@@ -1,0 +1,72 @@
+{
+  "username": "Server Manager",
+  "avatar_url": "https://i.imgur.com/410CmKi.png",
+  "content": "",
+  "embeds": [
+    {
+      "title": "{SERVER_NAME} My Arma 3 Server [{PLAYER_COUNT}/{AVALIABLE_PLAYERS}]",
+      "url": "",
+      "description": "**Mission: \"{MISSION_NAME}\" || :white_check_mark:**",
+      "color": "15258703",
+      "fields": [
+        {
+          "name": "MAP",
+          "value": "{MAP_NAME}",
+          "inline": true
+        },
+        {
+          "name": "IP / Port",
+          "value": "192.168.xx.xx:2302",
+          "inline": true
+        },
+        {
+          "name": "Game Version",
+          "value": "{GAME_VERSION}",
+          "inline": true
+        },
+        {
+          "name": "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬Analyze▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+          "value": "",
+          "inline": false
+        },
+        {
+          "name": "Server FPS : `{SERVER_FPS}`",
+          "value": "Min FPS: {FPS_MIN}",
+          "inline": true
+        },
+        {
+          "name": "[\"spawn\", \"execVM\", \"exec\", \"execFSM\"]",
+          "value": "**`{ACTIVE_SCRIPTS}`**",
+          "inline": true
+        },
+        {
+          "name": "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬Player▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬",
+          "value": "",
+          "inline": false
+        },
+        {
+          "name": "Player",
+          "value": "```{PLAYER_LIST}```",
+          "inline": true
+        },
+        {
+          "name": "State",
+          "value": "```{PLAYER_STATE}```",
+          "inline": true
+        },
+        {
+          "name": "[Ping, Bandwidth, Desync]",
+          "value": "```{PLAYER_NETWORK}```",
+          "inline": true
+        }
+      ],
+      "image": {
+        "url": "https://arma3.com/assets/img/wallpapers/low/3/Arma%203%20Laws%20of%20War_wallpaper_1024x768.jpg"
+      },
+      "footer": {
+        "text": "System Time: {SYSTEM_DATE} || {SYSTEM_TIME}",
+        "icon_url": "https://i.imgur.com/410CmKi.png"
+      }
+    }
+  ]
+}
