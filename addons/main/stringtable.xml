@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="Discord_MSG">
+	<Package name="Localized_Descriptions">
+    <!-- Server Infos -->
+      <Key ID="STR_Discord_MSG_Edit_ServerID">
+        <Original>Server INFO [Message ID]</Original>
+        <Chinese>伺服器資訊 [訊息ID]</Chinese>
+        <ChineseSimp>服务器信息 [消息ID]</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_Edit_ServerID_Tip">
+        <Original>Enter the [Message ID] that will be refreshed.\n</Original>
+        <Chinese>輸入將被刷新的 [訊息ID]。\n</Chinese>
+        <ChineseSimp>输入将被刷新的 [消息ID]。\n</ChineseSimp>
+      </Key>
+
+    
+    <!-- Info JSON -->
+      <Key ID="STR_Discord_MSG_SERVERINFO_JSON">
+        <Original>Server INFO [JSON Message]</Original>
+        <Chinese>伺服器資訊 [JSON 訊息檔案]</Chinese>
+        <ChineseSimp>服务器信息 [JSON 信息文件]</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_SERVERINFO_JSON_Tip">
+        <Original>The File locat beside the [DiscordMessageAPI.Dll].\nYou Should see "Server_Info_msg.json" by default.\n</Original>
+        <Chinese>該檔案位於 [DiscordMessageAPI.Dll] 旁邊。\n預設情況下您應該會看到 "Server_Info_msg.json"。\n</Chinese>
+        <ChineseSimp>该文件位于 [DiscordMessageAPI.Dll] 旁边。\n默认情况下您应看到 "Server_Info_msg.json"。\n</ChineseSimp>
+      </Key>
+
+      <Key ID="STR_Discord_MSG_Closed_JSON">
+        <Original>Mission Closed [JSON Message]</Original>
+        <Chinese>任務關閉訊息 [JSON 訊息檔案]</Chinese>
+        <ChineseSimp>任务关闭信息 [JSON 信息文件]</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_Closed_JSON_Tip">
+        <Original>Send when "shutting down a Mission".\n</Original>
+        <Chinese>"關閉任務" 時發送。\n</Chinese>
+        <ChineseSimp>"关闭任务" 时发送。\n</ChineseSimp>
+      </Key>
+
+
+    <!-- Sub-Titles -->
+      <Key ID="STR_Discord_MSG_Server_INFO">
+        <Original>Server_INFO Message</Original>
+        <Chinese>伺服器資訊</Chinese>
+        <ChineseSimp>服务器信息</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_Webhook">
+        <Original>Select Webhook (From [Webhooks.json])</Original>
+        <Chinese>選擇 Webhook (於 [Webhooks.json])</Chinese>
+        <ChineseSimp>选择 Webhook (于 [Webhooks.json])</ChineseSimp>
+      </Key>
+
+
+    <!-- Select Webhook -->
+      <Key ID="STR_Discord_MSG_Webhook_Sel">
+        <Original>Select the "Gerneral Purpose Webhook" (Index)</Original>
+        <Chinese>選擇 "通用 Webhook" (Index)</Chinese>
+        <ChineseSimp>选择 "通用 Webhook" (Index)</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_SERVER_INFO_Webhook_Sel">
+        <Original>Select the "Server INFO Webhook" (Index)</Original>
+        <Chinese>選擇 "伺服器資訊 Webhook" (Index)</Chinese>
+        <ChineseSimp>选择 "服务器信息 Webhook" (Index)</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_Webhook_Sel_Tip">
+        <Original>Pick the webhook from [Webhooks.json] beside the [DiscordMessageAPI.Dll]\n</Original>
+        <Chinese>從 [DiscordMessageAPI.Dll] 旁的 [Webhooks.json] 中選擇 Webhook。\n</Chinese>
+        <ChineseSimp>从 [DiscordMessageAPI.Dll] 旁的 [Webhooks.json] 中选择 Webhook。\n</ChineseSimp>
+      </Key>
+
+    
+    <!-- Common Settings -->
+      <Key ID="STR_Discord_MSG_ServerInfo_Delay">
+        <Original>Message Sending Delay for "Server INFO"</Original>
+        <Chinese>"伺服器資訊" 發送延遲</Chinese>
+        <ChineseSimp>"服务器信息" 发送延迟</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_ServerInfo_Delay_Tip">
+        <Original>In "Seconds". \nSo the webhook don't spam the channel.\n</Original>
+        <Chinese>以"秒"計時。 \nWebhook 才不會 瘋狂刷新。\n</Chinese>
+        <ChineseSimp>以"秒"计时。 \nWebhook 才不会频繁刷新。\n</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_isPersistent">
+        <Original>Persistent Server</Original>
+        <Chinese>持續性伺服器 (Persistent)</Chinese>
+        <ChineseSimp>持续性服务器 (Persistent)</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_isPersistent_Tip">
+        <Original>Enable if Server is a "Persistent Server".\n</Original>
+        <Chinese>如果 "持續性伺服器"，則啟用。\n</Chinese>
+        <ChineseSimp>如果 "持续性服务器"，则启用。\n</ChineseSimp>
+      </Key>
+      <Key ID="STR_Discord_MSG_Init_Hint">
+        <Original>Client Discord API initiated.</Original>
+        <Chinese>客戶端 Discord API 初始化完成。</Chinese>
+        <ChineseSimp>客户端 Discord API 初始化完成。</ChineseSimp>
+      </Key>
+
+
+      <!-- SERVER INFO -->
+        <Key ID="STR_Discord_MSG_INFO_0">
+          <Original>NONE</Original>
+          <Chinese>無</Chinese>
+          <ChineseSimp>无</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_1">
+          <Original>CREATED</Original>
+          <Chinese>已建立</Chinese>
+          <ChineseSimp>已建立</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_2">
+          <Original>CONNECTED</Original>
+          <Chinese>已連接</Chinese>
+          <ChineseSimp>已连接</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_3">
+          <Original>LOGGED IN</Original>
+          <Chinese>已登錄</Chinese>
+          <ChineseSimp>已登录</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_4">
+          <Original>MISSION SELECTED</Original>
+          <Chinese>選擇任務中</Chinese>
+          <ChineseSimp>选择任务中</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_5">
+          <Original>ROLE ASSIGNING</Original>
+          <Chinese>選擇職位中</Chinese>
+          <ChineseSimp>选择职位中</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_6">
+          <Original>ROLE ASSIGNED</Original>
+          <Chinese>已分配 職位</Chinese>
+          <ChineseSimp>已分配 职位</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_7">
+          <Original>MISSION RECEIVED</Original>
+          <Chinese>已接收 任務</Chinese>
+          <ChineseSimp>已接收 任务</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_8">
+          <Original>GAME LOADED</Original>
+          <Chinese>已加載 遊戲</Chinese>
+          <ChineseSimp>已加载 游戏</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_9">
+          <Original>BRIEFING SHOWN</Original>
+          <Chinese>已顯示 簡報</Chinese>
+          <ChineseSimp>已显示 简报</ChineseSimp>
+        </Key>
+        <Key ID="STR_Discord_MSG_INFO_10">
+          <Original>During OP</Original>
+          <Chinese>任務中</Chinese>
+          <ChineseSimp>任务中</ChineseSimp>
+        </Key>
+
+
+  </Package>
+</Project>
