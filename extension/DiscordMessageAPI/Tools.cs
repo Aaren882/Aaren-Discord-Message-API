@@ -1,14 +1,12 @@
-using System;
-using System.IO;
-using System.Text;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace DiscordMessageAPI
 {
     internal class Tools
     {
-        public static readonly string AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        public static readonly string? AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly()?.Location);
         private static readonly string ExtFilePath = Path.Combine(AssemblyPath, "DiscordMessageAPI");
         private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
         private static readonly byte[] Webkey = GenerateRandomWebKey();
@@ -35,7 +33,8 @@ namespace DiscordMessageAPI
             {
                 if (!loop)
                     Logger(i, null, true);
-            };
+            }
+            ;
         }
         internal static string ParseJson(string file)
         {
