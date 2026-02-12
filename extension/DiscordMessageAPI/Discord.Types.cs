@@ -1,9 +1,8 @@
-using System;
 using System.Text;
-using System.Collections.Generic;
-using System.Linq;
+using System.Text.Json.Serialization;
 namespace DiscordMessageAPI
 {
+
     public class Types
     {
         public class EmbedData
@@ -21,7 +20,8 @@ namespace DiscordMessageAPI
             public string FooterIconUrl { get; set; }
             public List<Types.FieldData> Fields { get; set; } = new List<Types.FieldData>();
 
-            string RandomColor() {
+            string RandomColor()
+            {
                 Random random = new Random();
                 int red = random.Next(256);
                 int green = random.Next(256);
@@ -53,15 +53,21 @@ namespace DiscordMessageAPI
                 Description = data.Count > 1 ? (string)data[1] : "";
                 Color = data.Count > 2 ? (string)data[2] : "14177041";
 
-                if (data.Count > 2) {
+                if (data.Count > 2)
+                {
                     Color = data[2] != "" ? "" : RandomColor();
-                } else {
+                }
+                else
+                {
                     Color = RandomColor();
                 }
 
-                if (data.Count > 3) {
+                if (data.Count > 3)
+                {
                     timestamp = data[3].ToLower() == "true" ? DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") : "";
-                } else {
+                }
+                else
+                {
                     timestamp = "";
                 }
 
@@ -113,12 +119,14 @@ namespace DiscordMessageAPI
         public string[] Webhooks
         {
             get => webhooks;
-            set {
+            set
+            {
                 value = value.Select(data => Tools.EncryptString(data)).ToArray();
                 webhooks = value;
             }
         }
     }
+
     public class JSON_MessageTypes
     {
         class JSON_Message
@@ -163,4 +171,28 @@ namespace DiscordMessageAPI
             public string icon_url { get; set; }
         }
     }
+
+    public class MsgPayload
+    {
+        public string Url { get; set; }
+        public string HandlerType { get; set; }
+        public string? MessageID { get; set; }
+    }
+
+    [JsonSerializable(typeof(Webhooks_Storage))]
+    internal partial class Webhooks_Storage_JsonContext : JsonSerializerContext
+    {
+    }
+
+    [JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Serialization)]
+    [JsonSerializable(typeof(JSON_MessageTypes))]
+    internal partial class MessageTypes_JsonContext : JsonSerializerContext
+    {
+    }
+
+    [JsonSerializable(typeof(MsgPayload))]
+    internal partial class MsgPayload_JsonContext : JsonSerializerContext
+    {
+    }
+
 }
