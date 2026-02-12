@@ -1,18 +1,22 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml;
 
 namespace DiscordMessageAPI
 {
     internal class Tools
     {
-        public static readonly string? AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly()?.Location);
-        private static readonly string ExtFilePath = Path.Combine(AssemblyPath, "DiscordMessageAPI");
+        //public static readonly string? AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly()?.Location!);
+        public static readonly string AssemblyPath = Path.GetDirectoryName(AppContext.BaseDirectory);
+        private static readonly string ExtFilePath = Path.Combine(AssemblyPath!, "DiscordMessageAPI");
         private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
         private static readonly byte[] Webkey = GenerateRandomWebKey();
-        private static readonly string LogFileName = Path.Combine(LogFilePath, $"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.DiscordMessageAPI.log");
+        private static readonly string LogFileName = Path.Combine(
+            LogFilePath,
+            $"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.DiscordMessageAPI.log");
 
-        internal static void Logger(Exception e = null, string s = "", bool loop = false)
+        internal static void Logger(Exception? e, string s = "", bool loop = false)
         {
             try
             {
@@ -23,8 +27,8 @@ namespace DiscordMessageAPI
 
                 using (StreamWriter file = new StreamWriter(@LogFileName, true))
                 {
-                    if (e != null)
-                        s = $"{e}";
+                    if (e == null)
+                        s = e!.Message;
                     if (s.Length > 0)
                         file.WriteLine($"{DateTime.Now.ToString("T")} - {s}");
                 }
@@ -34,20 +38,20 @@ namespace DiscordMessageAPI
                 if (!loop)
                     Logger(i, null, true);
             }
-            ;
         }
         internal static string ParseJson(string file)
         {
             // if no disk "dir" defined
-            try
+            string dir = file.IndexOf(":") < 0 ? $@"{AssemblyPath}\{file}" : @file;
+            return File.ReadAllText(dir);
+            /*try
             {
-                string dir = file.IndexOf(":") < 0 ? $@"{AssemblyPath}\{file}" : file;
-                return File.ReadAllText(dir);
+                
             }
             catch (Exception e)
             {
                 return $"{e}";
-            }
+            }*/
         }
 
         internal static int[] StringToCode32(string str)

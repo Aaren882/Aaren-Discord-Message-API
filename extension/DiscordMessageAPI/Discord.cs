@@ -1,15 +1,16 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Configuration.Assemblies;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace DiscordMessageAPI
 {
@@ -118,8 +119,9 @@ namespace DiscordMessageAPI
         internal static async Task DiscordMsg(string handlerPayload, MultipartFormDataContent package)
         {
             //- [ Handler<int> , Required Payload<object> ]
-            object[] HandlerType = JsonSerializer.Deserialize<object[]>(handlerPayload);
-            string url = HandlerType[0].ToString();
+            MsgPayload? HandlerType = JsonSerializer.Deserialize(handlerPayload, MsgPayload_JsonContext.Default.MsgPayload);
+
+            string url = HandlerType!.Url;
 
             url = Tools.DecryptString(url);
 
@@ -132,11 +134,11 @@ namespace DiscordMessageAPI
 
             using (HttpClient APIClient = new HttpClient())
             {
-                switch (HandlerType[1].ToString())
+                switch (HandlerType!.HandlerType)
                 {
                     case "1": //- Http(s) (Patch) request for Editting Message 
                     {
-                        HttpResponseMessage response = await APIClient.PatchAsync($"https://discord.com/api/webhooks/{url}/messages/{HandlerType[2]}", package);
+                        HttpResponseMessage response = await APIClient.PatchAsync($"https://discord.com/api/webhooks/{url}/messages/{HandlerType.MessageID}", package);
                         break;
                     }
                     default:
@@ -149,14 +151,14 @@ namespace DiscordMessageAPI
         }
 
         // - Make a PATCH Http Request
-        private static async Task<HttpResponseMessage> PatchAsync(this HttpClient client, string requestUri, HttpContent content)
+        /*private static async Task<HttpResponseMessage> PatchAsync(this HttpClient client, string requestUri, HttpContent content)
         {
             var request = new HttpRequestMessage(new HttpMethod("PATCH"), requestUri)
             {
                 Content = content
             };
             return await client.SendAsync(request);
-        }
+        }*/
 
 
         private static void Resize<T>(this List<T> list, int sz, T c)
