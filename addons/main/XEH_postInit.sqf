@@ -1,3 +1,5 @@
+#include "script_component.hpp"
+
 //- Must Be Multiplayer
 if !(isMultiplayer) exitWith {};
 
