@@ -28,7 +28,7 @@ Author:
 params ["_info"];
 TRACE_1("fn_Deserialize_ExtensionOutput",_this);
 
-private _output = reverse (_info # 0);
+private _output = reverse _info;
 private _endString = count _output - (_output find ']'); 
 
 _output = reverse _output;
