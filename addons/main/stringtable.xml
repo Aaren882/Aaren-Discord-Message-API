@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="Discord_MSG">
 	<Package name="Localized_Descriptions">
+    <Key ID="str_discordapi_main_url">
+      <Original>https://github.com/Aaren882/Aaren-Discord-Message-API</Original>
+    </Key>
+
     <!-- Server Infos -->
       <Key ID="STR_Discord_MSG_Edit_ServerID">
         <Original>Server INFO [Message ID]</Original>

@@ -1,28 +1,23 @@
 name = "Aaren Discord Message API"
 author = "Aaren"
 prefix = "DiscordAPI"
+url = "https://github.com/Aaren882/Aaren-Discord-Message-API"
 mainprefix = "z"
-
-[version]
-major = 24
-minor = 8
-patch = 1
 
 [files]
 include = [
-    "addon/*",
-    "AUTHORS.txt",
-    "LICENSE",
-    "mod.paa",
-    "mod.cpp",
-    "README.md",
-    "CLICK ME !! (Basic Files)/**"
+  "addon/*",
+  "*.dll",
+  "AUTHORS.txt",
+  "LICENSE",
+  "mod.paa",
+  "mod.cpp",
+  "README.md",
+  "CLICK ME !! (Basic Files)/**"
 ]
 
 exclude = [
-    ".vscode",
-    "*.sqfc",
-    "*.tga"
+  "*.sqfc"
 ]
 
 [asc]
