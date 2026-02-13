@@ -48,6 +48,7 @@ class CfgFunctions
 			class ServerInfo_Loop;
 
 			class Update_ServerInfo;
+			class Deserialize_ExtensionOutput;
 		};
 	};
 };
