@@ -1,3 +1,5 @@
+#include "script_component.hpp"
+
 private _infoVar = missionNamespace getVariable ["DiscordEmbedBuilder_Info",[]];
 if (
   !hasInterface || 

@@ -1,7 +1,9 @@
 #include "script_component.hpp"
 
 //- Must Be Multiplayer
-if !(isMultiplayer) exitWith {};
+#ifndef DEBUG_MODE_FULL
+  if !(isMultiplayer) exitWith {};
+#endif
 
 //- initiate for Server only
 if (isServer) then {
@@ -9,7 +11,7 @@ if (isServer) then {
   //- Init on Mission Started
     private _Info = "DiscordMessageAPI" callExtension ["Refresh_Webhooks",[-1]];
 
-    private _Webhook = (parseSimpleArray (_Info # 0)) + [_Info # 1];
+    private _Webhook = ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOutput) + [_Info # 1];
     serverNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook];
     missionNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook,true];
     call DiscordAPI_fnc_ServerInfo_Loop;
@@ -21,22 +23,21 @@ if (isServer) then {
       //- Check Mission Ended
       findDisplay 46 displayAddEventHandler ["Unload",
       {
-        private _msg = toString parseSimpleArray (("DiscordMessageAPI" callExtension [ 
-          "ParseJson", 
-          [//- File Directory
-            serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""]
-          ] 
-        ]) # 0);
 
-        with serverNamespace do {
-          "DiscordMessageAPI" callExtension [ 
-            "HandlerJsonFormat", 
-            [
-              [DiscordEmbedBuilder_Info # 0 # DiscordMessageAPI_ServerWebhookSel, 1, DiscordMessageAPI_ServerID],
-              _msg
-            ] 
-          ];
-        };
+        private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
+        private _format = [];
+        private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];
+        private _payload = [
+          ["HandlerType", 1],
+          ["MessageID", serverNamespace getVariable ["DiscordMessageAPI_ServerID", ""]]
+        ];
+        
+        [
+          _file,
+          _format,
+          _webhook_Sel,
+          _payload
+        ] call DiscordAPI_fnc_sendJsonFormat;
 
         (this # 0) displayRemoveEventHandler [_thisEvent, _thisEventHandler];
       }];

@@ -26,7 +26,7 @@ Author:
 ---------------------------------------------------------------------------- */
 
 params ["_info"];
-TRACE_1("fn_Deserialize_ExtensionOutput",_this);
+TRACE_2("fn_Deserialize_ExtensionOutput",_this,_fnc_scriptNameParent);
 
 private _output = reverse _info;
 private _endString = count _output - (_output find ']'); 
