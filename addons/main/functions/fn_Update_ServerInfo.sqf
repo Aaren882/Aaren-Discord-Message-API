@@ -1,5 +1,9 @@
+#include "script_component.hpp"
+
 // call DiscordAPI_fnc_Update_ServerInfo
 params [["_bypass", false]];
+
+TRACE_1("fn_Update_ServerInfo",_this);
 
 private _messageID = serverNamespace getVariable ["DiscordMessageAPI_ServerID", ""];
 
@@ -19,21 +23,20 @@ private _list = allUsers select {
 
 //- Exit with Shutdown Msg
 if (((_list findIf {true}) < 0) && !DiscordMsg_API_isPersistent) exitWith {
-  private _msg = toString parseSimpleArray (("DiscordMessageAPI" callExtension [
-    "ParseJson", 
-    [//- File Directory
-      serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""]
-    ] 
-  ]) # 0);
-  private _vars = ["DiscordEmbedBuilder_Info", "DiscordMessageAPI_ServerWebhookSel", "DiscordMessageAPI_ServerID"] apply {serverNamespace getVariable _x};
-
-  "DiscordMessageAPI" callExtension [
-    "HandlerJsonFormat", 
-    [
-      [(_vars # 0) # 0 # (_vars # 1), 1, _vars # 2],
-      _msg
-    ] 
+  private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
+  private _format = [];
+  private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];
+  private _payload =  [
+    ["HandlerType", 1],
+    ["MessageID", serverNamespace getVariable ["DiscordMessageAPI_ServerID", ""]]
   ];
+
+  [
+    _file,
+    _format,
+    _webhook_Sel,
+    _payload
+  ] call DiscordAPI_fnc_sendJsonFormat;
 };
 
 //- Count Headless Clients
@@ -77,6 +80,12 @@ for "_i" from 0 to 2 do {
   _SysTime pushBack ((["", "0"] select (_t < 10)) + str _t);
 };
 
+//- Payload with Message ID
+private _payload = [
+  ["HandlerType", 1],
+  ["MessageID", _messageID]
+];
+
 [
   serverNamespace getVariable ["DiscordMessageAPI_ServerJSON", ""],
   [
@@ -110,7 +119,7 @@ for "_i" from 0 to 2 do {
 
   ],
   DiscordMessageAPI_ServerWebhookSel,
-  [1,_messageID] //- Payload with Message ID 
+  _payload
   /* *** Payload Format ***
     - [0] Send by default
     - [1, "Message ID"] Refresh

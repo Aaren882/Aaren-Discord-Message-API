@@ -1,6 +1,9 @@
+#include "script_component.hpp"
+
 //- Check Current Webhooks Count
 private _infoVar = missionNamespace getVariable ["DiscordEmbedBuilder_Info",[]];
 
+TRACE_1("fn_refresh_webhooks",_infoVar);
 if (_infoVar findIf {true} < 0) exitWith {};
 
 #define LOCAL_STR(STRING) localize ("STR_Discord_MSG_" + STRING)
