@@ -16,14 +16,14 @@ class CfgPatches
 
 class Extended_PreInit_EventHandlers 
 {
-	class DiscordMessageAPI_EH
+	class ADDON
 	{
-		init = QUOTE(call COMPILE_FILE(PreInit));
+		init = QUOTE(call COMPILE_FILE(XEH_PreInit));
 	};
 };
 class Extended_PostInit_EventHandlers 
 {
-	class DiscordMessageAPI_EH
+	class ADDON
 	{
 		init = QUOTE(call COMPILE_FILE(XEH_postInit));
 	};
