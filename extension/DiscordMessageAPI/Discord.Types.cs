@@ -115,14 +115,14 @@ namespace DiscordMessageAPI
     }
     public class Webhooks_Storage
     {
-        private string[] webhooks;
+        private string[] _Webhooks;
         public string[] Webhooks
         {
-            get => webhooks;
+            get => _Webhooks;
             set
             {
                 value = value.Select(data => Tools.EncryptString(data)).ToArray();
-                webhooks = value;
+                _Webhooks = value;
             }
         }
     }
@@ -174,8 +174,8 @@ namespace DiscordMessageAPI
 
     public class MsgPayload
     {
-        public string Url { get; set; }
-        public string HandlerType { get; set; }
+        public required string Url { get; set; }
+        public required int HandlerType { get; set; }
         public string? MessageID { get; set; }
     }
 
@@ -184,7 +184,6 @@ namespace DiscordMessageAPI
     {
     }
 
-    [JsonSourceGenerationOptions(GenerationMode = JsonSourceGenerationMode.Serialization)]
     [JsonSerializable(typeof(JSON_MessageTypes))]
     internal partial class MessageTypes_JsonContext : JsonSerializerContext
     {
