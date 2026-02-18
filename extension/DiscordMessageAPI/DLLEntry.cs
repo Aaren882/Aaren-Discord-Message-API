@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using static DiscordMessageAPI.Delegates.EntryDelegates;
 
@@ -107,11 +107,11 @@ namespace DiscordMessageAPI
 
 			for (int i = 0; i < argCount; i++)
 			{
-				var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPrt + (i * Marshal.SizeOf<nint>())));
-				args[i] = str = str
+				var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPrt + (i * Marshal.SizeOf<nint>())))?
 					.Trim('"', ' ') //- Remove Arma quotations
                     .Replace("\"\"", "\"");
 
+				args[i] = str;
 				Tools.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
                 //args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
             }
@@ -123,7 +123,7 @@ namespace DiscordMessageAPI
 				int actionReturn = action(output, args, argCount);
 
 				if (InitTime == null)
-					throw new Exception("Find No Key.");
+					throw new Exception($"Function \"{inputKey}\" is not exist.");
 
 				// Use time as Key (for Server , Player)
 				/*if (ExtensionInit && inputKey == "init_player")
