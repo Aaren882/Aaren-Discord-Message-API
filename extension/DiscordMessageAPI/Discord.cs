@@ -69,7 +69,8 @@ namespace DiscordMessageAPI
 				//- Send File .png
 				if (filePath.Length > 0)
 				{
-					filePath = Path.Combine(Tools.AssemblyPath, filePath);
+					Tools.Trace("HandleRequest [filePath] : ", filePath);
+					filePath = Path.GetFullPath(filePath);
 					using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
 					{
 						byte[] fileBytes = new byte[fileStream.Length];
