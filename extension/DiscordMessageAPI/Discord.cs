@@ -1,6 +1,7 @@
 using System.Security.Authentication;
 using System.Text;
 using System.Text.Json;
+using DiscordMessageAPI.Tools;
 
 namespace DiscordMessageAPI
 {
@@ -9,7 +10,7 @@ namespace DiscordMessageAPI
 		internal static async void HandlerJson(string[] args)
 		{
 			//- ["url","json"]
-			string json = Tools.ParseJson(args[1]);
+			string json = Util.ParseJson(args[1]);
 			using (MultipartFormDataContent package = new MultipartFormDataContent())
 			{
 				package.Add(new StringContent(json, Encoding.UTF8), "payload_json");
@@ -69,7 +70,7 @@ namespace DiscordMessageAPI
 				//- Send File .png
 				if (filePath.Length > 0)
 				{
-					Tools.Trace("HandleRequest [filePath] : ", filePath);
+					Logger.Trace("HandleRequest [filePath] : ", filePath);
 					filePath = Path.GetFullPath(filePath);
 					using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
 					{
@@ -88,19 +89,19 @@ namespace DiscordMessageAPI
 
 		internal static async Task DiscordMsg(string handlerPayload, MultipartFormDataContent package)
 		{
-			Tools.Trace("DiscordMsg => \"handlerPayload\"", handlerPayload);
-            Tools.Trace("DiscordMsg => \"package\"", package.ToString()!);
+			Logger.Trace("DiscordMsg => \"handlerPayload\"", handlerPayload);
+            Logger.Trace("DiscordMsg => \"package\"", package.ToString()!);
 
             //- [ Handler<int> , Required Payload<object> ]
             MsgPayload? HandlerType = JsonSerializer.Deserialize(handlerPayload, MsgPayload_JsonContext.Default.MsgPayload);
 
-			Tools.Trace("DiscordMsg", "========================");
-			Tools.Trace("DiscordMsg => \"Url\"", HandlerType!.Url);
-            Tools.Trace("DiscordMsg => \"HandlerType\"", HandlerType.HandlerType.ToString());
-			Tools.Trace("DiscordMsg => \"MessageID\"", HandlerType.MessageID!);
+			Logger.Trace("DiscordMsg", "========================");
+			Logger.Trace("DiscordMsg => \"Url\"", HandlerType!.Url);
+            Logger.Trace("DiscordMsg => \"HandlerType\"", HandlerType.HandlerType.ToString());
+			Logger.Trace("DiscordMsg => \"MessageID\"", HandlerType.MessageID!);
             string url = HandlerType.Url;
 
-            url = Tools.DecryptString(url);
+            url = Util.DecryptString(url);
 
 			// Execute webhook
 			//ServicePointManager.Expect100Continue = true;

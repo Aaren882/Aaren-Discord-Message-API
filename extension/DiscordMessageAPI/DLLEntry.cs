@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using DiscordMessageAPI.Tools;
 using static DiscordMessageAPI.Delegates.EntryDelegates;
 
 namespace DiscordMessageAPI
@@ -112,13 +113,13 @@ namespace DiscordMessageAPI
                     .Replace("\"\"", "\"");
 
 				args[i] = str;
-				Tools.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
+				Logger.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
                 //args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
             }
 
 			try
 			{
-				Tools.Trace("DLL Entry", inputKey);
+				Logger.Trace("DLL Entry", inputKey);
 				InitActions action = ActionsDict.GetValueOrDefault(inputKey, EntryActions.NullDefault);
 				int actionReturn = action(output, args, argCount);
 
@@ -229,7 +230,7 @@ namespace DiscordMessageAPI
 			catch (Exception e)
 			{
 				output.Append($"Error!! \"{e.Message}\"");
-				Tools.Logger(e);
+				Logger.Log(e);
 
 				return -11;
 			}

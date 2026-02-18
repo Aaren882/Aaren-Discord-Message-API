@@ -1,63 +1,23 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace DiscordMessageAPI
+namespace DiscordMessageAPI.Tools
 {
-	internal class Tools
+	internal class Util
 	{
 		//public static readonly string? AssemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly()?.Location!);
-		public static readonly string? AssemblyPath = Path.Combine(AppContext.BaseDirectory, "Discord_Message_API");
+		public static readonly string AssemblyPath = Path.Combine(AppContext.BaseDirectory, "Discord_Message_API");
 		//public static readonly string? AssemblyPath = Path.GetDirectoryName(AppContext.BaseDirectory);
-		private static readonly string ExtFilePath = AssemblyPath;
-		private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
+		//private static readonly string ExtFilePath = AssemblyPath;
+		
 		private static readonly byte[] Webkey = GenerateRandomWebKey();
-		private static readonly bool debug = true;
-		private static readonly string LogFileName = Path.Combine(
-			LogFilePath,
-			$"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.DiscordMessageAPI.log");
-
-		/// <summary>
-		/// Writes a trace message to the logger if debugging is enabled.
-		/// </summary>
-		/// <remarks>No output is generated if debugging is not enabled. This method is intended for
-		/// internal diagnostic purposes.</remarks>
-		/// <param name="Name">The name or category associated with the trace message. Used to identify the source or context of the trace
-		/// output.</param>
-		/// <param name="content">The content of the trace message to be logged.</param>
-		internal static void Trace(string Name, string content)
-		{
-			if (!debug) return;
-			Logger(null, $"TRACER - {Name} : {content}");
-		}
-		internal static void Logger(Exception? e, string s = "", bool loop = false)
-		{
-			try
-			{
-				if (!Directory.Exists(ExtFilePath))
-					Directory.CreateDirectory(ExtFilePath);
-				if (!Directory.Exists(LogFilePath))
-					Directory.CreateDirectory(LogFilePath);
-
-				using (StreamWriter file = new StreamWriter(LogFileName, true))
-				{
-					if (string.IsNullOrEmpty(s))
-						s = e!.Message;
-					if (s.Length > 0)
-						file.WriteLine($"{DateTime.Now.ToString("T")} - {s}");
-				}
-			}
-			catch (Exception i)
-			{
-				if (!loop)
-					Logger(i, null, true);
-			}
-		}
+			
 		internal static string ParseJson(string file)
 		{
 			// if no disk "dir" defined
 			string dir = file.IndexOf(":") < 0 ? Path.Combine(AssemblyPath, file) : file;
-			Trace("ParseJson => \"file\"", file);
-			Trace("ParseJson => \"dir\"", dir);
+			Logger.Trace("ParseJson => \"file\"", file);
+			Logger.Trace("ParseJson => \"dir\"", dir);
 			return File.ReadAllText(dir);
 		}
 

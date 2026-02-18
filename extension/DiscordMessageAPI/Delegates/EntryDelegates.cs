@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using DiscordMessageAPI.Tools;
 using static DiscordMessageAPI.DllEntry;
 
 namespace DiscordMessageAPI.Delegates
@@ -60,8 +61,8 @@ namespace DiscordMessageAPI.Delegates
             /// <returns></returns>
             internal static int Refresh_Webhooks(OutputBuilder output, string[] args, int argCount)
             {
-                string jsonString = Tools.ParseJson("Webhooks.json");
-                Tools.Trace("Refresh_Webhooks", jsonString);
+                string jsonString = Util.ParseJson("Webhooks.json");
+                Logger.Trace("Refresh_Webhooks", jsonString);
 
                 ALLWebhooks = JsonSerializer.Deserialize<Webhooks_Storage>(
                     jsonString,
@@ -112,7 +113,7 @@ namespace DiscordMessageAPI.Delegates
             /// <returns>Always returns 1 to indicate successful processing of the first argument.</returns>
             internal static int ParseJson(OutputBuilder output, string[] args, int argCount)
             {
-                int[] utf = Tools.StringToCode32(Tools.ParseJson(args[0]));
+                int[] utf = Util.StringToCode32(Util.ParseJson(args[0]));
                 output.Append($"[{string.Join(",", utf)}]");
                 return 1;
             }
