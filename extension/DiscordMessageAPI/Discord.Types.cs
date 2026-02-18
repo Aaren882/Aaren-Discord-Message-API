@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using DiscordMessageAPI.Tools;
 namespace DiscordMessageAPI
 {
 
@@ -121,7 +122,7 @@ namespace DiscordMessageAPI
             get => _Webhooks;
             set
             {
-                value = value.Select(data => Tools.EncryptString(data)).ToArray();
+                value = value.Select(data => Util.EncryptString(data)).ToArray();
                 _Webhooks = value;
             }
         }
