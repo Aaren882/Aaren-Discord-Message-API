@@ -7,7 +7,6 @@ namespace DiscordMessageAPI.Tools
 		private static readonly string LogFileName = Path.Combine(
 			LogFilePath,
 			$"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.DiscordMessageAPI.log");
-		private static readonly bool debug = true;
 
 		/// <summary>
 		/// Writes a trace message to the logger if debugging is enabled.
@@ -19,8 +18,9 @@ namespace DiscordMessageAPI.Tools
 		/// <param name="content">The content of the trace message to be logged.</param>
 		internal static void Trace(string Name, string content)
 		{
-			if (!debug) return;
+#if DEBUG
 			Log(null, $"TRACER - {Name} : {content}");
+#endif
 		}
 		internal static void Log(Exception? e, string s = "", bool loop = false)
 		{
