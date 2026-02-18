@@ -65,7 +65,9 @@ namespace DiscordMessageAPI
 		[UnmanagedCallersOnly(EntryPoint = "RvExtensionVersion")]
 		public static void RvExtensionVersion(nint output, int outputSize)
 		{
-			Output(output, outputSize, "Nigga");
+			//- Clean up logs
+			Logger.CleanLogs();
+			Output(output, outputSize, "26.2.0");
 		}
 
 		[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
