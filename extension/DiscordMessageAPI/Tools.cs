@@ -11,7 +11,7 @@ namespace DiscordMessageAPI
 		private static readonly string ExtFilePath = AssemblyPath;
 		private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
 		private static readonly byte[] Webkey = GenerateRandomWebKey();
-		private static readonly bool debug = false;
+		private static readonly bool debug = true;
 		private static readonly string LogFileName = Path.Combine(
 			LogFilePath,
 			$"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.DiscordMessageAPI.log");
