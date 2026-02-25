@@ -3,11 +3,11 @@ using System.Text;
 using System.Text.Json;
 using DiscordMessageAPI.Tools;
 
-namespace DiscordMessageAPI
+namespace DiscordMessageAPI.Discord
 {
-	static class Discord
+	public static class Worker
 	{
-		internal static async void HandlerJson(string[] args)
+		public static async void HandlerJson(string[] args)
 		{
 			//- ["url","json"]
 			string json = Util.ParseJson(args[1]);
@@ -17,7 +17,7 @@ namespace DiscordMessageAPI
 				await DiscordMsg(args[0], package);
 			}
 		}
-		internal static async void HandlerJsonFormat(string[] args)
+		public static async void HandlerJsonFormat(string[] args)
 		{
 			//- ["url","json"]
 			string json = args[1];
@@ -27,7 +27,7 @@ namespace DiscordMessageAPI
 				await DiscordMsg(args[0], package);
 			}
 		}
-		internal static async void HandleRequest(string[] args)
+		public static async void HandleRequest(string[] args)
 		{
 			using (MultipartFormDataContent package = new MultipartFormDataContent())
 			{
@@ -49,10 +49,10 @@ namespace DiscordMessageAPI
 
 				foreach (var embed in embedsData)
 				{
-					Resize(embed, 11, "");
+					embed.Resize(11, "");
 					foreach (var field in FieldsData)
 					{
-						Resize(field, 3, "");
+						field.Resize(3, "");
 						embed.AddRange(field);
 					}
 				}
@@ -87,7 +87,7 @@ namespace DiscordMessageAPI
 			}
 		}
 
-		internal static async Task DiscordMsg(string handlerPayload, MultipartFormDataContent package)
+		public static async Task DiscordMsg(string handlerPayload, MultipartFormDataContent package)
 		{
 			Logger.Trace("DiscordMsg => \"handlerPayload\"", handlerPayload);
             Logger.Trace("DiscordMsg => \"package\"", package.ToString()!);

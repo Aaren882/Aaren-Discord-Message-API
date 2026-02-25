@@ -127,7 +127,7 @@ namespace DiscordMessageAPI.Delegates
             /// <returns>Always returns 1 to indicate successful handling of the command.</returns>
             internal static int HandlerJson(OutputBuilder output, string[] args, int argCount)
             {
-                Discord.HandlerJson(args);
+                Discord.Worker.HandlerJson(args);
                 return 1;
             }
             /// <summary>
@@ -140,7 +140,7 @@ namespace DiscordMessageAPI.Delegates
             /// <returns>Always returns 1 to indicate successful processing.</returns>
             internal static int HandlerJsonFormat(OutputBuilder output, string[] args, int argCount)
             {
-                Discord.HandlerJsonFormat(args);
+				Discord.Worker.HandlerJsonFormat(args);
                 return 1;
             }
             /// <summary>
@@ -165,7 +165,7 @@ namespace DiscordMessageAPI.Delegates
                 if (codePointStrings.Length > 1)
                     args[5] = string.Concat(codePointStrings.Select(cp => char.ConvertFromUtf32(int.Parse(cp))));
 
-                Discord.HandleRequest(args);
+				Discord.Worker.HandleRequest(args);
                 return 1;
             }
         }
