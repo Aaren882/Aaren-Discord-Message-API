@@ -10,6 +10,3 @@ releases
 *.dll
 *.dll.*
 *.pdb
-
-//- For testing functions
-/extension/ConsoleApp1
