@@ -1,0 +1,6 @@
+@Arma3DiscordBot_HostAddress = http://localhost:5048
+
+GET {{Arma3DiscordBot_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
