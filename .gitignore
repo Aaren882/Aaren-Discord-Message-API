@@ -10,3 +10,4 @@ releases
 *.dll
 *.dll.*
 *.pdb
+*.env
