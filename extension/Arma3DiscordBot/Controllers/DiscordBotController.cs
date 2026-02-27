@@ -18,9 +18,6 @@ namespace Arma3DiscordBot.Controllers
 
 		private readonly ILogger<DiscordBotController> _logger;
 
-		/*private static readonly Dictionary<string, string> env = DotNetEnv.Env.Load().ToDotEnvDictionary();
-		private static DiscordSocketClient? _client;*/
-
 		static Dictionary<string, string> env = Program.env;
 		static DiscordSocketClient? _client = Program.DiscordBotClient;
 		readonly static string TestChannel = env.GetValueOrDefault("TestChannel", "");
@@ -30,19 +27,9 @@ namespace Arma3DiscordBot.Controllers
 			_logger = logger;
 
 			_client.Log += Log;
-			/*_client = new DiscordSocketClient();
-
-			StartupBot()
-				.GetAwaiter().GetResult();*/
 		}
 
-		/*private async static Task StartupBot()
-		{
-			await _client.LoginAsync(TokenType.Bot, env.GetValueOrDefault("BotToken", ""));
-			await _client.StartAsync();
-		}*/
-
-		public Task Log(LogMessage msg)
+		private Task Log(LogMessage msg)
 		{
 			// Use the appropriate ILogger method based on Discord's LogSeverity
 			switch (msg.Severity)
@@ -79,7 +66,7 @@ namespace Arma3DiscordBot.Controllers
 
 			return new JsonResult(message);
 		}
-		
+
 		//////////////////////
 
 		[HttpGet(Name = "GetDiscordBot")]
