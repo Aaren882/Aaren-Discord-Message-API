@@ -4,7 +4,7 @@ using Discord.WebSocket;
 using DotNetEnv.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Arma3DiscordBot.Controllers
+namespace Arma3WebService.Controllers
 {
 
 	[ApiController]
@@ -25,7 +25,6 @@ namespace Arma3DiscordBot.Controllers
 		public DiscordBotController(ILogger<DiscordBotController> logger)
 		{
 			_logger = logger;
-
 			_client.Log += Log;
 		}
 

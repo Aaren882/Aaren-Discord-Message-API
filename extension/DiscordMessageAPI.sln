@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordMessageAPI", "Discor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "featureTest", "featureTest\featureTest.csproj", "{F8606BDD-8B28-43F9-8E96-06CCE7387498}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arma3DiscordBot", "Arma3DiscordBot\Arma3DiscordBot.csproj", "{816392A1-8C07-4420-9A94-55DFD96C7E28}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arma3WebService", "Arma3WebService\Arma3WebService.csproj", "{816392A1-8C07-4420-9A94-55DFD96C7E28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
