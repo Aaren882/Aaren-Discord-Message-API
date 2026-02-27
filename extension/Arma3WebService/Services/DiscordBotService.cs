@@ -1,7 +1,7 @@
 using Discord;
 using Discord.WebSocket;
 
-namespace Arma3DiscordBot.Services
+namespace Arma3WebService.Services
 {
 	public class DiscordBotService: IHostedService
 	{

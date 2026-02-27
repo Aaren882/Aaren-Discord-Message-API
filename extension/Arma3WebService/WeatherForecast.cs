@@ -1,4 +1,4 @@
-namespace Arma3DiscordBot
+namespace Arma3WebService
 {
 	public class WeatherForecast
 	{

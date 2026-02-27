@@ -1,11 +1,12 @@
 
-using Arma3DiscordBot.Controllers;
-using Arma3DiscordBot.Services;
+using Arma3WebService;
+using Arma3WebService.Controllers;
+using Arma3WebService.Services;
 using Discord;
 using Discord.WebSocket;
 using DotNetEnv.Extensions;
 
-namespace Arma3DiscordBot
+namespace Arma3WebService
 {
 	public class Program
 	{
