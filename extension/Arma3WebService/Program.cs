@@ -1,29 +1,45 @@
-
-using Arma3WebService;
-using Arma3WebService.Controllers;
 using Arma3WebService.Services;
-using Discord;
 using Discord.WebSocket;
-using DotNetEnv.Extensions;
+using DotNetEnv;
+using System.Collections;
 
 namespace Arma3WebService
 {
 	public class Program
 	{
-		internal static readonly Dictionary<string, string> env = DotNetEnv.Env.Load().ToDotEnvDictionary();
+		//internal static IQueryable env;
 		internal static DiscordSocketClient? DiscordBotClient;
 
 		public static void Main(string[] args)
 		{
+			Env.Load();
+			//env = Environment.GetEnvironmentVariables();
+
 			var builder = WebApplication.CreateBuilder(args);
 			DiscordBotClient = new DiscordSocketClient();
 
 			// Add services to the container.
 
+			//builder.Services.AddScoped<WebSocketApiController>();
 			builder.Services.AddControllers();
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			//builder.Services.AddOpenApi();
 			builder.Services.AddSwaggerGen();
+
+			builder.Services.AddControllers().AddControllersAsServices();
+
+			//- WebSocket
+			//builder.Services.AddSingleton<WebSocketConnectionManager>();
+			builder.Services.AddCors(options =>
+			{
+				options.AddPolicy("AllowAll",
+					policy =>
+					{
+						policy.AllowAnyOrigin()
+							  .AllowAnyHeader()
+							  .AllowAnyMethod();
+					});
+			});
 
 			//- Regiester Bot Service
 			builder.Services.AddScoped<DiscordBotService>();
@@ -40,6 +56,15 @@ namespace Arma3WebService
 			}
 
 			app.UseHttpsRedirection();
+
+			//- Websocket
+			app.UseCors("AllowAll");
+			app.UseWebSockets(new WebSocketOptions
+			{
+				KeepAliveInterval = TimeSpan.FromSeconds(30)
+			});
+			app.UseRouting();
+
 
 			app.UseAuthorization();
 
