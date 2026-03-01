@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using DiscordMessageAPI.Tools;
+using DiscordMessageAPI.WebAPI;
 using static DiscordMessageAPI.Delegates.EntryDelegates;
 
 namespace DiscordMessageAPI
@@ -22,6 +23,7 @@ namespace DiscordMessageAPI
 		public static Webhooks_Storage? ALLWebhooks = null;
 		private static CallContext contextInfo;
 		internal static OutputBuilder CurrentOutputBuilder;
+		internal static WebSocketClient WS_Client = new WebSocketClient("ws://localhost:5000/api/ws");
 
 		private static void Output(IntPtr destination, int outputSize, string data)
 		{
@@ -34,7 +36,7 @@ namespace DiscordMessageAPI
 			CurrentOutputBuilder = Builder;
 		}
 
-		internal class OutputBuilder
+		public class OutputBuilder
 		{
 			nint destination;
 			int outputSize;
@@ -60,14 +62,19 @@ namespace DiscordMessageAPI
 		/// Gets called when Arma starts up and loads all extension.
 		/// It's perfect to load in static objects in a separate thread so that the extension doesn't needs any separate initalization
 		/// </summary>
-		/// <param name="output"></param>
+		/// <param name="outputPrt"></param>
 		/// <param name="outputSize"></param>
 		[UnmanagedCallersOnly(EntryPoint = "RvExtensionVersion")]
-		public static void RvExtensionVersion(nint output, int outputSize)
+		public static void RvExtensionVersion(nint outputPrt, int outputSize)
 		{
 			//- Clean up logs
 			Logger.CleanLogs();
-			Output(output, outputSize, "26.2.0");
+
+			WS_Client.Connected += () => Logger.Log(null, $"Event: Connected to server");
+			WS_Client.Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
+			WS_Client.MessageReceived += (message) => Logger.Log(null, $"Event: Message received - {message}");
+
+			Output(outputPrt, outputSize, "26.2.0");
 		}
 
 		[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
@@ -86,6 +93,37 @@ namespace DiscordMessageAPI
 			contextInfo.missionName = args[2];
 			contextInfo.serverName = args[3];
 			contextInfo.remoteExecutedOwner = Convert.ToInt16(args[4]);
+		}
+
+
+		/// <summary>
+		/// The entry point for the default callExtension command.
+		/// </summary>
+		/// <param name="outputPrt">The string builder object that contains the result of the function</param>
+		/// <param name="outputSize">The maximum size of bytes that can be returned</param>
+		/// <param name="function">The string argument that is used along with callExtension</param>
+		[UnmanagedCallersOnly(EntryPoint = "RVExtension")]
+		public static void RVExtension(nint outputPrt, int outputSize, nint function)
+		{
+			var inputKey = Marshal.PtrToStringUTF8(function)!;
+
+			if (!String.IsNullOrEmpty(inputKey))
+			{
+				WS_Client.SendMessageAsync(inputKey);
+			}
+			else
+			{
+				WS_Client.ConnectAsync();
+			}
+			//WS_Client.SendMessageAsync(inputKey);
+
+
+			// - await will block the thread, makes the game stuttering - //
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+			//APIRequest.SendRequest("http://localhost:5000/api/Arma", inputKey);
+#pragma warning restore CS4014
+
+			Output(outputPrt, outputSize, inputKey);
 		}
 
 		/// <summary>
@@ -112,12 +150,12 @@ namespace DiscordMessageAPI
 			{
 				var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPrt + (i * Marshal.SizeOf<nint>())))?
 					.Trim('"', ' ') //- Remove Arma quotations
-                    .Replace("\"\"", "\"");
+					.Replace("\"\"", "\"");
 
 				args[i] = str;
 				Logger.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
-                //args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
-            }
+				//args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
+			}
 
 			try
 			{

@@ -14,4 +14,7 @@
     <Version>$(AssemblyVersion)</Version>
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Arma3WebService\ArmaPayload.cs" Link="ArmaPayload.cs" />
+  </ItemGroup>
 </Project>
