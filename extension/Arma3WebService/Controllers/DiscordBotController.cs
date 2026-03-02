@@ -1,7 +1,5 @@
-using System.Collections.ObjectModel;
 using Discord;
 using Discord.WebSocket;
-using DotNetEnv.Extensions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
@@ -18,9 +16,8 @@ namespace Arma3WebService.Controllers
 
 		private readonly ILogger<DiscordBotController> _logger;
 
-		static Dictionary<string, string> env = Program.env;
 		static DiscordSocketClient? _client = Program.DiscordBotClient;
-		readonly static string TestChannel = env.GetValueOrDefault("TestChannel", "");
+		readonly static string TestChannel = Environment.GetEnvironmentVariable("TestChannel")!;
 
 		public DiscordBotController(ILogger<DiscordBotController> logger)
 		{
@@ -71,7 +68,7 @@ namespace Arma3WebService.Controllers
 		[HttpGet(Name = "GetDiscordBot")]
 		public IEnumerable<WeatherForecast> Get()
 		{
-			var result = CreateWeatherForecast(1,5).ToArray();
+			var result = CreateWeatherForecast(1, 5).ToArray();
 
 			return result;
 		}
