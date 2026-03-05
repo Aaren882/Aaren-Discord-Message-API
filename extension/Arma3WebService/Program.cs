@@ -8,7 +8,7 @@ namespace Arma3WebService
 	public class Program
 	{
 		//internal static IQueryable env;
-		internal static DiscordSocketClient? DiscordBotClient;
+		//internal static DiscordSocketClient? DiscordBotClient;
 
 		public static void Main(string[] args)
 		{
@@ -16,17 +16,21 @@ namespace Arma3WebService
 			//env = Environment.GetEnvironmentVariables();
 
 			var builder = WebApplication.CreateBuilder(args);
-			DiscordBotClient = new DiscordSocketClient();
 
 			// Add services to the container.
+			builder.Services.AddSingleton<DiscordBotService>();
+			builder.Services.AddHostedService<DiscordBotService>();
+			//- Regiester Bot Service -//
 
-			//builder.Services.AddScoped<WebSocketApiController>();
+
+			//- Add controller
+			builder.Services.AddScoped<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddControllers();
+
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			//builder.Services.AddOpenApi();
 			builder.Services.AddSwaggerGen();
 
-			builder.Services.AddControllers().AddControllersAsServices();
 
 			//- WebSocket
 			//builder.Services.AddSingleton<WebSocketConnectionManager>();
@@ -40,10 +44,6 @@ namespace Arma3WebService
 							  .AllowAnyMethod();
 					});
 			});
-
-			//- Regiester Bot Service
-			builder.Services.AddScoped<DiscordBotService>();
-			builder.Services.AddHostedService<DiscordBotService>();
 
 			var app = builder.Build();
 
