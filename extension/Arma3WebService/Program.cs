@@ -1,20 +1,13 @@
 using Arma3WebService.Models;
-using Discord.WebSocket;
 using DotNetEnv;
-using System.Collections;
 
 namespace Arma3WebService
 {
 	public class Program
 	{
-		//internal static IQueryable env;
-		//internal static DiscordSocketClient? DiscordBotClient;
-
 		public static void Main(string[] args)
 		{
 			Env.Load();
-			//env = Environment.GetEnvironmentVariables();
-
 			var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
@@ -37,7 +30,6 @@ namespace Arma3WebService
 
 
 			//- WebSocket
-			//builder.Services.AddSingleton<WebSocketConnectionManager>();
 			builder.Services.AddCors(options =>
 			{
 				options.AddPolicy("AllowAll",

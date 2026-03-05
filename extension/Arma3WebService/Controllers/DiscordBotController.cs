@@ -1,6 +1,5 @@
 using Arma3WebService.Models;
 using Discord;
-using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
@@ -25,10 +24,10 @@ namespace Arma3WebService.Controllers
 		}
 
 		[HttpPost(Name = "PostBotOnline")]
-		public async Task<OkObjectResult> PostBotOnline(string text)
+		public async Task<IActionResult> PostBotOnline(string text)
 		{
 			IUserMessage result = await _service.PostBotOnline(text);
-			return new OkObjectResult(result);
+			return Ok(result);
 		}
 
 		//////////////////////
