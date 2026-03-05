@@ -22,9 +22,13 @@ namespace Arma3WebService
 			builder.Services.AddHostedService<DiscordBotService>();
 			//- Regiester Bot Service -//
 
+			builder.Services.AddSingleton<WebSocketService>();
+			builder.Services.AddHostedService<WebSocketService>();
+			//- Regiester WebSocket Service -//
 
-			//- Add controller
+			//- Add controllers
 			builder.Services.AddScoped<IDiscordBotService, DiscordBotService>();
+			builder.Services.AddTransient<IWebSocketService, WebSocketService>();
 			builder.Services.AddControllers();
 
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
