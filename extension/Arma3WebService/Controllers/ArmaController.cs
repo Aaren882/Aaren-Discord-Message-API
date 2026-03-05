@@ -18,7 +18,7 @@ namespace Arma3WebService.Controllers
 		public IActionResult PostLog(Arma3Payload payload)
 		{
 			_logger.LogInformation($"Restful Received Log: {payload.Log}");
-			return Ok(new ServiceReturnPayload());
+			return Ok(new { hello = "" });
 		}
 
 		[HttpGet("GetLogs")]
