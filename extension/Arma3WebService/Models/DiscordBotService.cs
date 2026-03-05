@@ -2,7 +2,7 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Arma3WebService.Services
+namespace Arma3WebService.Models
 {
 	public interface IDiscordBotService
 	{

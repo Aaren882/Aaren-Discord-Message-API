@@ -1,4 +1,4 @@
-using Arma3WebService.Services;
+using Arma3WebService.Models;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.AspNetCore.Mvc;
