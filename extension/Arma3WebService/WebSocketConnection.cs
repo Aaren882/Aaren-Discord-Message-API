@@ -1,7 +1,6 @@
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 
 namespace Arma3WebService
 {
@@ -34,7 +33,13 @@ namespace Arma3WebService
 					if (message.Count > 0)
 					{
 						var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
-						Console.WriteLine($"Received message {receivedMessage}");
+
+						if (String.IsNullOrEmpty(receivedMessage))
+							continue;
+
+						Arma3Payload deserialized = JsonSerializer.Deserialize(receivedMessage, Arma3Payload_JsonSerializerContext.Default.Arma3Payload);
+
+						Console.WriteLine($"Received message '{deserialized.Log}'");
 						await Send(receivedMessage);
 					}
 				}

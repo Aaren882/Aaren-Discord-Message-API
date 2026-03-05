@@ -49,7 +49,8 @@ namespace DiscordMessageAPI.WebAPI
 			{
 				Arma3Payload messageObj = new Arma3Payload
 				{
-					Log = message
+					Log = message,
+					Timestamp = DateTime.Now
 				};
 
 				var messageJson = JsonSerializer.Serialize(messageObj, Arma3Payload_JsonSerializerContext.Default.Arma3Payload);
