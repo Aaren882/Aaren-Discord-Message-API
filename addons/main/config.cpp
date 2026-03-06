@@ -1,29 +1,31 @@
+#include "script_component.hpp"
+
 class CfgPatches
 {
 	class DiscordMessageAPI
 	{
+		authors[] = {"Aaren"};
+		url = ECSTRING(main,url);
+		requiredVersion = REQUIRED_VERSION;
+		requiredAddons[] = {"A3_Data_F"};
 		units[] = {};
 		weapons[] = {};
-		requiredVersion = 2.00;
-		requiredAddons[] = 
-		{
-			"A3_Data_F"
-		};
+		VERSION_CONFIG;
 	};
 };
 
 class Extended_PreInit_EventHandlers 
 {
-	class DiscordMessageAPI_EH
+	class ADDON
 	{
-		init = "call compile preprocessFileLineNumbers 'z\DiscordAPI\addons\main\XEH_preInit.sqf'";
+		init = QUOTE(call COMPILE_FILE(XEH_PreInit));
 	};
 };
 class Extended_PostInit_EventHandlers 
 {
-	class DiscordMessageAPI_EH
+	class ADDON
 	{
-		init = "call compile preprocessFileLineNumbers 'z\DiscordAPI\addons\main\XEH_postInit.sqf'";
+		init = QUOTE(call COMPILE_FILE(XEH_postInit));
 	};
 };
 
@@ -33,19 +35,20 @@ class CfgFunctions
 	{
 		class init
 		{
-			file="\z\DiscordAPI\addons\main\functions\init";
+			file=QPATHTOF(functions\init);
 			class init_player;
 			class refresh_webhooks;
 		};
 		class functions
 		{
-			file="\z\DiscordAPI\addons\main\functions";
+			file=QPATHTOF(functions);
 			class sendMessage;
 			class sendJson;
 			class sendJsonFormat;
 			class ServerInfo_Loop;
 
 			class Update_ServerInfo;
+			class Deserialize_ExtensionOutput;
 		};
 	};
 };

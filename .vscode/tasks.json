@@ -4,10 +4,7 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "hemtt build –no-bin",
-            "windows": {
-                "command": "hemtt build"
-            },
+            "command": "hemtt build",
             "problemMatcher": [],
             "group": {
                 "kind": "build",

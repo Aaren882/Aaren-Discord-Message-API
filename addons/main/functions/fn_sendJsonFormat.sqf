@@ -1,8 +1,50 @@
+#include "script_component.hpp"
+/* ----------------------------------------------------------------------------
+Function: DiscordAPI_fnc_sendJsonFormat
+Description:
+    Send a JSON file with formatted string replacements.
+
+Parameters:
+    _file     - JSON file directory <STRING>
+    _formats  - Array of [Key, Value] pairs for replacement <ARRAY>
+    _Sel      - Webhook index <NUMBER>
+    _payload  - Additional payload data like HandlerType and MessageID <ARRAY>
+
+Returns:
+    Extension return <ARRAY>
+
+Examples
+    (begin example)
+        [
+          "Server_Info_msg.json",
+          [
+            ["{MAP_NAME}", worldName]
+          ],
+          0,
+          [
+            ["HandlerType", 0],
+            ["MessageID", ""]
+          ]
+        ] call DiscordAPI_fnc_sendJsonFormat
+    (end)
+
+Author:
+    Aaren
+---------------------------------------------------------------------------- */
+
+TRACE_1("fn_sendJsonFormat",_this);
+
+
 // Function Name: ["_file","_formats","_Sel"] call DiscordAPI_fnc_sendJsonFormat
 
-params ["_file","_formats",["_Sel",DiscordMessageAPI_WebhookSel],["_payload",[0]]];
+params [
+  ["_file", ""],
+  "_formats",
+  ["_Sel", DiscordMessageAPI_WebhookSel],
+  ["_payload", nil]
+];
 
-if (isNil{_Sel} || _file == "") exitWith {};
+if (isNil "_Sel" || _file == "" || isNil "_payload") exitWith {};
 
 /* 
 [
@@ -22,23 +64,29 @@ if (isNil{_Sel} || _file == "") exitWith {};
   ] call DiscordAPI_fnc_sendJsonFormat;
 */
 
-private _msg = toString parseSimpleArray (("DiscordMessageAPI" callExtension [
+private _Info = "DiscordMessageAPI" callExtension [
   "ParseJson", 
   [//- File Directory
     _file
   ] 
-]) # 0);
+];
+
+private _url = DiscordEmbedBuilder_Info # 0 # _Sel;
+private _msg = toString ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOutput);
 
 {
   _msg = [_msg,_x # 0,_x # 1] call CBA_fnc_replace;
 } forEach _formats;
 
-//- Send Format Json
+//- Struct hashMap
+_payload = createHashMapFromArray _payload;
+_payload set ["Url", _url];
 
+//- Send Format Json
 "DiscordMessageAPI" callExtension [ 
   "HandlerJsonFormat", 
   [
-    [DiscordEmbedBuilder_Info # 0 # _Sel] + _payload,
+    toJSON _payload,
     _msg
   ] 
 ];

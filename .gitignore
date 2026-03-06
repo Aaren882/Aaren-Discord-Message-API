@@ -5,3 +5,8 @@ hemtt
 hemtt.exe
 *.biprivatekey
 releases
+
+# Extension
+*.dll
+*.dll.*
+*.pdb
