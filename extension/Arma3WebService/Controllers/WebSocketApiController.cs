@@ -1,5 +1,7 @@
 using System.Net;
 using Arma3WebService.Models;
+using Discord.Interactions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
@@ -15,15 +17,16 @@ namespace Arma3WebService.Controllers
 			_service = service;
 		}
 
-		[HttpGet]
-		public async Task<IActionResult> Get()
+		[HttpGet("ingame")]
+		public async Task<IActionResult> InGameWebSocket()
 		{
 			var context = ControllerContext.HttpContext;
 
 			if (!context.WebSockets.IsWebSocketRequest)
-				return BadRequest();
+				return Problem(statusCode: 501);
 
-			return await _service.CreateConnection(context);
+			await _service.CreateConnection(context);
+			return new EmptyResult();
 		}
 	}
 }
