@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordMessageAPI", "Discor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "featureTest", "featureTest\featureTest.csproj", "{F8606BDD-8B28-43F9-8E96-06CCE7387498}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arma3WebService", "Arma3WebService\Arma3WebService.csproj", "{816392A1-8C07-4420-9A94-55DFD96C7E28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,18 @@ Global
 		{F8606BDD-8B28-43F9-8E96-06CCE7387498}.Release|x64.Build.0 = Release|Any CPU
 		{F8606BDD-8B28-43F9-8E96-06CCE7387498}.Release|x86.ActiveCfg = Release|Any CPU
 		{F8606BDD-8B28-43F9-8E96-06CCE7387498}.Release|x86.Build.0 = Release|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Debug|x64.Build.0 = Debug|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Debug|x86.Build.0 = Debug|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Release|x64.ActiveCfg = Release|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Release|x64.Build.0 = Release|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Release|x86.ActiveCfg = Release|Any CPU
+		{816392A1-8C07-4420-9A94-55DFD96C7E28}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
