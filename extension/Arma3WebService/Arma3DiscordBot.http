@@ -1,6 +1,32 @@
 @Arma3WebService_HostAddress = http://localhost:5048
+@JwtToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6Ijg0ZmUwNWUwLTgyYjgtNDFmMS05N2JlLTY1ODAxZTEyMzBlNCIsInJvbGUiOiJBZG1pbiIsIm5iZiI6MTc3MjgxNjc2MCwiZXhwIjoxNzcyODIwMzYwLCJpYXQiOjE3NzI4MTY3NjAsImlzcyI6Imlzc3VlciIsImF1ZCI6IkFkbWluIn0.Yb1SH8aLAxENlekSX_fV_fVndGPQBkuKxXdkLW1_SjY
+@ServerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6ImJhM2VmZDcwLTNiZGMtNDY0My05NjBlLTYzNjYwZTE5ZmE2ZCIsInJvbGUiOiJHYW1lLVNlcnZlciIsIm5iZiI6MTc3MjgxNjczNSwiZXhwIjoxNzcyODIwMzM1LCJpYXQiOjE3NzI4MTY3MzUsImlzcyI6Imlzc3VlciIsImF1ZCI6IkdhbWUtU2VydmVyIn0.3iYvDKpZfuc9bxjkAGRVBPY-NN9EWC2XamQGwZHLFvo
 
-GET {{Arma3WebService_HostAddress}}/weatherforecast/
+GET {{Arma3WebService_HostAddress}}/api/arma/GetLogs/
 Accept: application/json
+Authorization: Bearer {{JwtToken}} 
+###
+
+GET {{Arma3WebService_HostAddress}}/api/token
+Content-Type: application/json
+{
+    "Name": "New",
+    "Role": 1,
+    "AuthToken": "{{JwtToken}}"
+}
 
 ###
+
+POST {{Arma3WebService_HostAddress}}/api/token
+Content-Type: application/json
+{
+    "Name": "New Product",
+    "Role": 1
+}
+###
+
+GET {{Arma3WebService_HostAddress}}/api/ws/ingame?access_token={{JwtToken}} 
+Accept: application/json
+# Authorization: Bearer {{JwtToken}} 
+
+##

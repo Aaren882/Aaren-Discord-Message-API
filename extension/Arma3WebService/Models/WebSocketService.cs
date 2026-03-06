@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Mvc;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
@@ -11,7 +9,7 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
-		public Task<IActionResult> CreateConnection(HttpContext context);
+		public Task CreateConnection(HttpContext context);
 	}
 
 	public sealed class WebSocketService : IHostedService, IWebSocketService
@@ -36,19 +34,19 @@ namespace Arma3WebService.Models
 		{
 			var service = _serviceProvider.GetRequiredService<WebSocketService>();
 
-			_logger.LogInformation($"WebSocket is Start Listening now");
+			_logger.LogInformation("WebSocket is Listening now");
 
 			return Task.CompletedTask;
 		}
 		public Task StopAsync(CancellationToken cancellationToken)
 		{
-			_logger.LogInformation($"WebSocket is Stop Listening now");
+			_logger.LogInformation("WebSocket Has Stopped Listening...");
 
 			return Task.CompletedTask;
 		}
 
 
-		public async Task<IActionResult> CreateConnection(HttpContext context)
+		public async Task CreateConnection(HttpContext context)
 		{
 			WebSocket websocket;
 			try
@@ -78,8 +76,6 @@ namespace Arma3WebService.Models
 				_connections.TryRemove(context.Connection.Id, out websocket!);
 				_logger.LogInformation($"Close connection '{context.Connection.Id}' - '{context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
 			}
-
-			return new EmptyResult();
 		}
 	}
 }
