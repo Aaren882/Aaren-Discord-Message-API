@@ -38,7 +38,7 @@ namespace Arma3WebService.Controllers
 		}
 
 		[HttpGet]
-		public IActionResult VaildateToken(IdentityRolesVaildation payload)
+		public IActionResult VaildateToken(IdentityRolesPayload payload)
 		{
 			var vaildation = _jwtHelpers.VaildateToken(payload)
 				.GetAwaiter().GetResult();

@@ -61,10 +61,9 @@ namespace Arma3WebService.Identities
 			};
 		}
 
-		public Task<TokenValidationResult> VaildateToken(IdentityRolesVaildation payload)
+		public Task<TokenValidationResult> VaildateToken(IdentityRolesPayload payload)
 		{
 			var roleName = GetIdentityRole(payload.Role);
-			var roleGuid = GetIdentityRoleGuid(payload.Role);
 
 			var secret = GenerateHashSecret(signKey);
 			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
@@ -111,8 +110,9 @@ namespace Arma3WebService.Identities
 
 			var claims = new List<Claim>{
 				new Claim(JwtRegisteredClaimNames.Sub, payload.Name), // Subject Name
-				new Claim(JwtRegisteredClaimNames.Jti, roleGuid), // JWT ID
+				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID
 				new Claim(ClaimTypes.Role, roleName),
+				new Claim(ClaimTypes.NameIdentifier, roleGuid),
 			};
 
 			return new ClaimsIdentity(claims);
