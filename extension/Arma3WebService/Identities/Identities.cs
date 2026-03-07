@@ -17,23 +17,21 @@ namespace Arma3WebService
 		public const string GameServer = "Game-Server";
 	}
 
-	public class IdentityRolesReturnPayload
+	public abstract class IdentityBase
+	{
+		public string? AuthToken { get; set; }
+	}
+	public class IdentityRolesReturnPayload: IdentityBase
 	{
 		public required string RoleName { get; set; }
-		public required string AuthToken { get; set; }
 	}
-
-	public class IdentityRolesPayload
+	public class IdentityRolesPayload: IdentityBase
 	{
 		public required string Name { get; set; }
 		public Role Role { get; set; } // Audiance
 		public int? ExpireMinute { get; set; }
-		public string? AuthToken { get; set; }
 	}
-	public class IdentityRolesVaildation: IdentityRolesPayload
-	{
-		public new required string? AuthToken;
-	}
+	
 
 	[JsonSourceGenerationOptions(WriteIndented = true)] // Optional: Add desired options
 	[JsonSerializable(typeof(IdentityRolesPayload))]
