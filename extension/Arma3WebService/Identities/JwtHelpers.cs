@@ -70,16 +70,18 @@ namespace Arma3WebService.Identities
 
 			var tokenHandler = new JsonWebTokenHandler();
 
-			return tokenHandler.ValidateTokenAsync(payload.AuthToken, GetValidationParameters(payload.Role));
+			return tokenHandler.ValidateTokenAsync(payload.AuthToken, GetValidationParameters());
 		}
 
 		
-		internal static string GenerateHashSecret(string input)
+		private static string GenerateHashSecret(string input)
 		{
 			var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
 			return Convert.ToBase64String(hash);
 		}
-		internal TokenValidationParameters GetValidationParameters(Role role)
+		internal TokenValidationParameters GetValidationParameters(
+			//Role role
+		)
 		{
 			// Symmetric Key for Credential
 			var secret = GenerateHashSecret(signKey);
@@ -91,14 +93,15 @@ namespace Arma3WebService.Identities
 				ValidateIssuer = true,
 				ValidIssuer = issuer,
 				// Recipient
-				ValidateAudience = true,
-				ValidAudience = GetIdentityRole(role),
+				ValidateAudience = false,
+				//ValidAudience = GetIdentityRole(role),
+
 				// Token Life Time
 				ValidateLifetime = true,
 				// vaildate when the key is in the token. or just check the signature
 				ValidateIssuerSigningKey = false,
 
-				RoleClaimType = GetIdentityRole(role),
+				//RoleClaimType = GetIdentityRole(role),
 				// key
 				IssuerSigningKey = securityKey
 			};

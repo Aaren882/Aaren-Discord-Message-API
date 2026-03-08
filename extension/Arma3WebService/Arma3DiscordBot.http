@@ -25,8 +25,9 @@ Content-Type: application/json
 }
 ###
 
-GET {{Arma3WebService_HostAddress}}/api/ws/ingame?access_token={{JwtToken}} 
+GET {{Arma3WebService_HostAddress}}/api/ws/ingame
 Accept: application/json
+Authorization: Bearer {{JwtToken}} 
 # Authorization: Bearer {{JwtToken}} 
 
 ##

@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using Arma3WebService.Identities;
 using Arma3WebService.Models;
@@ -52,8 +53,9 @@ namespace Arma3WebService
 
 			builder.Services.AddAuthorization(options =>
 			{
-				options.AddPolicy("ElevatedRights", policy =>
-					policy.RequireRole("Administrator", "PowerUser", "BackupAdministrator"));
+				options.AddPolicy("GameRequest", policy => 
+					policy.RequireClaim(ClaimTypes.NameIdentifier, IdentityRoles.GameServerGuid.ToString())
+				);
 			});
 
 			builder.Services
@@ -62,23 +64,7 @@ namespace Arma3WebService
 				{
 					options.IncludeErrorDetails = true; // Show exception details
 					options.TokenValidationParameters = 
-						new JwtHelpers(builder.Configuration).GetValidationParameters(Role.Admin);
-
-					/*options.TokenValidationParameters = new TokenValidationParameters
-					{
-						// 簽發者
-						ValidateIssuer = true,
-						ValidIssuer = builder.Configuration["Jwt:Issuer"],
-						// 接收者
-						ValidateAudience = false,
-						ValidAudience = builder.Configuration["Jwt:Audience"],
-						// Token 的有效期間
-						ValidateLifetime = true,
-						// 如果 Token 中包含 key 才需要驗證，一般都只有簽章而已
-						ValidateIssuerSigningKey = false,
-						// key
-						IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtHelpers.GenerateHashSecret(builder.Configuration["Jwt:Key"]!)))
-					};*/
+						new JwtHelpers(builder.Configuration).GetValidationParameters();
 				});
 
 			var app = builder.Build();
