@@ -1,10 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Arma3WebService.Handler;
 using Arma3WebService.Identities;
 using Arma3WebService.Models;
 using Discord;
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -59,13 +61,18 @@ namespace Arma3WebService
 			});
 
 			builder.Services
-				.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-				.AddJwtBearer(options =>
+				.AddAuthentication()
+				.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 				{
 					options.IncludeErrorDetails = true; // Show exception details
-					options.TokenValidationParameters = 
+					options.TokenValidationParameters =
 						new JwtHelpers(builder.Configuration).GetValidationParameters();
+				})
+				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", options =>
+				{
+
 				});
+
 
 			var app = builder.Build();
 

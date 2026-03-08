@@ -1,11 +1,14 @@
-using System.Net;
 using Arma3WebService.Models;
-using Discord.Interactions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
+	[Authorize(
+		Policy = "GameRequest",
+		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
+	]
 	[Route("/api/ws")]
 	[ApiController]
 	public class WebSocketApiController : ControllerBase
@@ -23,7 +26,7 @@ namespace Arma3WebService.Controllers
 			var context = ControllerContext.HttpContext;
 
 			if (!context.WebSockets.IsWebSocketRequest)
-				return Problem(statusCode: 501);
+				return Problem(statusCode: 501, detail: "Incorrect Request Context");
 
 			await _service.CreateConnection(context);
 			return new EmptyResult();

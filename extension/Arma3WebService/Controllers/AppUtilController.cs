@@ -1,8 +1,11 @@
 using Arma3WebService.Identities;
+using Discord.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
+	[Authorize(AuthenticationSchemes = "BasicAuth")]
 	[Route("api/token")]
 	[ApiController]
 	public class AppUtilController : ControllerBase
@@ -23,16 +26,6 @@ namespace Arma3WebService.Controllers
 			{
 				return BadRequest();
 			}
-			//AnsiConsole.MarkupLine($"[yellow bold]\"{username}\"[/] [green]here is your token below:[/]");
-			//AnsiConsole.MarkupLine($"[Chartreuse4]{token}[/]");
-
-			//var panel = new Panel($"[dim]{token}[/]")
-			//	.Header($"[yellow bold]\"{username}\"[/] [green]here is your token below:[/]")
-			//	.BorderColor(Color.Chartreuse4)
-			//	.Border(BoxBorder.Rounded);
-
-			//AnsiConsole.Write(panel);
-			//Console.WriteLine($"Token Vaildation : \"{VaildateToken(token)}\"");
 
 			return Ok(_jwtHelpers.GenerateToken(payload));
 		}
@@ -42,8 +35,10 @@ namespace Arma3WebService.Controllers
 		{
 			var vaildation = _jwtHelpers.VaildateToken(payload)
 				.GetAwaiter().GetResult();
-
-			return Ok(vaildation.IsValid);
+			
+			return Ok(new {
+				Vaild = vaildation.IsValid
+			});
 		}
 	}
 }
