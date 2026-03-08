@@ -1,9 +1,14 @@
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
+	[Authorize(
+		Policy = "GameRequest",
+		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
+	]
 	[Route("api/[controller]")]
 	[ApiController]
 	public class ArmaController : ControllerBase
@@ -22,7 +27,6 @@ namespace Arma3WebService.Controllers
 			return Ok(new { hello = "" });
 		}
 
-		[Authorize]
 		[HttpGet("GetLogs")]
 		public async IAsyncEnumerable<WeatherForecast> Get()
 		{
