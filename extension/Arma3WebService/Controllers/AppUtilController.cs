@@ -1,5 +1,4 @@
 using Arma3WebService.Identities;
-using Discord.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
