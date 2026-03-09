@@ -1,6 +1,7 @@
-@Arma3WebService_HostAddress = http://localhost:5048
+@HostAddress = localhost:5048
+@Arma3WebService_HostAddress = http://{{HostAddress}}
 @JwtToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6ImJlM2U3YTdhLTE0OWQtNGUwMS05MWZkLTYzMzQ4NzgxNjU3ZSIsInJvbGUiOiJBZG1pbiIsIm5hbWVpZCI6Ijg0ZmUwNWUwLTgyYjgtNDFmMS05N2JlLTY1ODAxZTEyMzBlNCIsIm5iZiI6MTc3Mjg4MzEzMSwiZXhwIjoxNzcyODg2NzMxLCJpYXQiOjE3NzI4ODMxMzEsImlzcyI6Imlzc3VlciIsImF1ZCI6IkFkbWluIn0.VtMGObAs-5_XN0wwAmAkBDVLsf8wk6JZqJbL2_v6Hg4
-@ServerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6IjNmNjFkNjg1LWQzZmItNGY0Yy05ZjNlLWY5NTVmYjVkN2NiZCIsInJvbGUiOiJHYW1lLVNlcnZlciIsIm5hbWVpZCI6ImJhM2VmZDcwLTNiZGMtNDY0My05NjBlLTYzNjYwZTE5ZmE2ZCIsIm5iZiI6MTc3Mjg4MzE0OCwiZXhwIjoxNzcyODg2NzQ4LCJpYXQiOjE3NzI4ODMxNDgsImlzcyI6Imlzc3VlciIsImF1ZCI6IkdhbWUtU2VydmVyIn0.2DYuEYVx6hBHmF8YmK5iUkFz3XTD6v2PXxeX5hkaeVc
+@ServerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6IjhhMjgyMDg1LWFhMTUtNDg5Ni1hY2NjLTAwNTA1Y2UxNWJhZCIsInJvbGUiOiJHYW1lLVNlcnZlciIsIm5hbWVpZCI6ImJhM2VmZDcwLTNiZGMtNDY0My05NjBlLTYzNjYwZTE5ZmE2ZCIsIm5iZiI6MTc3MzA1MDg4MywiZXhwIjoxNzczMDU0NDgzLCJpYXQiOjE3NzMwNTA4ODMsImlzcyI6Imlzc3VlciIsImF1ZCI6IkdhbWUtU2VydmVyIn0.QTGwFrQRXG8TtSuIduW91MeX1ru8gck5cJIzljuzn2A
 
 GET {{Arma3WebService_HostAddress}}/api/arma/GetLogs/
 Accept: application/json
@@ -8,26 +9,41 @@ Authorization: Bearer {{JwtToken}}
 ###
 
 GET {{Arma3WebService_HostAddress}}/api/token
+Accept: application/json
+Authorization: Basic YWRtaW46cGFzc3dvcmQ=
 Content-Type: application/json
+
 {
-    "Name": "New",
-    "Role": 1,
-    "AuthToken": "{{JwtToken}}"
+    "Name": "New Product",
+    "Role": 2,
+    "AuthToken": "{{ServerToken}}"
 }
 
 ###
 
 POST {{Arma3WebService_HostAddress}}/api/token
+Authorization: Basic YWRtaW46cGFzc3dvcmQ=
 Content-Type: application/json
+
 {
-    "Name": "New Product",
-    "Role": 2
+  "Name": "New Product",
+  "Role": 2
 }
+
 ###
 
 GET {{Arma3WebService_HostAddress}}/api/ws/ingame
 Accept: application/json
 Authorization: Bearer {{JwtToken}} 
-# Authorization: Bearer {{JwtToken}} 
 
-##
+###
+
+WEBSOCKET ws://{{HostAddress}}/api/ws/ingame
+Content-Type: application/json // We use it for highlighting
+Authorization: Bearer {{ServerToken}}
+
+{
+  "message": "Send when the WebSocket connection is opened"
+}
+
+###
