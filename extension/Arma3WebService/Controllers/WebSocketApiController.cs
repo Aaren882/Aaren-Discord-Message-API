@@ -24,9 +24,12 @@ namespace Arma3WebService.Controllers
 		public async Task<IActionResult> InGameWebSocket()
 		{
 			var context = ControllerContext.HttpContext;
-
+			
 			if (!context.WebSockets.IsWebSocketRequest)
 				return Problem(statusCode: 501, detail: "Incorrect Request Context");
+			
+			if (context.User.Identity == null)
+				return Unauthorized("No Identity is specified.");
 
 			await _service.CreateConnection(context);
 			return new EmptyResult();

@@ -48,18 +48,21 @@ namespace Arma3WebService.Models
 
 		public async Task CreateConnection(HttpContext context)
 		{
+			var connectionIdentity = context.User.Identity?.Name ?? "Not Specified";
+			
 			WebSocket websocket;
 			try
 			{
-				if (_connections.ContainsKey(context.Connection.Id))
-					throw new Exception($"Refuse Request. Connection already exist. '{context.Connection.Id}'");
+				
+				if (_connections.ContainsKey(connectionIdentity))
+					throw new Exception($"Refuse Request. Connection already exist. Name : '{connectionIdentity}'/'{context.Connection.Id}'");
 
 				websocket = await context.WebSockets.AcceptWebSocketAsync();
 				var connection = _connectionFactory.CreateConnection(websocket);
 
-				_connections.TryAdd(context.Connection.Id, websocket);
+				_connections.TryAdd(connectionIdentity, websocket);
 
-				_logger.LogInformation($"Accepted connection '{context.Connection.Id}' - '{context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
+				_logger.LogInformation($"Accepted connection Name : '{connectionIdentity}'/'{context.Connection.Id}' - '{context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
 
 				await _connectionManager.HandleConnection(connection);
 			}
@@ -73,7 +76,7 @@ namespace Arma3WebService.Models
 			}
 			finally
 			{
-				_connections.TryRemove(context.Connection.Id, out websocket!);
+				_connections.TryRemove(connectionIdentity, out websocket!);
 				_logger.LogInformation($"Close connection '{context.Connection.Id}' - '{context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
 			}
 		}
