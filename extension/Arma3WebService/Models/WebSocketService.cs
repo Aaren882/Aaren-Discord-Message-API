@@ -44,19 +44,19 @@ namespace Arma3WebService.Models
 
 			return Task.CompletedTask;
 		}
-
-
 		public async Task CreateConnection(HttpContext context)
 		{
 			var connectionIdentity = context.User.Identity?.Name ?? "Not Specified";
-			
+
+			if (_connections.ContainsKey(connectionIdentity))
+			{
+				_logger.LogError($"Refuse Request. Connection already exist. Name : '{connectionIdentity}'/'{context.Connection.Id}'");
+				return;
+			}
+
 			WebSocket websocket;
 			try
 			{
-				
-				if (_connections.ContainsKey(connectionIdentity))
-					throw new Exception($"Refuse Request. Connection already exist. Name : '{connectionIdentity}'/'{context.Connection.Id}'");
-
 				websocket = await context.WebSockets.AcceptWebSocketAsync();
 				var connection = _connectionFactory.CreateConnection(websocket);
 
