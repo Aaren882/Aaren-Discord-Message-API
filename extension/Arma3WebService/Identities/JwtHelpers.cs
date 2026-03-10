@@ -117,6 +117,7 @@ namespace Arma3WebService.Identities
 			var claims = new List<Claim>{
 				new Claim(JwtRegisteredClaimNames.Sub, payload.Name), // Subject Name
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID
+				new Claim(ClaimTypes.Name, payload.Name),
 				new Claim(ClaimTypes.Role, roleName),
 				new Claim(ClaimTypes.NameIdentifier, roleGuid),
 			};
