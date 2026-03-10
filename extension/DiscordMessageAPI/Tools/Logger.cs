@@ -6,7 +6,7 @@ namespace DiscordMessageAPI.Tools
 		private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
 		private static readonly string LogFileName = Path.Combine(
 			LogFilePath,
-			$"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.DiscordMessageAPI.log");
+			$"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.log");
 
 		/// <summary>
 		/// Writes a trace message to the logger if debugging is enabled.
@@ -31,12 +31,12 @@ namespace DiscordMessageAPI.Tools
 				if (!Directory.Exists(LogFilePath))
 					Directory.CreateDirectory(LogFilePath);
 
-				using (StreamWriter file = new StreamWriter(LogFileName, true))
+				using (var file = new StreamWriter(LogFileName, true))
 				{
 					if (string.IsNullOrEmpty(s))
 						s = e!.Message;
 					if (s.Length > 0)
-						file.WriteLine($"{DateTime.Now.ToString("T")} - {s}");
+						file.WriteLine($"{DateTime.Now:T} - {s}");
 				}
 			}
 			catch (Exception i)
@@ -52,6 +52,7 @@ namespace DiscordMessageAPI.Tools
 			var files = Directory.GetFiles(LogFilePath);
 
 			//- Check how many logs
+			Trace("CleanLogs", "Check how many logs...");
 			if (files.Length < limit) return;
 
 			Dictionary<string, DateTime> dict = new();
@@ -62,11 +63,13 @@ namespace DiscordMessageAPI.Tools
 			}
 
 			var list = dict.OrderByDescending(x => x.Value).ToList();
-			for (int i = 0; i < list.Count - limit; i++)
+			for (var i = 0; i < list.Count - limit; i++)
 			{
 				var logFile= list[i].Key;
 				File.Delete(logFile);
 			}
+			
+			Trace("CleanLogs", "Old logs is cleaned out.");
 		}
 	}
 }
