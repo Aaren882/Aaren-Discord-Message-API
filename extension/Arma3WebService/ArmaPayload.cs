@@ -21,8 +21,9 @@ public struct ServiceAuthenticationHeader
 
 public class Arma3ServiceSecret
 {
-	public ServiceAuthenticationHeader Secret { get; set; }
 	public required string ServiceUri { get; set; }
+	public required string WebSocketServiceUri { get; set; }
+	public ServiceAuthenticationHeader Secret { get; set; }
 }
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options

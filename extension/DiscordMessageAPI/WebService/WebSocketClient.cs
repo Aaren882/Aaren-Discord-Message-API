@@ -6,30 +6,33 @@ using DiscordMessageAPI.Tools;
 
 namespace DiscordMessageAPI.WebService
 {
-	class WebSocketClient
+	class WebSocketClient(string serverUri)
 	{
 		private ClientWebSocket? _webSocket;
 		private CancellationTokenSource? _cancellationTokenSource;
-		private string _serverUri;
 
 		public event Action<string>? MessageReceived;
 		public event Action? Connected;
 		public event Action? Disconnected;
 
-		public WebSocketClient(string serverUri)
-		{
-			_serverUri = serverUri;
-		}
-
-		public async Task ConnectAsync()
+		public async Task ConnectAsync(string? jwtToken)
 		{
 			try
 			{
 				_webSocket = new ClientWebSocket();
+				if (jwtToken != null)
+				{
+					_webSocket.Options.SetRequestHeader("Authorization", "Bearer " + jwtToken);
+				}
+			
+				Connected += () => Logger.Log(null, $"Event: Connected to server");
+				Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
+				MessageReceived += (message) => Logger.Log(null, $"Event: Message received - {message}");
+				
 				_cancellationTokenSource = new CancellationTokenSource();
 
-				Logger.Log(null ,$"Connecting to {_serverUri}...");
-				await _webSocket.ConnectAsync(new Uri(_serverUri), _cancellationTokenSource.Token);
+				Logger.Log(null ,$"Connecting to {serverUri}...");
+				await _webSocket.ConnectAsync(new Uri(serverUri), _cancellationTokenSource.Token);
 
 				Logger.Log(null ,"Connected successfully!");
 				Connected?.Invoke();

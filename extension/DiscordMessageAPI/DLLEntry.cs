@@ -23,7 +23,7 @@ namespace DiscordMessageAPI
 		public static Webhooks_Storage? ALLWebhooks = null;
 		private static CallContext contextInfo;
 		internal static OutputBuilder CurrentOutputBuilder;
-		private static readonly WebSocketClient WS_Client = new WebSocketClient("ws://localhost:5000/api/ws");
+		private static readonly ServiceInteractions ServiceInteractions = new();
 
 		private static void Output(IntPtr destination, int outputSize, string data)
 		{
@@ -58,16 +58,17 @@ namespace DiscordMessageAPI
 		/// </summary>
 		/// <param name="outputPrt"></param>
 		/// <param name="outputSize"></param>
-		[UnmanagedCallersOnly(EntryPoint = "RvExtensionVersion")]
-		public static void RvExtensionVersion(nint outputPrt, int outputSize)
+		[UnmanagedCallersOnly(EntryPoint = "RVExtensionVersion")]
+		public static void RVExtensionVersion(nint outputPrt, int outputSize)
 		{
 			//- Clean up logs
 			Logger.CleanLogs();
-
-			WS_Client.Connected += () => Logger.Log(null, $"Event: Connected to server");
-			WS_Client.Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
-			WS_Client.MessageReceived += (message) => Logger.Log(null, $"Event: Message received - {message}");
-
+			
+			ServiceInteractions.AccessTokenReceived += (authTokenPayload) => 
+				_ = ServiceInteractions.EstablishWebSocketConnection(authTokenPayload);
+			
+			_ = ServiceInteractions.GetAccessToken(accessName: "New Arma Server");
+			
 			Output(outputPrt, outputSize, "26.2.0");
 		}
 		
@@ -106,20 +107,11 @@ namespace DiscordMessageAPI
 		{
 			var inputKey = Marshal.PtrToStringUTF8(function)!;
 
-			/*if (!string.IsNullOrEmpty(inputKey))
+			if (!string.IsNullOrEmpty(inputKey))
 			{
-				_ = WS_Client.SendMessageAsync(inputKey);
+				_ = ServiceInteractions._wsClient.SendMessageAsync(inputKey);
 			}
-			else
-			{
-				_ = WS_Client.ConnectAsync();
-			}*/
-			//WS_Client.SendMessageAsync(inputKey);
 
-			_ = ServiceInteractions.GetAccessToken(
-				"Arma Test"
-			);
-			
 
 			// - await will block the thread, makes the game stuttering - //
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed

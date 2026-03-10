@@ -10,47 +10,56 @@ namespace DiscordMessageAPI.WebService;
 public class ServiceInteractions
 {
 	private const string Secret = "secret.json"; 
-	internal static readonly Arma3ServiceSecret ServiceSecret = GetServiceSecret();
+	private static readonly Arma3ServiceSecret ServiceSecret = GetServiceSecret();
+	
+	public event Action<IdentityRolesReturnPayload>? AccessTokenReceived;
+	internal readonly WebSocketClient _wsClient = new(ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
+
 	/// <summary>
-	/// This is a placeholder for the logic to retrieve or generate the JWT token.
-	/// In a production scenario, this might involve an authentication request to the identity server.
+	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
 	/// </summary>
-	public static async Task<IdentityRolesReturnPayload?> GetAccessToken(string name)
+	internal async Task<IdentityRolesReturnPayload?> GetAccessToken(string accessName)
 	{
 		try
 		{
 			//- Send Request for access token
-			var payload = new IdentityRolesPayload { Name = name, Role = Role.GameServer, ExpireMinute = 15 };
+			var payload = new IdentityRolesPayload { Name = accessName, Role = Role.GameServer, ExpireMinute = 15 };
 			var jsonPayload = JsonSerializer.Serialize(
 				payload,
 				IdentityRolesPayload_JsonSerializerContext.Default.IdentityRolesPayload
 			);
 
 			using var response = await APIRequest.PostRequest(
-		       $"{ServiceSecret.ServiceUri}/api/token",
-		       content : new StringContent(
-						jsonPayload,
-						Encoding.UTF8, "application/json"
-					),
-		       authHeader: new AuthenticationHeaderValue(
-				       "Basic",
-				       GetBasicAuthenticationBearer()
-			       )
-		    );
+				ServiceSecret.ServiceUri + "/api/token",
+				content : new StringContent(
+					jsonPayload,
+					Encoding.UTF8, "application/json"
+				),
+				authHeader: new AuthenticationHeaderValue(
+					"Basic",
+					GetBasicAuthenticationBearer(ServiceSecret)
+				)
+			);
 			
 			//- Get the Token
 			var result = await response.Content.ReadAsStringAsync();
 			Logger.Trace("Token Manager (result)", result);
 			
-			var tokenPayload = JsonSerializer.Deserialize(
+			var authTokenPayload = JsonSerializer.Deserialize(
 				result,
 				IdentityRolesPayload_JsonSerializerContext.Default.IdentityRolesReturnPayload
 			)!;
-			
-			Logger.Trace("Token Manager (Token)", tokenPayload.AuthToken);
-			Logger.Trace("Token Manager (Role Name)", tokenPayload.RoleName);
 
-			return tokenPayload;
+			if (authTokenPayload == null)
+				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");
+			
+			Logger.Trace("Token Manager (Token)", authTokenPayload.AuthToken);
+			Logger.Trace("Token Manager (Role Name)", authTokenPayload.RoleName);
+			
+			//- Establish Socket Connection
+			AccessTokenReceived?.Invoke(authTokenPayload);
+			
+			return authTokenPayload;
 		}
 		catch (Exception e)
 		{
@@ -58,7 +67,10 @@ public class ServiceInteractions
 			return null;
 		}
 	}
-
+	internal async Task EstablishWebSocketConnection(IdentityRolesReturnPayload tokenPayload)
+	{
+		await _wsClient.ConnectAsync(tokenPayload.AuthToken!);
+	}
 	private static Arma3ServiceSecret GetServiceSecret()
 	{
 		var secretString = File.ReadAllText(Path.Combine(Util.AssemblyPath, Secret));
@@ -71,14 +83,15 @@ public class ServiceInteractions
 		Logger.Trace("GetServiceSecret (Username)", tokenPayload.Secret.Username);
 		Logger.Trace("GetServiceSecret (Password)", tokenPayload.Secret.Password);
 		Logger.Trace("GetServiceSecret (Uri)", tokenPayload.ServiceUri);
+		Logger.Trace("GetServiceSecret (WS Uri)", tokenPayload.WebSocketServiceUri);
 
 		return tokenPayload;
 	}
-	private static string GetBasicAuthenticationBearer()
+	private static string GetBasicAuthenticationBearer(Arma3ServiceSecret serviceSecret)
 	{
 		return ConvertSecretIntoHash(
-			ServiceSecret.Secret.Username,
-			ServiceSecret.Secret.Password
+			serviceSecret.Secret.Username,
+			serviceSecret.Secret.Password
 		);
 	}
 
