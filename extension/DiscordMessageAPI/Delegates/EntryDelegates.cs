@@ -5,10 +5,10 @@ using static DiscordMessageAPI.DllEntry;
 
 namespace DiscordMessageAPI.Delegates
 {
-    internal class EntryDelegates
+    public class EntryDelegates
     {
-        internal static readonly Dictionary<string, InitActions> ActionsDict = _Init();
-        internal delegate int InitActions(OutputBuilder output, string[] args, int argCount);
+		public static readonly Dictionary<string, InitActions> ActionsDict = _Init();
+		public delegate int InitActions(OutputBuilder output, string[] args, int argCount);
 
 
         private static Dictionary<string, InitActions> _Init()
@@ -36,7 +36,7 @@ namespace DiscordMessageAPI.Delegates
             return _dict;
         }
 
-        internal static class EntryActions
+        public static class EntryActions
         {
             /// <summary>
             /// Initation for Clients (Players)
@@ -94,7 +94,7 @@ namespace DiscordMessageAPI.Delegates
             /// <param name="args"></param>
             /// <returns></returns>
             /// <exception cref="Exception"></exception>
-            internal static int NullDefault(OutputBuilder output, string[] args, int argCount)
+            public static int NullDefault(OutputBuilder output, string[] args, int argCount)
             {
                 throw new Exception("No method found.");
             }

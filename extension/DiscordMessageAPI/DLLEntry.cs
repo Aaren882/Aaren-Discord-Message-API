@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using DiscordMessageAPI.Tools;
-using DiscordMessageAPI.WebAPI;
+using DiscordMessageAPI.WebService;
 using static DiscordMessageAPI.Delegates.EntryDelegates;
 
 namespace DiscordMessageAPI
@@ -23,7 +23,7 @@ namespace DiscordMessageAPI
 		public static Webhooks_Storage? ALLWebhooks = null;
 		private static CallContext contextInfo;
 		internal static OutputBuilder CurrentOutputBuilder;
-		internal static WebSocketClient WS_Client = new WebSocketClient("ws://localhost:5000/api/ws");
+		private static readonly WebSocketClient WS_Client = new WebSocketClient("ws://localhost:5000/api/ws");
 
 		private static void Output(IntPtr destination, int outputSize, string data)
 		{
@@ -36,16 +36,10 @@ namespace DiscordMessageAPI
 			CurrentOutputBuilder = Builder;
 		}
 
-		public class OutputBuilder
+		public class OutputBuilder(IntPtr destination, int outputSize)
 		{
-			nint destination;
-			int outputSize;
-
-			public OutputBuilder(IntPtr destination, int outputSize)
-			{
-				this.destination = destination;
-				this.outputSize = outputSize;
-			}
+			private readonly nint _destination = destination;
+			private readonly int _outputSize = outputSize;
 
 			/// <summary>
 			/// Construct output buffer for Arma
@@ -54,13 +48,13 @@ namespace DiscordMessageAPI
 			public void Append(string data)
 			{
 				var bytes = Encoding.UTF8.GetBytes(data);
-				Marshal.Copy(bytes, 0, this.destination, Math.Min(bytes.Length, this.outputSize));
+				Marshal.Copy(bytes, 0, _destination, Math.Min(bytes.Length, _outputSize));
 			}
 		}
 
 		/// <summary>
 		/// Gets called when Arma starts up and loads all extension.
-		/// It's perfect to load in static objects in a separate thread so that the extension doesn't needs any separate initalization
+		/// It's perfect to load in static objects in a separate thread so that the extension doesn't need any separate initialization
 		/// </summary>
 		/// <param name="outputPrt"></param>
 		/// <param name="outputSize"></param>
@@ -76,7 +70,12 @@ namespace DiscordMessageAPI
 
 			Output(outputPrt, outputSize, "26.2.0");
 		}
-
+		
+		/// <summary>
+		/// Receives context information .
+		/// </summary>from Arma 3 about the execution environment
+		/// <param name="argsPtr">Pointer to the array of strings containing context data.</param>
+		/// <param name="argCount">The number of arguments passed in the context.</param>
 		[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
 		public static void RVExtensionContext(nint argsPtr, int argCount)
 		{
@@ -107,16 +106,20 @@ namespace DiscordMessageAPI
 		{
 			var inputKey = Marshal.PtrToStringUTF8(function)!;
 
-			if (!String.IsNullOrEmpty(inputKey))
+			/*if (!string.IsNullOrEmpty(inputKey))
 			{
-				WS_Client.SendMessageAsync(inputKey);
+				_ = WS_Client.SendMessageAsync(inputKey);
 			}
 			else
 			{
-				WS_Client.ConnectAsync();
-			}
+				_ = WS_Client.ConnectAsync();
+			}*/
 			//WS_Client.SendMessageAsync(inputKey);
 
+			_ = ServiceInteractions.GetAccessToken(
+				"Arma Test"
+			);
+			
 
 			// - await will block the thread, makes the game stuttering - //
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed

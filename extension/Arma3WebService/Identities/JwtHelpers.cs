@@ -29,7 +29,7 @@ namespace Arma3WebService.Identities
 		
 		public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
 		{
-			var roleName = GetIdentityRole(payload.Role);
+			var RoleName = GetIdentityRole(payload.Role);
 			var userClaimsIdentity = CreateClaimsIdentity(payload);
 
 			// Symmetric Key for Credential
@@ -43,7 +43,7 @@ namespace Arma3WebService.Identities
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{
 				Issuer = issuer,
-				Audience = roleName,
+				Audience = RoleName,
 				Subject = userClaimsIdentity,
 
 				Expires = payload.ExpireMinute is null
@@ -59,7 +59,7 @@ namespace Arma3WebService.Identities
 			var serializeToken = tokenHandler.WriteToken(securityToken);
 
 			return new IdentityRolesReturnPayload {
-				RoleName = roleName,
+				RoleName = RoleName,
 				AuthToken = serializeToken
 			};
 		}
