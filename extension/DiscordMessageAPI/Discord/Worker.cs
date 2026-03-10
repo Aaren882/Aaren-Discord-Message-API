@@ -212,6 +212,7 @@ namespace DiscordMessageAPI.Discord
 
 		private static string BuildEmbedJson(Types.EmbedData embed)
 		{
+			Logger.Trace("embed.ImageUrl", embed.ImageUrl);
 			return $@"
             {{
                 ""title"": ""{embed.Title}"",

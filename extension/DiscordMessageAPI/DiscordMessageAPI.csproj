@@ -16,5 +16,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Arma3WebService\ArmaPayload.cs" Link="ArmaPayload.cs" />
+    <Compile Include="..\Arma3WebService\Identities\IdentityPayload.cs">
+      <Link>IdentityPayload.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 </Project>

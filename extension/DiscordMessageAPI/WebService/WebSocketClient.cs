@@ -4,7 +4,7 @@ using System.Text.Json;
 using Arma3WebService;
 using DiscordMessageAPI.Tools;
 
-namespace DiscordMessageAPI.WebAPI
+namespace DiscordMessageAPI.WebService
 {
 	class WebSocketClient
 	{
