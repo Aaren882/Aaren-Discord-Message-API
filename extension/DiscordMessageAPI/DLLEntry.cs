@@ -26,13 +26,12 @@ namespace DiscordMessageAPI
 
 		private static void Output(IntPtr destination, int outputSize, string data)
 		{
+			//- Empty buffer (clean up previous output)
+			Marshal.Copy(new byte[outputSize], 0, destination, outputSize);
+			
+			//- Write data into buffer 
 			var bytes = Encoding.UTF8.GetBytes(data);
 			Marshal.Copy(bytes, 0, destination, Math.Min(bytes.Length, outputSize));
-		}
-
-		private static void SetOutput(OutputBuilder Builder)
-		{
-			CurrentOutputBuilder = Builder;
 		}
 
 		public class OutputBuilder(IntPtr destination, int outputSize)
@@ -46,8 +45,7 @@ namespace DiscordMessageAPI
 			/// <param name="data">String data that will be output</param>
 			public void Append(string data)
 			{
-				var bytes = Encoding.UTF8.GetBytes(data);
-				Marshal.Copy(bytes, 0, _destination, Math.Min(bytes.Length, _outputSize));
+				Output(_destination, _outputSize, data);
 			}
 		}
 
