@@ -1,29 +1,40 @@
+using System.Data;
 using System.Net.Http.Headers;
 using System.Text;
 using Arma3WebService;
 using Arma3WebService.Identities;
 using DiscordMessageAPI.Tools;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace DiscordMessageAPI.WebService;
 
-public class ServiceInteractions
+public class ServiceInteractions()
 {
 	private const string Secret = "secret.json"; 
 	private static readonly Arma3ServiceSecret ServiceSecret = GetServiceSecret();
-	
+	private static string AccessName;
+
 	public event Action<IdentityRolesReturnPayload>? AccessTokenReceived;
-	internal readonly WebSocketClient _wsClient = new(ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
+	private readonly WebSocketClient WsClient = new(ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
 
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
 	/// </summary>
-	internal async Task<IdentityRolesReturnPayload?> GetAccessToken(string accessName)
+	private async Task<IdentityRolesReturnPayload?> GetAccessToken(string accessName)
 	{
 		try
 		{
+			if (string.IsNullOrEmpty(AccessName))
+				AccessName = accessName;
+			
 			//- Send Request for access token
-			var payload = new IdentityRolesPayload { Name = accessName, Role = Role.GameServer, ExpireMinute = 15 };
+			var payload = new IdentityRolesPayload
+			{
+				Name = AccessName,
+				Role = Role.GameServer,
+				ExpireMinute = 15
+			};
 			var jsonPayload = JsonSerializer.Serialize(
 				payload,
 				IdentityRolesPayload_JsonSerializerContext.Default.IdentityRolesPayload
@@ -67,13 +78,38 @@ public class ServiceInteractions
 			return null;
 		}
 	}
-	internal async Task EstablishWebSocketConnection(IdentityRolesReturnPayload tokenPayload)
+	internal async Task EstablishWebSocketConnection(string accessName)
 	{
-		await _wsClient.ConnectAsync(tokenPayload.AuthToken!);
+		var tokenPayload = await GetAccessToken(accessName);
+		await WsClient.ConnectAsync(tokenPayload.AuthToken);
 	}
+	internal async Task DisconnectWebSocket()
+	{
+		await WsClient.DisconnectAsync();
+	}
+	internal async Task ReconnectWebSocket()
+	{
+		await DisconnectWebSocket();
+		await EstablishWebSocketConnection(AccessName);
+	}
+	internal async Task SendWebSocketMessage(Arma3Payload messageObj)
+	{
+		var context = messageObj.MessageType switch
+		{
+			Arma3PayLoadType.Logging => Arma3Payload_JsonSerializerContext.Default.Arma3Payload,
+			_ => null
+		};
+		
+		if (context == null)
+			throw new NoNullAllowedException("Websocket message context is not exist.");
+		
+		var messageJson = JsonSerializer.Serialize(messageObj, context);
+		await WsClient.SendMessageAsync(messageJson);
+	}
+	
 	private static Arma3ServiceSecret GetServiceSecret()
 	{
-		var secretString = File.ReadAllText(Path.Combine(Util.AssemblyPath, Secret));
+		var secretString = Util.ParseJson(Secret);
 		var tokenPayload = JsonSerializer.Deserialize(
 			secretString,
 			Arma3Payload_JsonSerializerContext.Default.Arma3ServiceSecret

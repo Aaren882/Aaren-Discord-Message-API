@@ -11,38 +11,31 @@ namespace Arma3WebService
 		Task Close();
 	}
 
-	public class WebSocketConnection : IConnection
+	public class WebSocketConnection(WebSocket webSocket) : IConnection
 	{
-		private readonly WebSocket _webSocket;
-		//private static readonly ConcurrentDictionary<string, WebSocket> _connections = new ConcurrentDictionary<string, WebSocket>();
-
-		public WebSocketConnection(WebSocket webSocket)
-		{
-			_webSocket = webSocket;
-			//_connections.TryAdd(context.Connection.Id, webSocket);
-		}
+		private readonly WebSocket _webSocket = webSocket;
 
 		public async Task<WebSocketCloseStatus?> KeepReceiving()
 		{
 			WebSocketReceiveResult message;
 			do
 			{
-				using (var memoryStream = new MemoryStream())
-				{
-					message = await ReceiveMessage(memoryStream);
-					if (message.Count > 0)
-					{
-						var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
+				using var memoryStream = new MemoryStream();
+				message = await ReceiveMessage(memoryStream);
 
-						if (String.IsNullOrEmpty(receivedMessage))
-							continue;
+				if (message.Count <= 0) continue;
+				var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
 
-						Arma3Payload deserialized = JsonSerializer.Deserialize(receivedMessage, Arma3Payload_JsonSerializerContext.Default.Arma3Payload);
+				if (string.IsNullOrEmpty(receivedMessage)) continue;
+				
+				//- Deserialize Payload
+				var deserialized = JsonSerializer.Deserialize(
+					receivedMessage,
+					Arma3Payload_JsonSerializerContext.Default.Arma3Payload
+				)!;
 
-						Console.WriteLine($"Received message '{deserialized.Log}'");
-						await Send(receivedMessage);
-					}
-				}
+				Console.WriteLine($"Received message '{deserialized.Message}'");
+				await Send(receivedMessage);
 			} while (message.MessageType != WebSocketMessageType.Close);
 
 			return message.CloseStatus;

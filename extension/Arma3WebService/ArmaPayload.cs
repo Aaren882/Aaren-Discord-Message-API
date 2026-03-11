@@ -2,15 +2,16 @@ using System.Text.Json.Serialization;
 
 namespace Arma3WebService;
 
+public enum Arma3PayLoadType
+{
+	Logging = 1,
+	PlayerConnectionChanged = 2, 
+}
 public class Arma3Payload
 {
-	public string? Log { get; set; }
-	public DateTime Timestamp { get; set; }
-}
-
-public class ServiceReturnPayload
-{
-	public DateTime Date { get { return DateTime.Now; } }
+	public required Arma3PayLoadType MessageType { get; set; }
+	public string? Message { get; set; }
+	public static DateTime Timestamp => DateTime.Now;
 }
 
 public struct ServiceAuthenticationHeader

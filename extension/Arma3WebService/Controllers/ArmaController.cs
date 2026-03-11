@@ -23,7 +23,7 @@ namespace Arma3WebService.Controllers
 		[HttpPost(Name = "ArmaController")]
 		public IActionResult PostLog(Arma3Payload payload)
 		{
-			_logger.LogInformation($"Restful Received Log: {payload.Log}");
+			_logger.LogInformation($"Restful Received Log: {payload.Message}");
 			return Ok(new { hello = "" });
 		}
 

@@ -5,7 +5,7 @@ using System.Text.Json;
 using Arma3WebService;
 namespace DiscordMessageAPI.WebService
 {
-	public class APIRequest
+	public static class APIRequest
 	{
 		private static readonly HttpClientHandler Handler = new HttpClientHandler
 		{
@@ -14,21 +14,6 @@ namespace DiscordMessageAPI.WebService
 		};
 		private static readonly HttpClient Client = new(Handler);
 
-		public static async Task SendRequest(string uri, string text)
-		{
-			var payload = new Arma3Payload { Log = text };
-
-			var jsonPayload = JsonSerializer.Serialize(payload, Arma3Payload_JsonSerializerContext.Default.Arma3Payload);
-			var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-
-			using HttpResponseMessage response = await PostRequest(uri, content);
-
-			// Check if the request was successful
-			if (response.IsSuccessStatusCode)
-			{
-				Console.WriteLine($"Product created with ID: {response.StatusCode}");
-			}
-		}
 		public static async Task<HttpResponseMessage> PostRequest(
 			string uri,
 			StringContent content,
