@@ -46,26 +46,19 @@ namespace DiscordMessageAPI.WebService
 			}
 		}
 
-		public async Task SendMessageAsync(string message)
+		public async Task SendMessageAsync(string messagePayload)
 		{
 			if (_webSocket?.State == WebSocketState.Open)
 			{
-				Arma3Payload messageObj = new Arma3Payload
-				{
-					Log = message,
-					Timestamp = DateTime.Now
-				};
-
-				var messageJson = JsonSerializer.Serialize(messageObj, Arma3Payload_JsonSerializerContext.Default.Arma3Payload);
-				var bytes = Encoding.UTF8.GetBytes(messageJson);
-
+				var bytes = Encoding.UTF8.GetBytes(messagePayload);
+				
 				await _webSocket.SendAsync(
 					new ArraySegment<byte>(bytes),
 					WebSocketMessageType.Text,
 					true,
 					_cancellationTokenSource?.Token ?? CancellationToken.None);
 
-				Logger.Log(null ,$"Sent: {message}");
+				Logger.Log(null ,$"Sent: {messagePayload}");
 			}
 			else
 			{
@@ -75,7 +68,7 @@ namespace DiscordMessageAPI.WebService
 
 		private async Task ReceiveMessages()
 		{
-			var buffer = new byte[1024 * 4];
+			var buffer = new byte[1024 * 2];
 
 			try
 			{

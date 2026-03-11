@@ -31,13 +31,11 @@ namespace DiscordMessageAPI.Tools
 				if (!Directory.Exists(LogFilePath))
 					Directory.CreateDirectory(LogFilePath);
 
-				using (var file = new StreamWriter(LogFileName, true))
-				{
-					if (string.IsNullOrEmpty(s))
-						s = e!.Message;
-					if (s.Length > 0)
-						file.WriteLine($"{DateTime.Now:T} - {s}");
-				}
+				using var file = new StreamWriter(LogFileName, true);
+				if (string.IsNullOrEmpty(s))
+					s = e!.Message;
+				if (s.Length > 0)
+					file.WriteLine($"{DateTime.Now:T} - {s}");
 			}
 			catch (Exception i)
 			{

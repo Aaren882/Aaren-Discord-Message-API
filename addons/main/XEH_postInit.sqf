@@ -9,7 +9,13 @@
 if (isServer) then {
 
   //- Init on Mission Started
-    private _Info = "DiscordMessageAPI" callExtension ["Refresh_Webhooks",[-1]];
+    private _ServerName = serverName;
+    _ServerName = [
+      _ServerName,
+      format ["SP_Server %1", call CBA_fnc_createUUID]
+    ] select (_ServerName == "");
+
+    private _Info = "DiscordMessageAPI" callExtension ["Init_Server",[_ServerName]]; //- Return webhooks counts
 
     private _Webhook = ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOutput) + [_Info # 1];
     serverNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook];

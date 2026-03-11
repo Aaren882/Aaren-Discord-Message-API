@@ -8,11 +8,11 @@ namespace DiscordMessageAPI
 {
 	internal struct CallContext
 	{
-		public UInt64 steamId;
-		public string fileSource;
-		public string missionName;
-		public string serverName;
-		public Int16 remoteExecutedOwner;
+		public required UInt64 steamId;
+		public required string fileSource;
+		public required string missionName;
+		public required string serverName;
+		public required Int16 remoteExecutedOwner;
 	};
 
 	public class DllEntry
@@ -22,8 +22,7 @@ namespace DiscordMessageAPI
 		public static bool ExtensionInit = false;
 		public static Webhooks_Storage? ALLWebhooks = null;
 		private static CallContext contextInfo;
-		internal static OutputBuilder CurrentOutputBuilder;
-		private static readonly ServiceInteractions ServiceInteractions = new();
+		internal static readonly ServiceInteractions ServiceInteractions = new();
 
 		private static void Output(IntPtr destination, int outputSize, string data)
 		{
@@ -64,11 +63,6 @@ namespace DiscordMessageAPI
 			//- Clean up logs
 			Logger.CleanLogs();
 			
-			ServiceInteractions.AccessTokenReceived += (authTokenPayload) => 
-				_ = ServiceInteractions.EstablishWebSocketConnection(authTokenPayload);
-			
-			_ = ServiceInteractions.GetAccessToken(accessName: "New Arma Server");
-			
 			Output(outputPrt, outputSize, "26.2.0");
 		}
 		
@@ -107,17 +101,6 @@ namespace DiscordMessageAPI
 		{
 			var inputKey = Marshal.PtrToStringUTF8(function)!;
 
-			if (!string.IsNullOrEmpty(inputKey))
-			{
-				_ = ServiceInteractions._wsClient.SendMessageAsync(inputKey);
-			}
-
-
-			// - await will block the thread, makes the game stuttering - //
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-			//APIRequest.SendRequest("http://localhost:5000/api/Arma", inputKey);
-#pragma warning restore CS4014
-
 			Output(outputPrt, outputSize, inputKey);
 		}
 
@@ -136,14 +119,15 @@ namespace DiscordMessageAPI
 		public static int RvExtensionArgs(nint outputPrt, int outputSize, nint function, nint argsPrt, int argCount)
 		{
 			OutputBuilder output = new(outputPrt, outputSize);
-			SetOutput(output);
 
-			var inputKey = Marshal.PtrToStringUTF8(function);
-			var args = new string?[argCount];
+			var inputKey = Marshal.PtrToStringUTF8(function)!;
+			var args = new string[argCount];
 
-			for (int i = 0; i < argCount; i++)
+			for (var i = 0; i < argCount; i++)
 			{
-				var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPrt + (i * Marshal.SizeOf<nint>())))?
+				var str = Marshal.PtrToStringUTF8(
+						Marshal.ReadIntPtr(argsPrt + (i * Marshal.SizeOf<nint>()))
+					)!
 					.Trim('"', ' ') //- Remove Arma quotations
 					.Replace("\"\"", "\"");
 
@@ -155,11 +139,13 @@ namespace DiscordMessageAPI
 			try
 			{
 				Logger.Trace("DLL Entry", inputKey);
-				InitActions action = ActionsDict.GetValueOrDefault(inputKey, EntryActions.NullDefault);
-				int actionReturn = action(output, args, argCount);
+				var action = ActionsDict.GetValueOrDefault(inputKey, EntryActions.NullDefault);
+				var actionReturn = action(output, args, argCount);
 
 				if (InitTime == null)
 					throw new Exception($"Function \"{inputKey}\" is not exist.");
+				
+				return actionReturn;
 
 				// Use time as Key (for Server , Player)
 				/*if (ExtensionInit && inputKey == "init_player")
@@ -259,8 +245,6 @@ namespace DiscordMessageAPI
 						break; //- Exit
 					}
 				}*/
-
-				return 0;
 			}
 			catch (Exception e)
 			{
