@@ -29,8 +29,8 @@ namespace Arma3WebService.Identities
 		
 		public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
 		{
-			var RoleName = GetIdentityRole(payload.Role);
-			var userClaimsIdentity = CreateClaimsIdentity(payload);
+			var roleName = GetIdentityRole(payload.Identity.Role);
+			var userClaimsIdentity = CreateClaimsIdentity(payload.Identity);
 
 			// Symmetric Key for Credential
 			var secret = GenerateHashSecret(signKey);
@@ -43,7 +43,7 @@ namespace Arma3WebService.Identities
 			var tokenDescriptor = new SecurityTokenDescriptor
 			{
 				Issuer = issuer,
-				Audience = RoleName,
+				Audience = roleName,
 				Subject = userClaimsIdentity,
 
 				Expires = payload.ExpireMinute is null
@@ -59,14 +59,15 @@ namespace Arma3WebService.Identities
 			var serializeToken = tokenHandler.WriteToken(securityToken);
 
 			return new IdentityRolesReturnPayload {
-				RoleName = RoleName,
+				Identity = payload.Identity,
+				RoleName = roleName,
 				AuthToken = serializeToken
 			};
 		}
 
 		public Task<TokenValidationResult> VaildateToken(IdentityRolesPayload payload)
 		{
-			var roleName = GetIdentityRole(payload.Role);
+			var roleName = GetIdentityRole(payload.Identity.Role);
 
 			var secret = GenerateHashSecret(signKey);
 			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
@@ -75,13 +76,7 @@ namespace Arma3WebService.Identities
 
 			return tokenHandler.ValidateTokenAsync(payload.AuthToken, GetValidationParameters());
 		}
-
 		
-		private static string GenerateHashSecret(string input)
-		{
-			var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-			return Convert.ToBase64String(hash);
-		}
 		internal TokenValidationParameters GetValidationParameters(
 			//Role role
 		)
@@ -109,15 +104,20 @@ namespace Arma3WebService.Identities
 				IssuerSigningKey = securityKey
 			};
 		}
-		private static ClaimsIdentity CreateClaimsIdentity(IdentityRolesPayload payload)
+		private static string GenerateHashSecret(string input)
+		{
+			var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+			return Convert.ToBase64String(hash);
+		}
+		private static ClaimsIdentity CreateClaimsIdentity(IdentityInfo payload)
 		{
 			var roleName = GetIdentityRole(payload.Role);
 			var roleGuid = GetIdentityRoleGuid(payload.Role);
 
 			var claims = new List<Claim>{
-				new Claim(JwtRegisteredClaimNames.Sub, payload.Name), // Subject Name
+				new Claim(JwtRegisteredClaimNames.Sub, payload.AccessName), // Subject Name
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID
-				new Claim(ClaimTypes.Name, payload.Name),
+				new Claim(ClaimTypes.Name, payload.AccessName),
 				new Claim(ClaimTypes.Role, roleName),
 				new Claim(ClaimTypes.NameIdentifier, roleGuid),
 			};

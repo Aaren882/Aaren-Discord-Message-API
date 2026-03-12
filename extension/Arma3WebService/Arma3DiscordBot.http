@@ -1,7 +1,7 @@
 @HostAddress = localhost:5048
 @Arma3WebService_HostAddress = http://{{HostAddress}}
 @JwtToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6ImJlM2U3YTdhLTE0OWQtNGUwMS05MWZkLTYzMzQ4NzgxNjU3ZSIsInJvbGUiOiJBZG1pbiIsIm5hbWVpZCI6Ijg0ZmUwNWUwLTgyYjgtNDFmMS05N2JlLTY1ODAxZTEyMzBlNCIsIm5iZiI6MTc3Mjg4MzEzMSwiZXhwIjoxNzcyODg2NzMxLCJpYXQiOjE3NzI4ODMxMzEsImlzcyI6Imlzc3VlciIsImF1ZCI6IkFkbWluIn0.VtMGObAs-5_XN0wwAmAkBDVLsf8wk6JZqJbL2_v6Hg4
-@ServerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6IjhhMjgyMDg1LWFhMTUtNDg5Ni1hY2NjLTAwNTA1Y2UxNWJhZCIsInJvbGUiOiJHYW1lLVNlcnZlciIsIm5hbWVpZCI6ImJhM2VmZDcwLTNiZGMtNDY0My05NjBlLTYzNjYwZTE5ZmE2ZCIsIm5iZiI6MTc3MzA1MDg4MywiZXhwIjoxNzczMDU0NDgzLCJpYXQiOjE3NzMwNTA4ODMsImlzcyI6Imlzc3VlciIsImF1ZCI6IkdhbWUtU2VydmVyIn0.QTGwFrQRXG8TtSuIduW91MeX1ru8gck5cJIzljuzn2A
+@ServerToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJOZXcgUHJvZHVjdCIsImp0aSI6IjZkODljY2QwLWI5MjgtNDk2Mi1iYTY1LWIyMzYwMWE4Nzc4YyIsInVuaXF1ZV9uYW1lIjoiTmV3IFByb2R1Y3QiLCJyb2xlIjoiR2FtZS1TZXJ2ZXIiLCJuYW1laWQiOiJiYTNlZmQ3MC0zYmRjLTQ2NDMtOTYwZS02MzY2MGUxOWZhNmQiLCJuYmYiOjE3NzMzMDQ2NzAsImV4cCI6MTc3MzMwODI3MCwiaWF0IjoxNzczMzA0NjcwLCJpc3MiOiJpc3N1ZXIiLCJhdWQiOiJHYW1lLVNlcnZlciJ9.wiAVYdXxVG18ffP78-5FRhifOTxxzwrNaFKQS35IKrw
 
 GET {{Arma3WebService_HostAddress}}/api/arma/GetLogs/
 Accept: application/json
@@ -14,9 +14,11 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ=
 Content-Type: application/json
 
 {
-    "Name": "New Product",
-    "Role": 2,
-    "AuthToken": "{{ServerToken}}"
+  "Identity" : {
+    "AccessName": "New Product",
+    "Role": 2
+  },
+  "AuthToken": "{{ServerToken}}"
 }
 
 ###
@@ -26,8 +28,10 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ=
 Content-Type: application/json
 
 {
-  "Name": "New Product",
-  "Role": 2
+  "Identity" : {
+    "AccessName": "New Product",
+    "Role": 2
+  }
 }
 
 ###

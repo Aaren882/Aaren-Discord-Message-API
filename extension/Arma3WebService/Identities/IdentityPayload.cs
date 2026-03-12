@@ -8,25 +8,27 @@ public enum Role
 	GameServer = 2,
 }
 
-public abstract class IdentityBase
+public record struct IdentityInfo
 {
+	public string AccessName { get; set; }
+	public Role Role { get; set; } // Audiance
+};
+
+public record struct IdentityRolesReturnPayload
+{
+	public IdentityInfo Identity { get; set; }
+	public string? RoleName { get; set; }
+	public string? AuthToken { get; set; }
+};
+
+public record struct IdentityRolesPayload
+{
+	public IdentityInfo Identity { get; set; }
+	public int? ExpireMinute { get; set; }
 	public string? AuthToken { get; set; }
 }
-public class IdentityRolesReturnPayload: IdentityBase
-{
-	public string RoleName { get; set; }
-}
-public class IdentityRolesPayload: IdentityBase
-{
-	public required string Name { get; set; }
-	public Role Role { get; set; } // Audiance
-	public int? ExpireMinute { get; set; }
-}
-
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [JsonSerializable(typeof(IdentityRolesPayload))]
 [JsonSerializable(typeof(IdentityRolesReturnPayload))]
-internal sealed partial class IdentityRolesPayload_JsonSerializerContext : JsonSerializerContext
-{
-}
+internal sealed partial class IdentityRolesPayloadJsonSerializerContext : JsonSerializerContext;
 
