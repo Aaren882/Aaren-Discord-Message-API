@@ -31,7 +31,7 @@ namespace Arma3WebService
 				//- Deserialize Payload
 				var deserialized = JsonSerializer.Deserialize(
 					receivedMessage,
-					Arma3Payload_JsonSerializerContext.Default.Arma3Payload
+					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 				)!;
 
 				Console.WriteLine($"Received message '{deserialized.Message}'");

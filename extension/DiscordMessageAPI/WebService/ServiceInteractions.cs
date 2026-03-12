@@ -21,7 +21,7 @@ public class ServiceInteractions()
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
 	/// </summary>
-	private async Task<IdentityRolesReturnPayload?> GetAccessToken(string accessName)
+	private async Task<IdentityRolesReturnPayload> GetAccessToken(string accessName)
 	{
 		try
 		{
@@ -31,13 +31,16 @@ public class ServiceInteractions()
 			//- Send Request for access token
 			var payload = new IdentityRolesPayload
 			{
-				Name = AccessName,
-				Role = Role.GameServer,
+				Identity = new IdentityInfo
+				{
+					AccessName =  AccessName,
+					Role = Role.GameServer
+				},
 				ExpireMinute = 15
 			};
 			var jsonPayload = JsonSerializer.Serialize(
 				payload,
-				IdentityRolesPayload_JsonSerializerContext.Default.IdentityRolesPayload
+				IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesPayload
 			);
 
 			using var response = await APIRequest.PostRequest(
@@ -58,14 +61,13 @@ public class ServiceInteractions()
 			
 			var authTokenPayload = JsonSerializer.Deserialize(
 				result,
-				IdentityRolesPayload_JsonSerializerContext.Default.IdentityRolesReturnPayload
+				IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesReturnPayload
 			)!;
 
-			if (authTokenPayload == null)
+			if (authTokenPayload is { AuthToken: null })
 				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");
 			
-			Logger.Trace("Token Manager (Token)", authTokenPayload.AuthToken);
-			Logger.Trace("Token Manager (Role Name)", authTokenPayload.RoleName);
+			Logger.Trace("Token Manager", authTokenPayload.ToString());
 			
 			//- Establish Socket Connection
 			AccessTokenReceived?.Invoke(authTokenPayload);
@@ -75,7 +77,7 @@ public class ServiceInteractions()
 		catch (Exception e)
 		{
 			Logger.Log(e);
-			return null;
+			throw;
 		}
 	}
 	internal async Task EstablishWebSocketConnection(string accessName)
@@ -96,7 +98,7 @@ public class ServiceInteractions()
 	{
 		var context = messageObj.MessageType switch
 		{
-			Arma3PayLoadType.Logging => Arma3Payload_JsonSerializerContext.Default.Arma3Payload,
+			Arma3PayLoadType.Logging => Arma3PayloadJsonSerializerContext.Default.Arma3Payload,
 			_ => null
 		};
 		
@@ -112,7 +114,7 @@ public class ServiceInteractions()
 		var secretString = Util.ParseJson(Secret);
 		var tokenPayload = JsonSerializer.Deserialize(
 			secretString,
-			Arma3Payload_JsonSerializerContext.Default.Arma3ServiceSecret
+			Arma3PayloadJsonSerializerContext.Default.Arma3ServiceSecret
 		)!;
 		
 		Logger.Trace("GetServiceSecret", secretString);

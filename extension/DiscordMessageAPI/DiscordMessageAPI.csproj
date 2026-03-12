@@ -14,6 +14,9 @@
     <Version>$(AssemblyVersion)</Version>
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Arma3WebService\ArmaPayload.cs" Link="ArmaPayload.cs" />
     <Compile Include="..\Arma3WebService\Identities\IdentityPayload.cs">
