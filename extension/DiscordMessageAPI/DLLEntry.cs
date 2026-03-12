@@ -6,14 +6,13 @@ using static DiscordMessageAPI.Delegates.EntryDelegates;
 
 namespace DiscordMessageAPI
 {
-	internal struct CallContext
-	{
-		public required UInt64 steamId;
-		public required string fileSource;
-		public required string missionName;
-		public required string serverName;
-		public required Int16 remoteExecutedOwner;
-	};
+	internal record struct CallContext(
+		UInt64 steamId,
+		string fileSource,
+		string missionName,
+		string serverName,
+		Int16 remoteExecutedOwner
+	);
 
 	public class DllEntry
 	{
@@ -26,26 +25,24 @@ namespace DiscordMessageAPI
 
 		private static void Output(IntPtr destination, int outputSize, string data)
 		{
+			var buffer = new byte[outputSize];
 			//- Empty buffer (clean up previous output)
-			Marshal.Copy(new byte[outputSize], 0, destination, outputSize);
+			Marshal.Copy(buffer, 0, destination, outputSize);
 			
 			//- Write data into buffer 
-			var bytes = Encoding.UTF8.GetBytes(data);
-			Marshal.Copy(bytes, 0, destination, Math.Min(bytes.Length, outputSize));
+			var bytes = Encoding.UTF8.GetBytes(data, buffer);
+			Marshal.Copy(buffer, 0, destination, bytes);
 		}
 
-		public class OutputBuilder(IntPtr destination, int outputSize)
+		public readonly record struct OutputBuilder(IntPtr destination, int outputSize)
 		{
-			private readonly nint _destination = destination;
-			private readonly int _outputSize = outputSize;
-
 			/// <summary>
 			/// Construct output buffer for Arma
 			/// </summary>
 			/// <param name="data">String data that will be output</param>
 			public void Append(string data)
 			{
-				Output(_destination, _outputSize, data);
+				Output(destination, outputSize, data);
 			}
 		}
 
@@ -74,17 +71,20 @@ namespace DiscordMessageAPI
 		{
 			var args = new string?[argCount];
 
-			for (int i = 0; i < argCount; i++)
+			for (var i = 0; i < argCount; i++)
 			{
 				var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPtr + (i * Marshal.SizeOf<nint>())));
 				args[i] = str;
 			}
 
-			contextInfo.steamId = Convert.ToUInt64(args[0]);
-			contextInfo.fileSource = args[1];
-			contextInfo.missionName = args[2];
-			contextInfo.serverName = args[3];
-			contextInfo.remoteExecutedOwner = Convert.ToInt16(args[4]);
+			contextInfo = new CallContext(
+				Convert.ToUInt64(args[0]),
+				args[1],
+				args[2],
+				args[3],
+				Convert.ToInt16(args[4])
+			);
+			Logger.Trace(nameof(contextInfo),contextInfo.ToString());
 		}
 
 
