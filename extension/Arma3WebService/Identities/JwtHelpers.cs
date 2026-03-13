@@ -29,7 +29,7 @@ namespace Arma3WebService.Identities
 		
 		public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
 		{
-			var roleName = GetIdentityRole(payload.Identity.Role);
+			var roleName = GetIdentityRole(payload.Identity);
 			var userClaimsIdentity = CreateClaimsIdentity(payload.Identity);
 
 			// Symmetric Key for Credential
@@ -67,19 +67,11 @@ namespace Arma3WebService.Identities
 
 		public Task<TokenValidationResult> VaildateToken(IdentityRolesPayload payload)
 		{
-			var roleName = GetIdentityRole(payload.Identity.Role);
-
-			var secret = GenerateHashSecret(signKey);
-			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-
 			var tokenHandler = new JsonWebTokenHandler();
-
 			return tokenHandler.ValidateTokenAsync(payload.AuthToken, GetValidationParameters());
 		}
 		
-		internal TokenValidationParameters GetValidationParameters(
-			//Role role
-		)
+		internal TokenValidationParameters GetValidationParameters()
 		{
 			// Symmetric Key for Credential
 			var secret = GenerateHashSecret(signKey);
@@ -111,8 +103,8 @@ namespace Arma3WebService.Identities
 		}
 		private static ClaimsIdentity CreateClaimsIdentity(IdentityInfo payload)
 		{
-			var roleName = GetIdentityRole(payload.Role);
-			var roleGuid = GetIdentityRoleGuid(payload.Role);
+			var roleName = GetIdentityRole(payload);
+			var roleGuid = GetIdentityRoleGuid(payload);
 
 			var claims = new List<Claim>{
 				new Claim(JwtRegisteredClaimNames.Sub, payload.AccessName), // Subject Name
@@ -124,21 +116,21 @@ namespace Arma3WebService.Identities
 
 			return new ClaimsIdentity(claims);
 		}
-		private static string GetIdentityRole(Role role)
+		private static string GetIdentityRole(IdentityInfo identity)
 		{
-			return role switch
+			return identity switch
 			{
-				Role.Admin => IdentityRoles.Admin,
-				Role.GameServer => IdentityRoles.GameServer,
+				{ Role: Role.Admin } => IdentityRoles.Admin,
+				{ Role: Role.GameServer } => IdentityRoles.GameServer,
 				_ => throw new ArgumentOutOfRangeException("Request Role is not supported.")
 			};
 		}
-		private static string GetIdentityRoleGuid(Role role)
+		private static string GetIdentityRoleGuid(IdentityInfo identity)
 		{
-			return role switch
+			return identity switch
 			{
-				Role.Admin => IdentityRoles.AdminGuid.ToString(),
-				Role.GameServer => IdentityRoles.GameServerGuid.ToString(),
+				{ Role: Role.Admin } => IdentityRoles.AdminGuid.ToString(),
+				{ Role: Role.GameServer } => IdentityRoles.GameServerGuid.ToString(),
 				_ => throw new ArgumentOutOfRangeException("Request Role is not supported.")
 			};
 		}
