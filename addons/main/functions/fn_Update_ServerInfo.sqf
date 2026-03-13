@@ -18,11 +18,11 @@ localNamespace setVariable ["DiscordAPI_ServerRefresh_Time",time + DiscordMsg_AP
 //- Get User List
 private _list = allUsers select {
   private _info = getUserInfo _x;
-  !(_info # 7) && ([(11 > _info # 6),true] select DiscordMsg_API_isPersistent)
+  !(_info # 7) && ([(11 > _info # 6), true] select DiscordMsg_API_isPersistent)
 };
 
 //- Exit with Shutdown Msg
-if (((_list findIf {true}) < 0) && !DiscordMsg_API_isPersistent) exitWith {
+if (_list isEqualTo [] && !DiscordMsg_API_isPersistent) exitWith {
   private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
   private _format = [];
   private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];

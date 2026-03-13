@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Arma3WebService;
+using DiscordMessageAPI.Discord;
+using DiscordMessageAPI.Entity;
 using DiscordMessageAPI.Tools;
 using static DiscordMessageAPI.DllEntry;
 
@@ -49,21 +51,21 @@ public static class EntryDelegates
         /// <returns></returns>
         internal static int Init_player(OutputBuilder output, string[] args, int argCount)
         {
-            if (ExtensionInit)
+            /*if (ExtensionInit)
             {
                 throw new Exception("Extension has already been initiated.");
-            }
+            }*/
             InitTime = args[0]; //- From Server
 			
             return 0;
         }
         internal static int Init_Server(OutputBuilder output, string[] args, int argCount)
         {
-	        var webhooksCount = 0;
-	        if (ExtensionInit) return webhooksCount;
+	        // var webhooksCount = 0;
+	        // if (ExtensionInit) return webhooksCount;
 	        
 	        Actions.ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
-	        webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
+	        var webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
 
 	        return webhooksCount;
         }
@@ -140,7 +142,7 @@ public static class EntryDelegates
         /// <returns>Always returns 1 to indicate successful handling of the command.</returns>
         internal static int HandlerJson(OutputBuilder output, string[] args, int argCount)
         {
-            Discord.Worker.HandlerJson(args);
+            _ = Worker.HandlerJson(args);
             return 1;
         }
         /// <summary>
@@ -153,7 +155,7 @@ public static class EntryDelegates
         /// <returns>Always returns 1 to indicate successful processing.</returns>
         internal static int HandlerJsonFormat(OutputBuilder output, string[] args, int argCount)
         {
-			Discord.Worker.HandlerJsonFormat(args);
+	        _ = Worker.HandlerJsonFormat(args);
             return 1;
         }
         /// <summary>
@@ -178,7 +180,7 @@ public static class EntryDelegates
             if (codePointStrings.Length > 1)
                 args[5] = string.Concat(codePointStrings.Select(cp => char.ConvertFromUtf32(int.Parse(cp))));
 
-			Discord.Worker.HandleRequest(args);
+			_ = Worker.HandleRequest(args);
             return 1;
         }
         

@@ -18,12 +18,17 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Arma3WebService\ArmaPayload.cs" Link="ArmaPayload.cs" />
+    <Compile Include="..\Arma3WebService\ArmaPayload.cs">
+      <Link>Entity\ArmaPayload.cs</Link>
+    </Compile>
     <Compile Include="..\Arma3WebService\Identities\IdentityPayload.cs">
-      <Link>IdentityPayload.cs</Link>
+      <Link>Entity\IdentityPayload.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Arma3WebService\Arma3WebService.csproj" />
   </ItemGroup>
 </Project>

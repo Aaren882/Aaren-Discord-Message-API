@@ -82,6 +82,8 @@ private _msg = toString ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOu
 _payload = createHashMapFromArray _payload;
 _payload set ["Url", _url];
 
+TRACE_1("fn_sendJsonFormat (Send)",_payload);
+
 //- Send Format Json
 "DiscordMessageAPI" callExtension [ 
   "HandlerJsonFormat", 
