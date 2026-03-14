@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using DiscordMessageAPI.Discord;
@@ -139,11 +140,11 @@ public class DllEntry
 		try
 		{
 			Logger.Trace("DLL Entry", inputKey);
-			var action = ActionsDict.GetValueOrDefault(inputKey, EntryActions.NullDefault);
-			var actionReturn = action(output, args, argCount);
+			
+			if (!ActionsDict.TryGetValue(inputKey, out var action))
+				throw new NullReferenceException($"Function \"{inputKey}\" is not exist.");
 
-			if (InitTime == null)
-				throw new Exception($"Function \"{inputKey}\" is not exist.");
+			var actionReturn = action(output, args, argCount);
 			
 			return actionReturn;
 		}
