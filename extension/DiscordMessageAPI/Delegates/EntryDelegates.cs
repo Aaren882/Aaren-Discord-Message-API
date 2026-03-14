@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Arma3WebService;
@@ -9,41 +11,32 @@ using static DiscordMessageAPI.DllEntry;
 namespace DiscordMessageAPI.Delegates;
 public static class EntryDelegates
 {
-	public static readonly Dictionary<string, InitActions> ActionsDict = _Init();
+	public static readonly IDictionary<string, InitActions> ActionsDict = _initActionsMap(typeof(Actions));
 	public delegate int InitActions(OutputBuilder output, string[] args, int argCount);
 
-    private static Dictionary<string, InitActions> _Init()
+    private static Dictionary<string, InitActions> _initActionsMap(
+	    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicMethods)] Type actionType
+	)
     {
-        var _dict = new Dictionary<string, InitActions>();
+        var methods = actionType
+	        .GetMethods(
+		        BindingFlags.Static | BindingFlags.NonPublic
+		    )
+	        .ToDictionary(
+		        prop => prop.Name, 
+		        prop => (InitActions)Delegate.CreateDelegate(
+			        typeof(InitActions),
+			        null,
+			        prop
+		        )!
+	        );
 
-        string[] keys = [
-            "init_player", "Init_Server", "Refresh_Webhooks",
-            "ParseJson", "HandlerJson", "HandlerJsonFormat", "SendMessage", 
-            "ConnectWebSocket","ReconnectWebSocket","DisconnectWebSocket",
-            "SendWebSocketLog"
-        ];
-		
-        InitActions[] actions = [
-            EntryActions.Init_player, EntryActions.Init_Server, EntryActions.Refresh_Webhooks,
-            Actions.ParseJson, Actions.HandlerJson, Actions.HandlerJsonFormat, Actions.SendMessage, 
-            Actions.ConnectWebSocket, Actions.ReconnectWebSocket, Actions.DisconnectWebSocket,
-            Actions.SendWebSocketLog
-        ];
-
-        //- Register functions
-        for (var i = 0; i < keys.Length; i++)
-        {
-            var key = keys[i];
-            var action = actions[i];
-            _dict.Add(key, action);
-        }
-
-        return _dict;
+        return methods;
     }
-
-    public static class EntryActions
+    
+    private class Actions
     {
-        /// <summary>
+	    /// <summary>
         /// Initation for Clients (Players)
         /// </summary>
         /// <param name="output"></param>
@@ -63,8 +56,7 @@ public static class EntryDelegates
         {
 	        // var webhooksCount = 0;
 	        // if (ExtensionInit) return webhooksCount;
-	        
-	        Actions.ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
+	        ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
 	        var webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
 
 	        return webhooksCount;
@@ -101,22 +93,7 @@ public static class EntryDelegates
 
             return webhooksCount;
         }
-
-        /// <summary>
-        /// Default method for **ActionsDict**
-        /// </summary>
-        /// <param name="output"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static int NullDefault(OutputBuilder output, string[] args, int argCount)
-        {
-            throw new Exception("No method found.");
-        }
-    }
-
-    private static class Actions
-    {
+        
         /// <summary>
         /// Parses the first JSON string in the specified arguments, converts it to a UTF-32 code point array, and
         /// appends the result to the output.
