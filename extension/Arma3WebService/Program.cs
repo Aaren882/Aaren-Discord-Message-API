@@ -1,5 +1,15 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Arma3WebService.Handler;
+using Arma3WebService.Identities;
 using Arma3WebService.Models;
+using Discord;
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Arma3WebService
 {
@@ -22,12 +32,14 @@ namespace Arma3WebService
 			//- Add controllers
 			builder.Services.AddScoped<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddTransient<IWebSocketService, WebSocketService>();
+			builder.Services.AddSingleton<JwtHelpers>();
 			builder.Services.AddControllers();
 
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			//builder.Services.AddOpenApi();
 			builder.Services.AddSwaggerGen();
 
+			//builder.Services.AddControllersWithViews();
 
 			//- WebSocket
 			builder.Services.AddCors(options =>
@@ -41,6 +53,27 @@ namespace Arma3WebService
 					});
 			});
 
+			builder.Services.AddAuthorization(options =>
+			{
+				options.AddPolicy("GameRequest", policy => 
+					policy.RequireClaim(ClaimTypes.NameIdentifier, IdentityRoles.GameServerGuid.ToString())
+				);
+			});
+
+			builder.Services
+				.AddAuthentication()
+				.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+				{
+					options.IncludeErrorDetails = true; // Show exception details
+					options.TokenValidationParameters =
+						new JwtHelpers(builder.Configuration).GetValidationParameters();
+				})
+				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", options =>
+				{
+
+				});
+
+
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
@@ -51,7 +84,7 @@ namespace Arma3WebService
 				app.UseSwaggerUI();
 			}
 
-			app.UseHttpsRedirection();
+			//app.UseHttpsRedirection();
 
 			//- Websocket
 			app.UseCors("AllowAll");
@@ -61,7 +94,7 @@ namespace Arma3WebService
 			});
 			app.UseRouting();
 
-
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 

@@ -1,8 +1,14 @@
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
+	[Authorize(
+		Policy = "GameRequest",
+		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
+	]
 	[Route("api/[controller]")]
 	[ApiController]
 	public class ArmaController : ControllerBase
@@ -26,7 +32,7 @@ namespace Arma3WebService.Controllers
 		{
 			for (int index = 1; index <= 5; index++)
 			{
-				await Task.Delay(1000); // 模擬非同步操作
+				await Task.Delay(500);
 				yield return new WeatherForecast
 				{
 					Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),

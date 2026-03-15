@@ -1,9 +1,14 @@
-using System.Net;
 using Arma3WebService.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
+	[Authorize(
+		Policy = "GameRequest",
+		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
+	]
 	[Route("/api/ws")]
 	[ApiController]
 	public class WebSocketApiController : ControllerBase
@@ -15,15 +20,16 @@ namespace Arma3WebService.Controllers
 			_service = service;
 		}
 
-		[HttpGet]
-		public async Task<IActionResult> Get()
+		[HttpGet("ingame")]
+		public async Task<IActionResult> InGameWebSocket()
 		{
 			var context = ControllerContext.HttpContext;
 
 			if (!context.WebSockets.IsWebSocketRequest)
-				return BadRequest();
+				return Problem(statusCode: 501, detail: "Incorrect Request Context");
 
-			return await _service.CreateConnection(context);
+			await _service.CreateConnection(context);
+			return new EmptyResult();
 		}
 	}
 }
