@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using Arma3WebService.Entity;
 
 namespace Arma3WebService.Factory
 {
@@ -6,12 +7,12 @@ namespace Arma3WebService.Factory
 	{
 		public interface IConnectionFactory
 		{
-			IConnection CreateConnection(WebSocket webSocket);
+			IConnection CreateConnection(WebsocketEntity webSocket);
 		}
 
 		public class ConnectionFactory : IConnectionFactory
 		{
-			public IConnection CreateConnection(WebSocket webSocket)
+			public IConnection CreateConnection(WebsocketEntity webSocket)
 			{
 				return new WebSocketConnection(webSocket);
 			}

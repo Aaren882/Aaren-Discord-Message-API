@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.WebSockets;
+using Arma3WebService.Entity;
 using Microsoft.AspNetCore.Mvc;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
@@ -9,7 +10,7 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
-		public Task CreateConnection(HttpContext context);
+		public Task CreateConnection(WebsocketContextEntity context);
 	}
 
 	public sealed class WebSocketService : IHostedService, IWebSocketService
@@ -19,7 +20,7 @@ namespace Arma3WebService.Models
 
 		private readonly IConnectionFactory _connectionFactory;
 		private readonly IConnectionManager _connectionManager;
-		private static readonly ConcurrentDictionary<string, WebSocket> _connections = new ConcurrentDictionary<string, WebSocket>();
+		private static readonly ConcurrentDictionary<string, WebsocketEntity> _connections = new ConcurrentDictionary<string, WebsocketEntity>();
 
 		public WebSocketService(ILogger<WebSocketService> logger, IServiceProvider serviceProvider)
 		{
@@ -44,25 +45,27 @@ namespace Arma3WebService.Models
 
 			return Task.CompletedTask;
 		}
-		public async Task CreateConnection(HttpContext context)
+		public async Task CreateConnection(WebsocketContextEntity contextEntity)
 		{
-			var connectionIdentity = context.User.Identity?.Name ?? "Not Specified";
+			var connectionIdentity = contextEntity.Context.User.Identity?.Name ?? "Not Specified";
 
 			if (_connections.ContainsKey(connectionIdentity))
 			{
-				_logger.LogError($"Refuse Request. Connection already exist. Name : '{connectionIdentity}'/'{context.Connection.Id}'");
+				_logger.LogError($"Refuse Request. Connection already exist. Name : '{connectionIdentity}'/'{contextEntity.Context.Connection.Id}'");
 				return;
 			}
 
-			WebSocket websocket;
+			WebsocketEntity websocketEntity;
 			try
 			{
-				websocket = await context.WebSockets.AcceptWebSocketAsync();
-				var connection = _connectionFactory.CreateConnection(websocket);
+				var websocket = await contextEntity.Context.WebSockets.AcceptWebSocketAsync();
+				websocketEntity = new WebsocketEntity(websocket, contextEntity);
+				
+				var connection = _connectionFactory.CreateConnection(websocketEntity);
 
-				_connections.TryAdd(connectionIdentity, websocket);
+				_connections.TryAdd(connectionIdentity, websocketEntity);
 
-				_logger.LogInformation($"Accepted connection Name : '{connectionIdentity}'/'{context.Connection.Id}' - '{context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
+				_logger.LogInformation($"Accepted connection Name : '{connectionIdentity}'/'{contextEntity.Context.Connection.Id}' - '{contextEntity.Context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
 
 				await _connectionManager.HandleConnection(connection);
 			}
@@ -76,8 +79,8 @@ namespace Arma3WebService.Models
 			}
 			finally
 			{
-				_connections.TryRemove(connectionIdentity, out websocket!);
-				_logger.LogInformation($"Close connection '{context.Connection.Id}' - '{context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
+				_connections.TryRemove(connectionIdentity, out websocketEntity!);
+				_logger.LogInformation($"Close connection '{contextEntity.Context.Connection.Id}' - '{contextEntity.Context.Connection.RemoteIpAddress}'. Total connections: {_connections.Count}");
 			}
 		}
 	}
