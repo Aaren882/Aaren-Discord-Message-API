@@ -1,3 +1,4 @@
+using Arma3WebService.Entity;
 using Arma3WebService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -5,10 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
-	[Authorize(
+	/*[Authorize(
 		Policy = "GameRequest",
 		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
-	]
+	]*/
 	[Route("/api/ws")]
 	[ApiController]
 	public class WebSocketApiController : ControllerBase
@@ -31,7 +32,22 @@ namespace Arma3WebService.Controllers
 			if (context.User.Identity == null)
 				return Unauthorized("No Identity is specified.");
 
-			await _service.CreateConnection(context);
+			await _service.CreateConnection(new WebsocketContextEntity(context, Arma3PayLoadType.Rpt));
+			return new EmptyResult();
+		}
+		
+		[HttpGet("file/Rpt")]
+		public async Task<IActionResult> RptWebSocket()
+		{
+			var context = ControllerContext.HttpContext;
+			
+			if (!context.WebSockets.IsWebSocketRequest)
+				return Problem(statusCode: 501, detail: "Incorrect Request Context");
+			
+			if (context.User.Identity == null)
+				return Unauthorized("No Identity is specified.");
+			
+			await _service.CreateConnection(new WebsocketContextEntity(context, Arma3PayLoadType.Rpt));
 			return new EmptyResult();
 		}
 	}
