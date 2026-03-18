@@ -42,7 +42,7 @@ public static class EntryDelegates
         /// <param name="output"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        internal static int Init_player(OutputBuilder output, string[] args, int argCount)
+        internal static int Init_Player(OutputBuilder output, string[] args, int argCount)
         {
             /*if (ExtensionInit)
             {
@@ -210,16 +210,21 @@ public static class EntryDelegates
         /// <param name="args"></param>
         /// <param name="argCount"></param>
         /// <returns></returns>
-        internal static int SendWebSocketLog(OutputBuilder output, string[] args, int argCount)
+        internal static int SendWebSocketMessage(OutputBuilder output, string[] args, int argCount)
         {
             var message = args[0];
             var messageObj = new Arma3Payload
             {
-	            MessageType = Arma3PayLoadType.Logging,
+	            MessageType = Arma3PayLoadType.Message,
 	            Message = message,
             };
             
             _ = ServiceInteractions.SendWebSocketMessage(messageObj);
+            return 1;
+        }
+        internal static int SendWebSocketRPT(OutputBuilder output, string[] args, int argCount)
+        {
+            _ = ServiceInteractions.SendWebSocketBinary(Util.GetLastestRpt());
             return 1;
         }
     }

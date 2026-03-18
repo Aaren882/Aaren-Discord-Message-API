@@ -5,23 +5,23 @@ namespace Arma3WebService;
 
 public enum Arma3PayLoadType
 {
-	Logging = 1,
+	Message = 1,
 	Rpt = 2, //- in game *.rpt logs
 }
 public record struct Arma3Payload
 {
 	public required Arma3PayLoadType MessageType { get; set; }
+	public DateTime Timestamp => DateTime.Now;
 	public string? Message { get; set; }
-	public DateTime Timestamp => DateTime.Now;
+	public Arma3PayloadRPT? Rpt { get; set; }
 }
-public record struct Arma3PayloadRPT
-{
-	public Arma3PayLoadType MessageType => Arma3PayLoadType.Rpt;
-	public required string FileName { get; set; }
-	public long FileSize { get; set; }
-	public int TotalChunks { get; set; }
-	public DateTime Timestamp => DateTime.Now;
-}
+
+public record struct Arma3PayloadRPT(
+	string FileName,
+	long FileSize,
+	DateTime CreatedTime,
+	int TotalChunks
+);
 
 public record struct ServiceAuthenticationHeader
 {
@@ -29,12 +29,12 @@ public record struct ServiceAuthenticationHeader
 	public string Password { get; set; }
 }
 
-public record struct Arma3ServiceSecret
-{
-	public required string ServiceUri { get; set; }
-	public required string WebSocketServiceUri { get; set; }
-	public ServiceAuthenticationHeader Secret { get; set; }
-}
+public record Arma3ServiceSecret(
+	string ServiceUri,
+	string WebSocketServiceUri,
+	string RPT_Directory,
+	ServiceAuthenticationHeader Secret
+);
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [JsonSerializable(typeof(Arma3Payload))]

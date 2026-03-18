@@ -25,12 +25,7 @@ namespace Arma3WebService
 			do
 			{
 				using var memoryStream = new MemoryStream();
-
-				message = (_websocketContextEntity.ConnectionType) switch
-				{
-					Arma3PayLoadType.Logging => await ReceiveMessage(memoryStream),
-					Arma3PayLoadType.Rpt => await ReceiveBinary(),
-				};
+				message = await ReceiveMessage(memoryStream);
 
 				if (memoryStream.Length <= 0) continue;
 				
@@ -42,9 +37,30 @@ namespace Arma3WebService
 					receivedMessage,
 					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 				)!;
+				
+				switch (deserialized.MessageType) 
+				{
+					case Arma3PayLoadType.Message :
+					{
+						Console.WriteLine($"Received message '{deserialized.Message}'");
 						
-				Console.WriteLine($"Received message '{deserialized.Message}'");
-				await Send(receivedMessage);
+						await Send(receivedMessage);
+						break;
+					}
+					case Arma3PayLoadType.Rpt : //- Must use metaData first
+					{
+						var metadata = deserialized.Rpt;
+						Console.WriteLine($"Received metaData for binary file '{metadata}'");
+						
+						await using var fileStream = new FileStream(
+							metadata?.FileName, FileMode.Create, FileAccess.Write);
+						
+						await ReceiveBinary(fileStream);
+						break;
+					}
+					default:
+						throw new ArgumentOutOfRangeException("No Connection is found.");
+				}
 			} while (message.MessageType != WebSocketMessageType.Close);
 
 			return message.CloseStatus;
@@ -64,58 +80,16 @@ namespace Arma3WebService
 
 			return result;
 		}
-		private async Task<WebSocketReceiveResult> ReceiveBinary()
+		private async Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream)
 		{
-			var readBuffer = new ArraySegment<byte>(new byte[2 * 1024]);
-			WebSocketReceiveResult? result = null;
+			var readBuffer = new ArraySegment<byte>(new byte[64 * 1024]);
 
-			FileStream? fileStream = null;
-			while (_webSocket.State == WebSocketState.Open)
+			WebSocketReceiveResult result;
+			do
 			{
 				result = await _webSocket.ReceiveAsync(readBuffer, CancellationToken.None);
-
-				Arma3PayloadRPT? metadata;
-				if (result.MessageType == WebSocketMessageType.Text)
-				{
-					// Received metadata
-					var metadataJson = Encoding.UTF8.GetString(readBuffer.Array!, 0, result.Count);
-					metadata = JsonSerializer.Deserialize(
-						metadataJson,
-						Arma3PayloadJsonSerializerContext.Default.Arma3PayloadRPT
-					);
-					
-					fileStream = new FileStream(
-							metadata!.Value.FileName, FileMode.Create, FileAccess.Write);
-					
-					// Initialize file storage based on metadata
-				}
-				else if (result.MessageType == WebSocketMessageType.Binary)
-				{
-					// Received a file chunk
-					await fileStream!.WriteAsync(readBuffer.Array!, 0, result.Count);
-
-					if (result.EndOfMessage)
-					{
-						// All chunks for the current file have been received
-						fileStream.Position = 0;
-						// Process the complete file stream and metadata
-                
-						// Clean up
-						metadata = null;
-						// fileStream.SetLength(0); 
-						await fileStream.DisposeAsync();
-					}
-				}
-				else if (result.MessageType == WebSocketMessageType.Close)
-				{
-					await _webSocket.CloseAsync(
-						WebSocketCloseStatus.NormalClosure,
-						string.Empty,
-						CancellationToken.None
-					);
-					break;
-				}
-			}
+				await fileStream!.WriteAsync(readBuffer.Array!, 0, result.Count);
+			} while (!result.EndOfMessage);
 
 			return result;
 		}

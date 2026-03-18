@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using Arma3WebService;
 using DiscordMessageAPI.Tools;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DiscordMessageAPI.WebService
 {
@@ -24,10 +26,6 @@ namespace DiscordMessageAPI.WebService
 				{
 					_webSocket.Options.SetRequestHeader("Authorization", "Bearer " + jwtToken);
 				}
-			
-				Connected += () => Logger.Log(null, $"Event: Connected to server");
-				Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
-				MessageReceived += (message) => Logger.Log(null, $"Event: Message received - {message}");
 				
 				_cancellationTokenSource = new CancellationTokenSource();
 
@@ -43,6 +41,58 @@ namespace DiscordMessageAPI.WebService
 			catch (Exception ex)
 			{
 				Logger.Log(null ,$"Connection failed: {ex.Message}");
+			}
+		}
+		public async Task SendBinaryAsync(string filePath, int chunkSize = 64 * 1024)
+		{
+			if (_webSocket?.State == WebSocketState.Open)
+			{
+				var fileInfo = new FileInfo(filePath);
+				var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+
+				// Send Metadata (as text message)
+				var metadata = new Arma3PayloadRPT
+				{
+					FileName = fileInfo.Name,
+					FileSize = fileInfo.Length,
+					CreatedTime = fileInfo.CreationTime,
+					TotalChunks = totalChunks
+					// ChunkIndex
+				};
+				var payload = new Arma3Payload
+				{
+					MessageType = Arma3PayLoadType.Rpt,
+					Rpt = metadata
+				};
+
+				var metadataJson = JsonSerializer.Serialize(
+					payload,
+					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+				);
+				var metadataBytes = Encoding.UTF8.GetBytes(metadataJson);
+				
+				await _webSocket.SendAsync(new ArraySegment<byte>(metadataBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+
+				// Send Chunks (as binary messages)
+				await using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+				{
+					for (var i = 0; i < totalChunks; i++)
+					{
+						var buffer = new byte[chunkSize];
+						var bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
+
+						// If the last chunk is smaller than the buffer size
+						var chunkBytes = new byte[bytesRead];
+						Buffer.BlockCopy(buffer, 0, chunkBytes, 0, bytesRead);
+
+						await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == totalChunks - 1), CancellationToken.None);
+					}
+				}
+				Logger.Log(null ,$"Sent Binary: {filePath}");
+			}
+			else
+			{
+				Logger.Log(null ,"WebSocket is not connected. Cannot send message.");
 			}
 		}
 
