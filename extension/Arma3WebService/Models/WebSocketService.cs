@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
-using System.Net;
 using System.Net.WebSockets;
 using Arma3WebService.Entity;
-using Microsoft.AspNetCore.Mvc;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 

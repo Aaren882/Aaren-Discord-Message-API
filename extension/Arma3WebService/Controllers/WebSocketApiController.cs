@@ -12,31 +12,24 @@ namespace Arma3WebService.Controllers
 	]*/
 	[Route("/api/ws")]
 	[ApiController]
-	public class WebSocketApiController : ControllerBase
+	public class WebSocketApiController(IWebSocketService service) : ControllerBase
 	{
-		private readonly IWebSocketService _service;
-
-		public WebSocketApiController(IWebSocketService service)
-		{
-			_service = service;
-		}
-
 		[HttpGet("ingame")]
 		public async Task<IActionResult> InGameWebSocket()
 		{
 			var context = ControllerContext.HttpContext;
-			
+
 			if (!context.WebSockets.IsWebSocketRequest)
 				return Problem(statusCode: 501, detail: "Incorrect Request Context");
 			
 			if (context.User.Identity == null)
 				return Unauthorized("No Identity is specified.");
 
-			await _service.CreateConnection(new WebsocketContextEntity(context, Arma3PayLoadType.Rpt));
+			await service.CreateConnection(new WebsocketContextEntity(context, Arma3PayLoadType.Logging));
 			return new EmptyResult();
 		}
 		
-		[HttpGet("file/Rpt")]
+		[HttpGet("file/rpt")]
 		public async Task<IActionResult> RptWebSocket()
 		{
 			var context = ControllerContext.HttpContext;
@@ -47,7 +40,7 @@ namespace Arma3WebService.Controllers
 			if (context.User.Identity == null)
 				return Unauthorized("No Identity is specified.");
 			
-			await _service.CreateConnection(new WebsocketContextEntity(context, Arma3PayLoadType.Rpt));
+			await service.CreateConnection(new WebsocketContextEntity(context, Arma3PayLoadType.Rpt));
 			return new EmptyResult();
 		}
 	}

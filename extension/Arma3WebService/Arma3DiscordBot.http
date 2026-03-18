@@ -47,6 +47,7 @@ Content-Type: application/json // We use it for highlighting
 Authorization: Bearer {{ServerToken}}
 
 {
+  "MessageType": 1, 
   "message": "Send when the WebSocket connection is opened"
 }
 
