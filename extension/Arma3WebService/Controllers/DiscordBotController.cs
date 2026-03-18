@@ -15,9 +15,9 @@ namespace Arma3WebService.Controllers
 		};
 
 		//private readonly ILogger<DiscordBotController> _logger;
-		private readonly IDiscordBotService _service;
+		private readonly DiscordBotService _service;
 
-		public DiscordBotController(IDiscordBotService service)
+		public DiscordBotController(DiscordBotService service)
 		{
 			_service = service;
 			//_logger = logger;
@@ -26,11 +26,17 @@ namespace Arma3WebService.Controllers
 		[HttpPost(Name = "PostBotOnline")]
 		public async Task<IActionResult> PostBotOnline(string text)
 		{
-			IUserMessage result = await _service.PostBotOnline(text);
+			var result = await _service.PostBotOnline(text);
 			return Ok(result);
 		}
 
 		//////////////////////
+		[HttpGet($"File/{{id}}")]
+		public async Task<IActionResult> DownloadFile(string id)
+		{
+			var bytes = await _service.SendLocalFile(id);
+			return File(bytes,"application/octet-stream", id);
+		}
 
 		[HttpGet(Name = "GetDiscordBot")]
 		public async Task<IEnumerable<WeatherForecast>> Get()
@@ -40,9 +46,9 @@ namespace Arma3WebService.Controllers
 			return result;
 		}
 
-		private async static IAsyncEnumerable<WeatherForecast> CreateWeatherForecast(int start, int end)
+		private static async IAsyncEnumerable<WeatherForecast> CreateWeatherForecast(int start, int end)
 		{
-			for (int index = 0; index < end; index++)
+			for (var index = 0; index < end; index++)
 			{
 				await Task.Delay(500);
 				yield return new WeatherForecast
@@ -57,7 +63,7 @@ namespace Arma3WebService.Controllers
 		[HttpGet("Async")]
 		public async IAsyncEnumerable<WeatherForecast> AsyncWeatherForecast(int start = 0, int end = 5)
 		{
-			for (int index = 0; index < end; index++)
+			for (var index = 0; index < end; index++)
 			{
 				await Task.Delay(500);
 				yield return new WeatherForecast
