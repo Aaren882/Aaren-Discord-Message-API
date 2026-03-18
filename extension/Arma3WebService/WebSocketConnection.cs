@@ -29,7 +29,7 @@ namespace Arma3WebService
 				message = (_websocketContextEntity.ConnectionType) switch
 				{
 					Arma3PayLoadType.Logging => await ReceiveMessage(memoryStream),
-					Arma3PayLoadType.Rpt => await ReceiveBinary(memoryStream),
+					Arma3PayLoadType.Rpt => await ReceiveBinary(),
 				};
 
 				if (memoryStream.Length <= 0) continue;
@@ -38,33 +38,13 @@ namespace Arma3WebService
 				var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
 				if (string.IsNullOrEmpty(receivedMessage)) continue;
 				
-				switch (message.MessageType)
-				{
-					case WebSocketMessageType.Text:
-					{
-						var deserialized = JsonSerializer.Deserialize(
-							receivedMessage,
-							Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-						)!;
+				var deserialized = JsonSerializer.Deserialize(
+					receivedMessage,
+					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+				)!;
 						
-						Console.WriteLine($"Received message '{deserialized.Message}'");
-						await Send(receivedMessage);
-						break;
-					}
-					/*case WebSocketMessageType.Binary:
-					{
-						var deserialized = JsonSerializer.Deserialize(
-							receivedMessage,
-							Arma3PayloadJsonSerializerContext.Default.Arma3PayloadRPTChunks
-						)!;
-						
-						await File.WriteAllBytesAsync(
-							deserialized.FileName,
-							deserialized.FileBytes
-						);
-						break;
-					}*/
-				}
+				Console.WriteLine($"Received message '{deserialized.Message}'");
+				await Send(receivedMessage);
 			} while (message.MessageType != WebSocketMessageType.Close);
 
 			return message.CloseStatus;
@@ -78,23 +58,23 @@ namespace Arma3WebService
 			do
 			{
 				result = await _webSocket.ReceiveAsync(readBuffer, CancellationToken.None);
-				await memoryStream.WriteAsync(readBuffer.Array, readBuffer.Offset, result.Count,
+				await memoryStream.WriteAsync(readBuffer.Array!, readBuffer.Offset, result.Count,
 					CancellationToken.None);
 			} while (!result.EndOfMessage);
 
 			return result;
 		}
-		private async Task<WebSocketReceiveResult> ReceiveBinary(Stream memoryStream)
+		private async Task<WebSocketReceiveResult> ReceiveBinary()
 		{
 			var readBuffer = new ArraySegment<byte>(new byte[2 * 1024]);
 			WebSocketReceiveResult? result = null;
-			
-			Arma3PayloadRPT? metadata = null;
+
 			FileStream? fileStream = null;
 			while (_webSocket.State == WebSocketState.Open)
 			{
 				result = await _webSocket.ReceiveAsync(readBuffer, CancellationToken.None);
 
+				Arma3PayloadRPT? metadata;
 				if (result.MessageType == WebSocketMessageType.Text)
 				{
 					// Received metadata
@@ -116,20 +96,14 @@ namespace Arma3WebService
 
 					if (result.EndOfMessage)
 					{
-						// fileStream.WriteAsync(memoryStream)
-						/*await File.WriteAllBytesAsync(
-							metadata!.Value.FileName,
-							
-						);*/
-						
 						// All chunks for the current file have been received
-						memoryStream.Position = 0;
+						fileStream.Position = 0;
 						// Process the complete file stream and metadata
-						// e.g., Save to disk using metadata.FileName
                 
-						// Reset for the next file
+						// Clean up
 						metadata = null;
-						memoryStream.SetLength(0); 
+						// fileStream.SetLength(0); 
+						await fileStream.DisposeAsync();
 					}
 				}
 				else if (result.MessageType == WebSocketMessageType.Close)
