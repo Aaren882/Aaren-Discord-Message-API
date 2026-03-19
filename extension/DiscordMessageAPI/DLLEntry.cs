@@ -44,7 +44,7 @@ public class DllEntry
 		Marshal.Copy(buffer, 0, destination, bytes);
 	}
 
-	public readonly record struct OutputBuilder(IntPtr destination, int outputSize)
+	public readonly record struct OutputBuilder(nint destination, int outputSize)
 	{
 		/// <summary>
 		/// Construct output buffer for Arma
@@ -124,7 +124,6 @@ public class DllEntry
 		Logger.Trace(nameof(contextInfo),contextInfo.ToString());
 	}
 
-
 	/// <summary>
 	/// The entry point for the default callExtension command.
 	/// </summary>
@@ -135,6 +134,15 @@ public class DllEntry
 	public static void RVExtension(nint outputPrt, int outputSize, nint function)
 	{
 		var inputKey = Marshal.PtrToStringUTF8(function)!;
+
+		try
+		{
+			Callback("CallBack Name", inputKey, "data");
+		}
+		catch (Exception e)
+		{
+			Logger.Log(e);
+		}
 
 		Output(outputPrt, outputSize, inputKey);
 	}

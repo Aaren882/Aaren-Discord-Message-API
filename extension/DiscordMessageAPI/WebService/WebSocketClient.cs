@@ -1,9 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 using Arma3WebService;
 using DiscordMessageAPI.Tools;
-using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DiscordMessageAPI.WebService
