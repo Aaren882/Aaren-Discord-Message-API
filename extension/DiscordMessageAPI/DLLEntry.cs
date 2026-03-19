@@ -25,8 +25,7 @@ internal delegate int ExtensionCallback(
 
 public class DllEntry
 {
-	//private static readonly string SessionKey = Tools.GenTimeEncode();
-	public static string InitTime = null;
+	public static string? InitTime = null;
 	public static bool ExtensionInit = false;
 	public static Webhooks_Storage? ALLWebhooks = null;
 	internal static readonly ServiceInteractions ServiceInteractions = new();
@@ -87,8 +86,16 @@ public class DllEntry
 	{
 		//- Clean up logs
 		Logger.CleanLogs();
-
-		Output(outputPrt, outputSize, "26.2.0");
+		
+		var version = typeof(DllEntry).GetTypeInfo().Assembly 
+			.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+			.InformationalVersion;
+		
+		version = version
+			.Substring(0, version.LastIndexOf('+') + 9);
+		
+		Logger.Log(null, $"Extension Version : [{version}]");
+		Output(outputPrt, outputSize, version);
 	}
 	
 	/// <summary>
