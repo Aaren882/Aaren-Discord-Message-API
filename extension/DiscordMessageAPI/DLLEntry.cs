@@ -17,14 +17,22 @@ internal record struct CallContext(
 	Int16 remoteExecutedOwner
 );
 
+internal delegate int ExtensionCallback(
+	string name, 
+	string function,
+	string data
+);
+
 public class DllEntry
 {
 	//private static readonly string SessionKey = Tools.GenTimeEncode();
 	public static string InitTime = null;
 	public static bool ExtensionInit = false;
 	public static Webhooks_Storage? ALLWebhooks = null;
-	private static CallContext contextInfo;
 	internal static readonly ServiceInteractions ServiceInteractions = new();
+	
+	private static CallContext contextInfo;
+	internal static ExtensionCallback Callback;
 
 	private static void Output(IntPtr destination, int outputSize, string data)
 	{
@@ -46,6 +54,25 @@ public class DllEntry
 		public void Append(string data)
 		{
 			Output(destination, outputSize, data);
+		}
+	}
+	
+	/// <summary>
+	/// Register callback for Arma
+	/// </summary>
+	/// <param name="functionPtr"></param>
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionRegisterCallback")]
+	public static void RVExtensionRegisterCallback(nint functionPtr)
+	{
+		try
+		{
+			Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
+			Logger.Trace("RVExtensionRegisterCallback", "CallBack Initiated");
+		}
+		catch (Exception e)
+		{
+			Logger.Trace("RVExtensionRegisterCallback", "ERROR...");
+			Logger.Log(e);
 		}
 	}
 
