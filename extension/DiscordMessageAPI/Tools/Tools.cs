@@ -1,6 +1,8 @@
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using static DiscordMessageAPI.WebService.ServiceInteractions;
+using Arma3WebService;
+using static DiscordMessageAPI.DllEntry;
 
 namespace DiscordMessageAPI.Tools;
 
@@ -82,7 +84,6 @@ internal class Util
 		// Return the encrypted bytes from the memory stream as a base64 encoded string
 		return Convert.ToBase64String(encrypted);
 	}
-
 	private static byte[] GenerateRandomWebKey()
 	{
 		using var sha256 = SHA256.Create();
@@ -104,10 +105,9 @@ internal class Util
 	
 	internal static string GetLastestRpt()
 	{
-		var files = Directory.GetFiles(RPTDirectory);
+		var files = Directory.GetFiles(ServiceInteractions.RPTDirectory);
 
 		//- Check how many logs
-
 		Dictionary<string, DateTime> dict = new();
 		foreach (var file in files)
 		{
@@ -119,5 +119,10 @@ internal class Util
 		
 		Logger.Trace("GetLastestRpt (Return)", list[0].Key);
 		return list[0].Key;
+	}
+	internal static int CallExtensionCallback(Arma3PayloadCallBack callBack)
+	{
+		Logger.Trace("MessageReceived [callBack] =>", callBack.ToString());
+		return Callback("DISCORD_API", callBack.Function, callBack.Data);
 	}
 }

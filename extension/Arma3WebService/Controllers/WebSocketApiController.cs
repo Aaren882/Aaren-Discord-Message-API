@@ -22,8 +22,8 @@ namespace Arma3WebService.Controllers
 			if (!context.WebSockets.IsWebSocketRequest)
 				return Problem(statusCode: 501, detail: "Incorrect Request Context");
 			
-			if (context.User.Identity == null)
-				return Unauthorized("No Identity is specified.");
+			// if (context.User.Identity == null)
+			// 	return Unauthorized("No Identity is specified.");
 
 			await service.CreateConnection(new WebsocketContextEntity(context, Arma3PayLoadType.Message));
 			return new EmptyResult();

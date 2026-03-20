@@ -12,6 +12,7 @@ class CfgPatches
 		weapons[] = {};
 		VERSION_CONFIG;
 	};
+  class ADDON: DiscordMessageAPI {};
 };
 
 class Extended_PreInit_EventHandlers 

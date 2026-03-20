@@ -1,5 +1,6 @@
 #include "script_component.hpp"
 
+
 //- Must Be Multiplayer
 #ifndef DEBUG_MODE_FULL
   if !(isMultiplayer) exitWith {};
@@ -26,10 +27,12 @@ if (isServer) then {
     0 spawn {
       waitUntil { !isNull findDisplay 46 };
 
+      INFO(MSG_INIT);
+      [QGVARMAIN(postInit_Server)] call CBA_fnc_LocalEvent;
+
       //- Check Mission Ended
       findDisplay 46 displayAddEventHandler ["Unload",
       {
-
         private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
         private _format = [];
         private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];
@@ -64,6 +67,7 @@ if (isServer) then {
       !isNil{DiscordEmbedBuilder_Info}
     };
     call DiscordAPI_fnc_init_player;
+    [QGVARMAIN(postInit_Client)] call CBA_fnc_LocalEvent;
   };
 };
 

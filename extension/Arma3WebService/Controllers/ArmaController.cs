@@ -1,30 +1,41 @@
 using System.Runtime.CompilerServices;
+using Arma3WebService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
-	[Authorize(
+	/*[Authorize(
 		Policy = "GameRequest",
 		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
-	]
+	]*/
 	[Route("api/[controller]")]
 	[ApiController]
 	public class ArmaController : ControllerBase
 	{
 		private readonly ILogger<ArmaController> _logger;
+		private readonly IServiceProvider _serviceProvider;
 
-		public ArmaController(ILogger<ArmaController> logger)
+		public ArmaController(ILogger<ArmaController> logger, IServiceProvider serviceProvider)
 		{
 			_logger = logger;
+			_serviceProvider = serviceProvider;
 		}
 
 		[HttpPost(Name = "ArmaController")]
-		public IActionResult PostLog(Arma3Payload payload)
+		public IActionResult PostLog(Arma3PayloadMessage payload)
 		{
 			_logger.LogInformation($"Restful Received Log: {payload.Message}");
 			return Ok(new { hello = "" });
+		}
+		
+		[HttpPost("remote")]
+		public async Task<IActionResult> Remote(string gameId, Arma3PayloadCallBack payload)
+		{
+			var service = _serviceProvider.GetRequiredService<WebSocketService>();
+			await service.InvokeArmaCallBack(gameId, payload);
+			return Ok();
 		}
 
 		[HttpGet("GetLogs")]
