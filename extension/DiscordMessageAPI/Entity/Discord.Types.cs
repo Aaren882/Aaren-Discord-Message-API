@@ -99,7 +99,11 @@ public record struct EmbedData
     public string? timestamp
     {
 	    get => _timestamp;
-	    init => _timestamp = value?.Trim().ToLower() == "true" ? 
+	    init => _timestamp = string.Equals(
+			    value?.Trim(),
+			    "true",
+			    StringComparison.OrdinalIgnoreCase
+			) ? 
 		    DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") : 
 		    value;
     }
@@ -169,10 +173,8 @@ public record struct Types
             name = data.Count > 0 ? data[0] : "";
             value = data.Count > 1 ? data[1] : "";
 
-            if (data.Count > 2)
-                inline = data[2].ToLower() is "true" ? true : false;
-            else
-                inline = false;
+            inline = data.Count > 2 &&
+                     string.Equals(data[2],"true", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
