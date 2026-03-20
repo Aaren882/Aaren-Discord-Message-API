@@ -23,14 +23,14 @@ if (isServer) then {
     missionNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook,true];
     call DiscordAPI_fnc_ServerInfo_Loop;
 
-  //- on Server Shutdown
     0 spawn {
       waitUntil { !isNull findDisplay 46 };
 
+      //- Fire postInit Event
       INFO(MSG_INIT);
       [QGVARMAIN(postInit_Server)] call CBA_fnc_LocalEvent;
 
-      //- Check Mission Ended
+      //- Check Mission Ended (on Server Shutdown)
       findDisplay 46 displayAddEventHandler ["Unload",
       {
         private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
