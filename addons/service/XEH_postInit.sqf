@@ -10,7 +10,7 @@ INFO(MSG_INIT);
     params ["_name", "_function", "_data"];
     if (_name isNotEqualTo "DISCORD_API") exitWith {}; //- Check source
 
-    INFO_3("DISCORD_API [CallBack]",_name,_function,_data);
+    INFO_2("DISCORD_API [CallBack] | Function : %1 :: Data : %2 ",_function,_data);
 
     private _fnc = uiNamespace getVariable [_function, {
       systemChat "No callBack function is found.";
