@@ -11,7 +11,7 @@ namespace DiscordMessageAPI.WebService
 		private ClientWebSocket? _webSocket;
 		private CancellationTokenSource? _cancellationTokenSource;
 
-		public event Action<string>? MessageReceived;
+		public event Action<Arma3Payload>? MessageReceived;
 		public event Action? Connected;
 		public event Action? Disconnected;
 
@@ -50,13 +50,13 @@ namespace DiscordMessageAPI.WebService
 
 				// Send Metadata (as text message)
 				var metadata = new Arma3PayloadRPT
-				{
-					FileName = fileInfo.Name,
-					FileSize = fileInfo.Length,
-					CreatedTime = fileInfo.CreationTime,
-					TotalChunks = totalChunks
+				(
+					fileInfo.Name,
+					fileInfo.Length,
+					fileInfo.CreationTime,
+					totalChunks
 					// ChunkIndex
-				};
+				);
 				var payload = new Arma3Payload
 				{
 					MessageType = Arma3PayLoadType.Rpt,
@@ -130,7 +130,14 @@ namespace DiscordMessageAPI.WebService
 					{
 						var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
 						Logger.Log(null ,$"Received: {message}");
-						MessageReceived?.Invoke(message);
+						
+						var payload = JsonSerializer.Deserialize(
+							message, 
+							Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+						);
+						
+						//- Invoke callback
+						MessageReceived?.Invoke(payload);
 					}
 					else if (result.MessageType == WebSocketMessageType.Close)
 					{
@@ -145,7 +152,7 @@ namespace DiscordMessageAPI.WebService
 			}
 			catch (Exception ex)
 			{
-				Logger.Log(null ,$"Error receiving message: {ex.Message}");
+				Logger.Log(null ,$"Error receiving message: \"{ex.Message}\"");
 			}
 			finally
 			{

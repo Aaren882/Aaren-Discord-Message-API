@@ -9,6 +9,7 @@ namespace Arma3WebService
 	public interface IConnection
 	{
 		Task<WebSocketCloseStatus?> KeepReceiving();
+		Task SendArmaCallback(Arma3PayloadCallBack callBack);
 		Task Send(string message);
 		Task Close();
 	}
@@ -53,7 +54,7 @@ namespace Arma3WebService
 						Console.WriteLine($"Received metaData for binary file '{metadata}'");
 						
 						await using var fileStream = new FileStream(
-							metadata?.FileName, FileMode.Create, FileAccess.Write);
+							metadata.FileName, FileMode.Create, FileAccess.Write);
 						
 						await ReceiveBinary(fileStream);
 						break;
@@ -93,7 +94,21 @@ namespace Arma3WebService
 
 			return result;
 		}
-
+		
+		public async Task SendArmaCallback(Arma3PayloadCallBack callBack)
+		{
+			var payload = new Arma3Payload(Arma3PayLoadType.Command)
+			{
+				CallBack = callBack
+			};
+			var package = JsonSerializer.Serialize(
+				payload, 
+				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+			);
+			var bytes = Encoding.UTF8.GetBytes(package);
+			await _webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, true,
+				CancellationToken.None);
+		}
 		public async Task Send(string message)
 		{
 			var bytes = Encoding.UTF8.GetBytes(message);

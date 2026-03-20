@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Arma3WebService;
@@ -7,28 +6,42 @@ public enum Arma3PayLoadType
 {
 	Message = 1,
 	Rpt = 2, //- in game *.rpt logs
+	Command = 3,
 }
-public record struct Arma3Payload
+public record struct Arma3Payload(
+	Arma3PayLoadType MessageType
+)
 {
-	public required Arma3PayLoadType MessageType { get; set; }
+	public Arma3PayloadMessage Message { get; init; }
+	public Arma3PayloadRPT Rpt { get; init; }
+	public Arma3PayloadCallBack CallBack { get; init; }
 	public DateTime Timestamp => DateTime.Now;
-	public string? Message { get; set; }
-	public Arma3PayloadRPT? Rpt { get; set; }
 }
 
-public record struct Arma3PayloadRPT(
+public abstract record IArma3Payload;
+
+public record Arma3PayloadMessage(
+	string Message
+) : IArma3Payload;
+
+public record Arma3PayloadRPT(
 	string FileName,
 	long FileSize,
 	DateTime CreatedTime,
 	int TotalChunks
-);
+) : IArma3Payload;
 
+public record Arma3PayloadCallBack(
+	string Function,
+	string Data
+) : IArma3Payload;
+
+//- Service
 public record struct ServiceAuthenticationHeader
-{
-	public string Username { get; set; }
-	public string Password { get; set; }
-}
-
+(
+	string Username,
+	string Password
+);
 public record Arma3ServiceSecret(
 	string ServiceUri,
 	string WebSocketServiceUri,
@@ -39,6 +52,7 @@ public record Arma3ServiceSecret(
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [JsonSerializable(typeof(Arma3Payload))]
 [JsonSerializable(typeof(Arma3PayloadRPT))]
+[JsonSerializable(typeof(Arma3PayloadCallBack))]
 [JsonSerializable(typeof(List<Arma3Payload>))] // Add all root types used
 [JsonSerializable(typeof(Arma3ServiceSecret))]
 internal sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;

@@ -12,8 +12,9 @@ public class ServiceInteractions
 {
 	private const string Secret = "secret.json"; 
 	private static readonly Arma3ServiceSecret ServiceSecret = GetServiceSecret();
-	private static string AccessName;
-	internal static readonly string RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
+	
+	private string? AccessName;
+	internal readonly string RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
 
 	public event Action<IdentityRolesReturnPayload>? AccessTokenReceived;
 	private readonly WebSocketClient _wsClient = new(ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
@@ -22,7 +23,21 @@ public class ServiceInteractions
 	{
 		_wsClient.Connected += () => Logger.Log(null, "Event: Connected to server");
 		_wsClient.Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
-		_wsClient.MessageReceived += (message) => Logger.Log(null, $"Event: Message received - {message}");
+		_wsClient.MessageReceived += (message) =>
+		{
+			switch (message.MessageType)
+			{
+				case Arma3PayLoadType.Command: { //- Remote command from websocket
+					Util.CallExtensionCallback(message.CallBack);
+					break;
+				}
+				case Arma3PayLoadType.Rpt: //- Remote command to Send RPT
+					break;
+				case Arma3PayLoadType.Message:
+					break;
+				// default : throw new Exception("No callBack action is found.");
+			}
+		};
 	}
 	
 	internal async Task EstablishWebSocketConnection(string accessName)
@@ -57,6 +72,10 @@ public class ServiceInteractions
     {
 		return _wsClient.SendBinaryAsync(filePath);
     }
+	internal string HashedAccessName()
+	{
+		return Convert.ToBase64String(Encoding.UTF8.GetBytes(AccessName!));
+	}
 	
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
@@ -97,12 +116,11 @@ public class ServiceInteractions
 			
 			//- Get the Token
 			var result = await response.Content.ReadAsStringAsync();
-			Logger.Trace("Token Manager (result)", result);
-			
 			var authTokenPayload = JsonSerializer.Deserialize(
 				result,
 				IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesReturnPayload
 			)!;
+			Logger.Trace("Token Manager (result)", authTokenPayload.ToString());
 
 			if (authTokenPayload is { AuthToken: null })
 				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");
@@ -129,12 +147,6 @@ public class ServiceInteractions
 		)!;
 		
 		Logger.Trace("GetServiceSecret", secretString);
-		Logger.Trace("GetServiceSecret (Username)", tokenPayload.Secret.Username);
-		Logger.Trace("GetServiceSecret (Password)", tokenPayload.Secret.Password);
-		Logger.Trace("GetServiceSecret (Uri)", tokenPayload.ServiceUri);
-		Logger.Trace("GetServiceSecret (WS Uri)", tokenPayload.WebSocketServiceUri);
-		Logger.Trace("GetServiceSecret (RPT Directory)", tokenPayload.RPT_Directory);
-
 		return tokenPayload;
 	}
 	private static string GetBasicAuthenticationBearer(Arma3ServiceSecret serviceSecret)

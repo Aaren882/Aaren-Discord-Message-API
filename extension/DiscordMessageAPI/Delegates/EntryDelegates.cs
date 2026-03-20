@@ -216,7 +216,7 @@ public static class EntryDelegates
             var messageObj = new Arma3Payload
             {
 	            MessageType = Arma3PayLoadType.Message,
-	            Message = message,
+	            Message = new Arma3PayloadMessage(message),
             };
             
             _ = ServiceInteractions.SendWebSocketMessage(messageObj);

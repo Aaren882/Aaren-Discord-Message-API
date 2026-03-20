@@ -27,5 +27,10 @@
       "useSSL": true
     }
   },
+  "executablePath": {
+    "type": "string",
+    "description": "An absolute or relative path to the executable.",
+    "default": "/WebService"
+  },
   "$schema": "https://json.schemastore.org/launchsettings.json"
 }
