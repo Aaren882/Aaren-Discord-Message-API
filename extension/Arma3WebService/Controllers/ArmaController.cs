@@ -30,12 +30,19 @@ namespace Arma3WebService.Controllers
 			return Ok(new { hello = "" });
 		}
 		
-		[HttpPost("remote")]
-		public async Task<IActionResult> Remote(string gameId, Arma3PayloadCallBack payload)
+		[HttpPost("RemoteCommand")]
+		public async Task<IActionResult> RemoteCommand(Arma3RemoteCommand command)
 		{
-			var service = _serviceProvider.GetRequiredService<WebSocketService>();
-			await service.InvokeArmaCallBack(gameId, payload);
-			return Ok();
+			try
+			{
+				var service = _serviceProvider.GetRequiredService<WebSocketService>();
+				await service.InvokeArmaCallBack(command);
+				return Ok();
+			}
+			catch (Exception e)
+			{
+				return BadRequest(e.Message);
+			}
 		}
 
 		[HttpGet("GetLogs")]

@@ -10,4 +10,6 @@ namespace Arma3WebService
 
 		public string? Summary { get; set; }
 	}
+
+	public record struct Arma3RemoteCommand(string gameId, Arma3PayloadCallBack payload);
 }

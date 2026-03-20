@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Arma3WebService.Entity;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 
@@ -8,7 +10,7 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
-		public Task InvokeArmaCallBack(string gameId, Arma3PayloadCallBack payloadCallBack);
+		public Task InvokeArmaCallBack(Arma3RemoteCommand command);
 		public Task CreateConnection(WebsocketContextEntity context);
 	}
 
@@ -30,10 +32,12 @@ namespace Arma3WebService.Models
 			_connectionManager = new ConnectionManager();
 		}
 
-		public async Task InvokeArmaCallBack(string gameId, Arma3PayloadCallBack payloadCallBack)
+		public async Task InvokeArmaCallBack(Arma3RemoteCommand command)
 		{
-			var session = Connections[gameId];
-			await session.SendArmaCallback(payloadCallBack);
+			if (!Connections.TryGetValue(command.gameId, out var session))
+				throw new NullReferenceException($"No \"{command.gameId}\" is not found.");
+			
+			await session.SendArmaCallback(command.payload);
 		}
 		public Task StartAsync(CancellationToken cancellationToken)
 		{
@@ -84,6 +88,7 @@ namespace Arma3WebService.Models
 			finally
 			{
 				Connections.TryRemove(connectionIdentity, out connection!);
+				await connection.Close();
 				_logger.LogInformation($"Close connection '{contextEntity.Context.Connection.Id}' - '{contextEntity.Context.Connection.RemoteIpAddress}'. Total connections: {Connections.Count}");
 			}
 		}
