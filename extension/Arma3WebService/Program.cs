@@ -68,10 +68,7 @@ namespace Arma3WebService
 					options.TokenValidationParameters =
 						new JwtHelpers(builder.Configuration).GetValidationParameters();
 				})
-				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", options =>
-				{
-
-				});
+				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
 
 
 			var app = builder.Build();

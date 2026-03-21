@@ -9,7 +9,7 @@ namespace Arma3WebService.Handler
 {
 	public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSchemeOptions>
 	{
-		private readonly string _username = Environment.GetEnvironmentVariable("tokenManagerName") ?? "admin";
+		private readonly ServiceAuthenticationHeader _header;
 		private readonly string _HashedKey;
 		private readonly ILogger _logger;
 
@@ -19,49 +19,43 @@ namespace Arma3WebService.Handler
 			UrlEncoder encoder
 		) : base(options, logger, encoder)
 		{
-			string password = Environment.GetEnvironmentVariable("tokenManagerPassword") ?? "password";
-			string usernamePassword = String.Join(':', [_username, password]);
-			_HashedKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(usernamePassword));
-			
+			var username = Environment.GetEnvironmentVariable("tokenManagerName") ?? "admin";
+            var password = Environment.GetEnvironmentVariable("tokenManagerPassword") ?? "password";
+
+            _header = new ServiceAuthenticationHeader(username, password);
+			_HashedKey = _header.ToString();
 			_logger = logger.CreateLogger("BasicAuthenticationHandler");
 		}
 
-		protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+		protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
 		{
 			var authorizationHeader = Request.Headers.Authorization.ToString();
 
 			if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Basic "))
 			{
-				return Task.FromResult(
-					AuthenticateResult.Fail("Missing Basic Auth header")
-				);
+				return AuthenticateResult.Fail("Missing Basic Auth header");
 			}
 			
 			var encodedUsernamePassword = authorizationHeader.Substring("Basic ".Length).Trim();
+			
+			//- Check Authentication
+			if (_HashedKey != encodedUsernamePassword)
+				return AuthenticateResult.Fail("Invalid credentials");
+			
+			_logger.LogInformation("\"Arma Token Manager Request is Authenticated.\"");
 
-			if (_HashedKey == encodedUsernamePassword)
-			{
-				_logger.LogInformation("\"Arma Token Manager Request is Authenticated.\"");
+			// Generate the JWT token upon successful validation
+			var claims = new[] {
+				new Claim(ClaimTypes.Name, _header.Username),
+				//#NOTE : In game server request
+				new Claim(ClaimTypes.NameIdentifier, IdentityRoles.GameServerGuid.ToString())
+			};
 
-				// Generate the JWT token upon successful validation
-				var claims = new[] {
-					new Claim(ClaimTypes.Name, _username),
-					//#NOTE : In game server request
-					new Claim(ClaimTypes.NameIdentifier, IdentityRoles.GameServerGuid.ToString())
-				};
+			var claimsIdentity = new ClaimsIdentity(claims, Scheme.Name);
+			var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+			var authenticationTicket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);
 
-				var claimsIdentity = new ClaimsIdentity(claims, Scheme.Name);
-				var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-				var authenticationTicket = new AuthenticationTicket(claimsPrincipal, Scheme.Name);
-
-				return Task.FromResult(
-					AuthenticateResult.Success(authenticationTicket)
-				);
-			}
-
-			return Task.FromResult(
-				AuthenticateResult.Fail("Invalid credentials")
-			);
+			return AuthenticateResult.Success(authenticationTicket);
 		}
 	}
 }

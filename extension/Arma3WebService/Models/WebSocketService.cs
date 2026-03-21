@@ -55,7 +55,7 @@ namespace Arma3WebService.Models
 		}
 		public async Task CreateConnection(WebsocketContextEntity contextEntity)
 		{
-			var connectionIdentity = contextEntity.Context.User.Identity?.Name ?? "Not Specified";
+			var connectionIdentity = contextEntity.Identity;
 
 			if (Connections.ContainsKey(connectionIdentity))
 			{
@@ -66,14 +66,12 @@ namespace Arma3WebService.Models
 			IConnection connection;
 			try
 			{
-				var websocket = await contextEntity.Context.WebSockets.AcceptWebSocketAsync();
-				var websocketEntity = new WebsocketEntity(websocket, contextEntity);
-				
+				var websocketEntity = new WebsocketEntity(contextEntity);
 				connection = _connectionFactory.CreateConnection(websocketEntity);
 
-				Connections.TryAdd(connectionIdentity, connection);
+				Connections.TryAdd(contextEntity.Identity, connection);
 
-				_logger.LogInformation($"Accepted connection Name : '{connectionIdentity}'/'{contextEntity.Context.Connection.Id}' - '{contextEntity.Context.Connection.RemoteIpAddress}'. Total connections: {Connections.Count}");
+				_logger.LogInformation($"Accepted connection Name : '{connectionIdentity}'/'{contextEntity.Id}' - '{contextEntity.ClientIpAddress}'. Total connections: {Connections.Count}");
 
 				await _connectionManager.HandleConnection(connection);
 			}
@@ -88,8 +86,13 @@ namespace Arma3WebService.Models
 			finally
 			{
 				Connections.TryRemove(connectionIdentity, out connection!);
-				await connection.Close();
-				_logger.LogInformation($"Close connection '{contextEntity.Context.Connection.Id}' - '{contextEntity.Context.Connection.RemoteIpAddress}'. Total connections: {Connections.Count}");
+				_logger.LogInformation(
+					"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}", 
+					connection.CloseStatusDescription(),
+					contextEntity.Identity,
+					contextEntity.ClientIpAddress,
+					Connections.Count
+				);
 			}
 		}
 	}

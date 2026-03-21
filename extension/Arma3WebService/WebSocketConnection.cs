@@ -6,19 +6,20 @@ using Arma3WebService.Entity;
 
 namespace Arma3WebService
 {
-	public interface IConnection
+	public interface IConnection 
 	{
 		Task<WebSocketCloseStatus?> KeepReceiving();
 		Task SendArmaCallback(Arma3PayloadCallBack callBack);
 		Task Send(string message);
 		Task Close();
+		string? CloseStatusDescription();
 	}
 
 	public class WebSocketConnection(WebsocketEntity websocketEntity) : IConnection
 	{
 		private readonly WebsocketEntity _websocketEntity = websocketEntity;
 		private readonly WebsocketContextEntity _websocketContextEntity = websocketEntity.ContextEntity;
-		private readonly WebSocket _webSocket = websocketEntity.WebSocket;
+		private readonly WebSocket _webSocket = websocketEntity.AcceptConnection();
 
 		public async Task<WebSocketCloseStatus?> KeepReceiving()
 		{
@@ -119,6 +120,11 @@ namespace Arma3WebService
 		public async Task Close()
 		{
 			await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+		}
+		
+		public string? CloseStatusDescription()
+		{
+			return _webSocket.CloseStatusDescription ?? "No Close Description";
 		}
 	}
 }

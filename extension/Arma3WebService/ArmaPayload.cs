@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Arma3WebService;
@@ -37,11 +38,17 @@ public record Arma3PayloadCallBack(
 ) : IArma3Payload;
 
 //- Service
-public record struct ServiceAuthenticationHeader
-(
+public record struct ServiceAuthenticationHeader(
 	string Username,
 	string Password
-);
+)
+{
+	public override string ToString()
+	{
+		var usernamePassword = string.Join(':', [Username, Password]);
+		return Convert.ToBase64String(Encoding.UTF8.GetBytes(usernamePassword));
+	}
+};
 public record Arma3ServiceSecret(
 	string ServiceUri,
 	string WebSocketServiceUri,
