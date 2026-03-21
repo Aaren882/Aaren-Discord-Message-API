@@ -1,5 +1,6 @@
 using System.Data;
 using System.Net.Http.Headers;
+using System.Net.WebSockets;
 using System.Text;
 using DiscordMessageAPI.Tools;
 using System.Text.Json;
@@ -42,16 +43,22 @@ public class ServiceInteractions
 	
 	internal async Task EstablishWebSocketConnection(string accessName)
 	{
+		if (_wsClient.Status() == WebSocketState.Open)
+		{
+			Logger.Log(null, "WebSocket connection already established.");
+			return;
+		}
+		
 		var tokenPayload = await GetAccessToken(accessName);
 		await _wsClient.ConnectAsync(tokenPayload.AuthToken);
 	}
-	internal async Task DisconnectWebSocket()
+	internal async Task DisconnectWebSocket(string description = "Client disconnect")
 	{
-		await _wsClient.DisconnectAsync();
+		await _wsClient.DisconnectAsync(description);
 	}
 	internal async Task ReconnectWebSocket()
 	{
-		await DisconnectWebSocket();
+		await DisconnectWebSocket("Client Reconnecting");
 		await EstablishWebSocketConnection(AccessName);
 	}
 	internal Task SendWebSocketMessage(Arma3Payload messageObj)
@@ -72,10 +79,6 @@ public class ServiceInteractions
     {
 		return _wsClient.SendBinaryAsync(filePath);
     }
-	internal string HashedAccessName()
-	{
-		return Convert.ToBase64String(Encoding.UTF8.GetBytes(AccessName!));
-	}
 	
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
@@ -151,14 +154,6 @@ public class ServiceInteractions
 	}
 	private static string GetBasicAuthenticationBearer(Arma3ServiceSecret serviceSecret)
 	{
-		return ConvertSecretIntoHash(
-			serviceSecret.Secret.Username,
-			serviceSecret.Secret.Password
-		);
-	}
-	private static string ConvertSecretIntoHash(string username, string password)
-	{
-		var usernamePassword = string.Join(':', [username, password]);
-		return Convert.ToBase64String(Encoding.UTF8.GetBytes(usernamePassword));
+		return serviceSecret.Secret.ToString();
 	}
 }

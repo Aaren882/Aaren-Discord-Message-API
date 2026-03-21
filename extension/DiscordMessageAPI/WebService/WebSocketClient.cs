@@ -15,15 +15,21 @@ namespace DiscordMessageAPI.WebService
 		public event Action? Connected;
 		public event Action? Disconnected;
 
+		public WebSocketState? Status()
+		{
+			return _webSocket?.State;
+		}
+
 		public async Task ConnectAsync(string? jwtToken)
 		{
 			try
 			{
+				if (Status() == WebSocketState.Open)
+					throw new Exception("WebSocket already connected."); 
+				
 				_webSocket = new ClientWebSocket();
 				if (jwtToken != null)
-				{
 					_webSocket.Options.SetRequestHeader("Authorization", "Bearer " + jwtToken);
-				}
 				
 				_cancellationTokenSource = new CancellationTokenSource();
 
@@ -43,7 +49,7 @@ namespace DiscordMessageAPI.WebService
 		}
 		public async Task SendBinaryAsync(string filePath, int chunkSize = 64 * 1024)
 		{
-			if (_webSocket?.State == WebSocketState.Open)
+			if (Status() == WebSocketState.Open)
 			{
 				var fileInfo = new FileInfo(filePath);
 				var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
@@ -96,7 +102,7 @@ namespace DiscordMessageAPI.WebService
 
 		public async Task SendMessageAsync(string messagePayload)
 		{
-			if (_webSocket?.State == WebSocketState.Open)
+			if (Status() == WebSocketState.Open)
 			{
 				var bytes = Encoding.UTF8.GetBytes(messagePayload);
 				
@@ -120,7 +126,7 @@ namespace DiscordMessageAPI.WebService
 
 			try
 			{
-				while (_webSocket?.State == WebSocketState.Open)
+				while (Status() == WebSocketState.Open)
 				{
 					var result = await _webSocket.ReceiveAsync(
 						new ArraySegment<byte>(buffer),
@@ -160,15 +166,15 @@ namespace DiscordMessageAPI.WebService
 			}
 		}
 
-		public async Task DisconnectAsync()
+		public async Task DisconnectAsync(string description)
 		{
 			try
 			{
-				if (_webSocket?.State == WebSocketState.Open)
+				if (Status() == WebSocketState.Open)
 				{
-					await _webSocket.CloseAsync(
+					await _webSocket!.CloseAsync(
 						WebSocketCloseStatus.NormalClosure,
-						"Client disconnect",
+						description,
 						CancellationToken.None);
 				}
 
