@@ -17,6 +17,4 @@ public sealed record WebsocketEntity(WebsocketContextEntity ContextEntity)
 		return ContextEntity.Context.WebSockets.AcceptWebSocketAsync()
 			.GetAwaiter().GetResult();
 	}
-
-	
 };

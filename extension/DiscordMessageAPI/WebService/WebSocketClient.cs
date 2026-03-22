@@ -83,7 +83,7 @@ namespace DiscordMessageAPI.WebService
 					for (var i = 0; i < totalChunks; i++)
 					{
 						var buffer = new byte[chunkSize];
-						var bytesRead = await fileStream.ReadAsync(buffer, 0, buffer.Length);
+						var bytesRead = await fileStream.ReadAsync(buffer);
 
 						// If the last chunk is smaller than the buffer size
 						var chunkBytes = new byte[bytesRead];
