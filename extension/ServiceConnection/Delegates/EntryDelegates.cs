@@ -2,13 +2,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Arma3WebService;
-using DiscordMessageAPI.Discord;
-using DiscordMessageAPI.Entity;
-using DiscordMessageAPI.Tools;
-using static DiscordMessageAPI.DllEntry;
+using Components.Entity;
+using ServiceConnection.Discord;
+using ServiceConnection.Tools;
+using static ServiceConnection.ServiceConnectionEntry;
 
-namespace DiscordMessageAPI.Delegates;
+namespace ServiceConnection.Delegates;
 public static class EntryDelegates
 {
 	public static readonly IDictionary<string, InitActions> ActionsDict = _initActionsMap(typeof(Actions));
@@ -52,7 +51,10 @@ public static class EntryDelegates
 			
             return 0;
         }
-        internal static int Init_Server(OutputBuilder output, string[] args, int argCount)
+
+	    public static string InitTime { get; set; }
+
+	    internal static int Init_Server(OutputBuilder output, string[] args, int argCount)
         {
 	        // var webhooksCount = 0;
 	        // if (ExtensionInit) return webhooksCount;
@@ -72,12 +74,17 @@ public static class EntryDelegates
             var jsonString = Util.ParseJson("Webhooks.json");
             Logger.Trace("Refresh_Webhooks", jsonString);
 
-            ALLWebhooks = JsonSerializer.Deserialize(
+            var webhooks = JsonSerializer.Deserialize(
                 jsonString,
                 Webhooks_Storage_JsonContext.Default.Webhooks_Storage
             );
+            
+            webhooks.Webhooks = webhooks.Webhooks
+	            .Select(data => Util.EncryptString(data)).ToArray();
+            
+            ALLWebhooks = webhooks;
 
-            var webhooksCount = ALLWebhooks!.Webhooks.Length;
+            var webhooksCount = ALLWebhooks?.Webhooks.Length ?? 0;
             var webhookSel = Math.Min(Int32.Parse(args[0]), webhooksCount - 1);
             ExtensionInit = true;
 
@@ -88,8 +95,8 @@ public static class EntryDelegates
             }
 
             output.Append(webhookSel < 0 // output can be like ["ww", "ww"]
-	            ? $"[[\"{string.Join("\",\"", ALLWebhooks.Webhooks)}\"],\"{InitTime}\"]"
-	            : $"[\"{ALLWebhooks.Webhooks[webhookSel]}\",\"{InitTime}\"]");
+	            ? $"[[\"{string.Join("\",\"", ALLWebhooks?.Webhooks)}\"],\"{InitTime}\"]"
+	            : $"[\"{ALLWebhooks?.Webhooks[webhookSel]}\",\"{InitTime}\"]");
 
             return webhooksCount;
         }
@@ -220,7 +227,7 @@ public static class EntryDelegates
         }
         internal static int SendWebSocketRPT(OutputBuilder output, string[] args, int argCount)
         {
-            _ = ServiceInteractions.SendWebSocketBinary(Util.GetLastestRpt());
+            _ = ServiceInteractions.SendWebSocketBinary(Util.GetLastestFile(ServiceInteractions.RPTDirectory));
             return 1;
         }
     }

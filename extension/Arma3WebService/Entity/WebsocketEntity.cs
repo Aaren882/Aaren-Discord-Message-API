@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.WebSockets;
+using Components.Entity;
 
 namespace Arma3WebService.Entity;
 

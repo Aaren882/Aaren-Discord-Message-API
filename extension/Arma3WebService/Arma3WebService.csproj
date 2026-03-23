@@ -33,4 +33,9 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ServiceConnection\ServiceConnection.csproj" />
+    <ProjectReference Include="..\Components\Components.csproj" />
+  </ItemGroup>
+
 </Project>

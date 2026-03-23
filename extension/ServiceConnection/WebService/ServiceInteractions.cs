@@ -2,12 +2,14 @@ using System.Data;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
-using DiscordMessageAPI.Tools;
 using System.Text.Json;
-using Arma3WebService;
-using Arma3WebService.Identities;
+using Components.Entity;
+using DiscordMessageAPI.ServiceConnection.WebService;
+using ServiceConnection;
+using ServiceConnection.Tools;
+using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
 
-namespace DiscordMessageAPI.WebService;
+namespace DiscordMessageAPI.DiscordMessageAPI.WebService;
 
 public class ServiceInteractions
 {
@@ -31,7 +33,7 @@ public class ServiceInteractions
 			switch (message.MessageType)
 			{
 				case Arma3PayLoadType.Command: { //- Remote command from websocket
-					Util.CallExtensionCallback(message as Arma3PayloadCallBack);
+					Util.CallExtensionCallback(ServiceConnectionEntry.Callback, message as Arma3PayloadCallBack);
 					break;
 				}
 				case Arma3PayLoadType.Rpt: //- Remote command to Send RPT

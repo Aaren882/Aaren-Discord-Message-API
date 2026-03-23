@@ -1,6 +1,6 @@
-namespace DiscordMessageAPI.Tools;
+namespace ServiceConnection.Tools;
 
-internal class Logger
+public class Logger
 {
 	private static readonly string ExtFilePath = Util.AssemblyPath!;
 	private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
@@ -16,13 +16,14 @@ internal class Logger
 	/// <param name="Name">The name or category associated with the trace message. Used to identify the source or context of the trace
 	/// output.</param>
 	/// <param name="content">The content of the trace message to be logged.</param>
-	internal static void Trace(string Name, string content)
+	public static void Trace(string Name, string content)
 	{
 #if DEBUG
 		Log(null, $"TRACER - {Name} : {content}");
 #endif
 	}
-	internal static void Log(Exception? e, string s = "", bool loop = false)
+
+	public static void Log(Exception? e, string s = "", bool loop = false)
 	{
 		try
 		{
@@ -44,7 +45,7 @@ internal class Logger
 		}
 	}
 
-	internal static void CleanLogs()
+	public static void CleanLogs()
 	{
 		var limit = 10;
 		var files = Directory.GetFiles(LogFilePath);

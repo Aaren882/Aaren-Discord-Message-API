@@ -1,15 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Arma3WebService.Handler;
 using Arma3WebService.Identities;
 using Arma3WebService.Models;
-using Discord;
+using Components.Entity;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Arma3WebService
 {

@@ -1,60 +1,14 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
-using DiscordMessageAPI.Discord;
-using DiscordMessageAPI.Entity;
-using DiscordMessageAPI.Tools;
-using DiscordMessageAPI.WebService;
-using static DiscordMessageAPI.Delegates.EntryDelegates;
+using Components.Entity;
+using ServiceConnection.Tools;
+using static ServiceConnection.Delegates.EntryDelegates;
+using static ServiceConnection.ServiceConnectionEntry;
 
 namespace DiscordMessageAPI;
 
-internal record struct CallContext(
-	UInt64 steamId,
-	string fileSource,
-	string missionName,
-	string serverName,
-	Int16 remoteExecutedOwner
-);
-
-internal delegate int ExtensionCallback(
-	string name, 
-	string function,
-	string data
-);
-
 public class DllEntry
 {
-	public static string? InitTime = null;
-	public static bool ExtensionInit = false;
-	public static Webhooks_Storage? ALLWebhooks = null;
-	internal static readonly ServiceInteractions ServiceInteractions = new();
-	
-	private static CallContext contextInfo;
-	internal static ExtensionCallback Callback;
-
-	private static void Output(IntPtr destination, int outputSize, string data)
-	{
-		var buffer = new byte[outputSize];
-		//- Empty buffer (clean up previous output)
-		Marshal.Copy(buffer, 0, destination, outputSize);
-		
-		//- Write data into buffer 
-		var bytes = Encoding.UTF8.GetBytes(data, buffer);
-		Marshal.Copy(buffer, 0, destination, bytes);
-	}
-
-	public readonly record struct OutputBuilder(nint destination, int outputSize)
-	{
-		/// <summary>
-		/// Construct output buffer for Arma
-		/// </summary>
-		/// <param name="data">String data that will be output</param>
-		public void Append(string data)
-		{
-			Output(destination, outputSize, data);
-		}
-	}
 	
 	/// <summary>
 	/// Register callback for Arma
@@ -95,7 +49,7 @@ public class DllEntry
 			.Substring(0, version.LastIndexOf('+') + 9);
 		
 		Logger.Log(null, $"Extension Version : [{version}]");
-		Output(outputPrt, outputSize, version);
+		OutputBuilder.Output(outputPrt, outputSize, version);
 	}
 	
 	/// <summary>
@@ -144,7 +98,7 @@ public class DllEntry
 			Logger.Log(e);
 		}
 
-		Output(outputPrt, outputSize, inputKey);
+		OutputBuilder.Output(outputPrt, outputSize, inputKey);
 	}
 
 	/// <summary>

@@ -1,4 +1,4 @@
-namespace Arma3WebService.Identities;
+namespace Components.Entity;
 
 public static class IdentityRoles
 {

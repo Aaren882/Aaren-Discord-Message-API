@@ -1,8 +1,12 @@
-using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Arma3WebService.Entity;
+using Components.Entity;
+using Arma3PayloadCallBack = Components.Entity.Arma3PayloadCallBack;
+using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
+using Arma3PayloadMessage = Components.Entity.Arma3PayloadMessage;
+using Arma3PayloadRPT = Components.Entity.Arma3PayloadRPT;
 
 namespace Arma3WebService
 {

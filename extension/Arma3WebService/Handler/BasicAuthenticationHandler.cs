@@ -1,7 +1,6 @@
 using System.Security.Claims;
-using System.Text;
 using System.Text.Encodings.Web;
-using Arma3WebService.Identities;
+using Components.Entity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 

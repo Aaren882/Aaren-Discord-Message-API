@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Arma3WebService;
+namespace Components.Entity;
 
 public enum Arma3PayLoadType
 {
@@ -67,4 +67,4 @@ public record Arma3ServiceSecret(
 // [JsonSerializable(typeof(Arma3PayloadRPT))]
 // [JsonSerializable(typeof(Arma3PayloadCallBack))]
 [JsonSerializable(typeof(Arma3ServiceSecret))]
-internal sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;
+public sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;

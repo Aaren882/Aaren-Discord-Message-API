@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Arma3WebService.Identities;
+namespace Components.Entity;
 
 public enum Role
 {
@@ -30,5 +30,5 @@ public record struct IdentityRolesPayload
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [JsonSerializable(typeof(IdentityRolesPayload))]
 [JsonSerializable(typeof(IdentityRolesReturnPayload))]
-internal sealed partial class IdentityRolesPayloadJsonSerializerContext : JsonSerializerContext;
+public sealed partial class IdentityRolesPayloadJsonSerializerContext : JsonSerializerContext;
 

@@ -1,4 +1,5 @@
 using Arma3WebService.Identities;
+using Components.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
