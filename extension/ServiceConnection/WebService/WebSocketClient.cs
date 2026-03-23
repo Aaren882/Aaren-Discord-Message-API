@@ -1,17 +1,19 @@
 using System.Net.WebSockets;
 using System.Text;
-using Arma3WebService;
-using DiscordMessageAPI.Tools;
-using JsonSerializer = System.Text.Json.JsonSerializer;
+using System.Text.Json;
+using ServiceConnection;
+using ServiceConnection.Tools;
+using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
+using Arma3PayloadRPT = Components.Entity.Arma3PayloadRPT;
 
-namespace DiscordMessageAPI.WebService;
+namespace DiscordMessageAPI.ServiceConnection.WebService;
 
-class WebSocketClient(string serverUri)
+public class WebSocketClient(string serverUri)
 {
 	private ClientWebSocket? _webSocket;
 	private CancellationTokenSource? _cancellationTokenSource;
 
-	public event Action<Arma3Payload>? MessageReceived;
+	public event Action<global::Components.Entity.Arma3Payload>? MessageReceived;
 	public event Action? Connected;
 	public event Action? Disconnected;
 

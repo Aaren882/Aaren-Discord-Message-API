@@ -1,17 +1,16 @@
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
-using Arma3WebService;
-using static DiscordMessageAPI.DllEntry;
+using Components.Entity;
+using ServiceConnection.Tools;
+using static ServiceConnection.ServiceConnectionEntry;
 
-namespace DiscordMessageAPI.Tools;
-
-internal class Util
+namespace ServiceConnection;
+public class Util
 {
 	public static readonly string AssemblyPath = Path.Combine(AppContext.BaseDirectory, "Discord_Message_API");
 	private static readonly byte[] Webkey = GenerateRandomWebKey();
-		
-	internal static string ParseJson(string file)
+
+	public static string ParseJson(string file)
 	{
 		// if no disk "dir" defined
 		var dir = file.IndexOf(":") < 0 ? Path.Combine(AssemblyPath, file) : file;
@@ -20,7 +19,7 @@ internal class Util
 		return File.ReadAllText(dir);
 	}
 
-	internal static int[] StringToCode32(string str)
+	public static int[] StringToCode32(string str)
 	{
 		var code32 = new int[str.Length];
 
@@ -38,12 +37,13 @@ internal class Util
 
 		return code32;
 	}
+
 	internal static string DecryptString(string cipherText)
 	{
 		var fullCipher = Convert.FromBase64String(cipherText);
-		
+	
 		using var aesAlg = Aes.Create();
-		
+	
 		var iv = new byte[aesAlg.BlockSize / 8];
 		Array.Copy(fullCipher, iv, iv.Length);
 
@@ -88,24 +88,24 @@ internal class Util
 	{
 		using var sha256 = SHA256.Create();
 		string time;
-		if (DllEntry.InitTime is null)
+		if (InitTime is null)
 		{
 			time = DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss");
-			DllEntry.InitTime = time;
+			InitTime = time;
 		}
 		else
 		{
-			time = DllEntry.InitTime;
+			time = InitTime;
 		}
 		var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(time));
 		var key = new byte[32];
 		Array.Copy(hash, key, key.Length);
 		return key;
 	}
-	
-	internal static string GetLastestRpt()
+
+	public static string GetLastestFile(string path)
 	{
-		var files = Directory.GetFiles(ServiceInteractions.RPTDirectory);
+		var files = Directory.GetFiles(path);
 
 		//- Check how many logs
 		Dictionary<string, DateTime> dict = new();
@@ -116,13 +116,15 @@ internal class Util
 		}
 
 		var list = dict.OrderByDescending(x => x.Value).ToList();
-		
+	
 		Logger.Trace("GetLastestRpt (Return)", list[0].Key);
 		return list[0].Key;
 	}
-	internal static int CallExtensionCallback(Arma3PayloadCallBack callBack)
+
+	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3PayloadCallBack? callBack)
 	{
 		Logger.Trace("MessageReceived [callBack] =>", callBack.ToString());
-		return Callback("DISCORD_API", callBack.Function, callBack.Data);
+		return extensionCallback("DISCORD_API", callBack.Function, callBack.Data);
 	}
+
 }

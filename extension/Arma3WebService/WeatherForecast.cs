@@ -1,3 +1,5 @@
+using Components.Entity;
+
 namespace Arma3WebService;
 
 public record WeatherForecast
