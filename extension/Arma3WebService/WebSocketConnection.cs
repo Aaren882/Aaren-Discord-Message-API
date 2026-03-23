@@ -44,20 +44,23 @@ namespace Arma3WebService
 				{
 					case Arma3PayLoadType.Message :
 					{
-						Console.WriteLine($"Received message '{deserialized.Message}'");
+						var messagePayload = deserialized as Arma3PayloadMessage;
+						Console.WriteLine($"Received message '{messagePayload.Message}'");
 						
 						await Send(receivedMessage);
 						break;
 					}
 					case Arma3PayLoadType.Rpt : //- Must use metaData first
 					{
-						var metadata = deserialized.Rpt;
-						Console.WriteLine($"Received metaData for binary file '{metadata}'");
+						var metadata = deserialized as Arma3PayloadRPT;
+						Console.WriteLine($"Receiving metaData for binary file '{metadata}'");
 						
 						await using var fileStream = new FileStream(
 							metadata.FileName, FileMode.Create, FileAccess.Write);
 						
 						await ReceiveBinary(fileStream);
+						
+						Console.WriteLine($"Stored binary file '{metadata.FileName}'");
 						break;
 					}
 					default:
@@ -71,8 +74,8 @@ namespace Arma3WebService
 		private async Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream)
 		{
 			var readBuffer = new ArraySegment<byte>(new byte[2 * 1024]);
-			WebSocketReceiveResult result;
 			
+			WebSocketReceiveResult result;
 			do
 			{
 				result = await _webSocket.ReceiveAsync(readBuffer, CancellationToken.None);
@@ -98,12 +101,9 @@ namespace Arma3WebService
 		
 		public async Task SendArmaCallback(Arma3PayloadCallBack callBack)
 		{
-			var payload = new Arma3Payload(Arma3PayLoadType.Command)
-			{
-				CallBack = callBack
-			};
+			// var payload = new Arma3PayloadCallBack();
 			var package = JsonSerializer.Serialize(
-				payload, 
+				callBack, 
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			);
 			var bytes = Encoding.UTF8.GetBytes(package);
