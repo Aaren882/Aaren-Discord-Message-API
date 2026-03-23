@@ -8,24 +8,19 @@
     <NativeLib>Shared</NativeLib>
     <Platforms>x64</Platforms>
     <AssemblyName>$(MSBuildProjectName)_x64</AssemblyName>
-    <PublishAot>true</PublishAot>
     <AssemblyVersion>26.2.0</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Version>$(AssemblyVersion)</Version>
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <StripSymbols>true</StripSymbols>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Arma3WebService\ArmaPayload.cs">
-      <Link>Entity\ArmaPayload.cs</Link>
-    </Compile>
-    <Compile Include="..\Arma3WebService\Identities\IdentityPayload.cs">
-      <Link>Entity\IdentityPayload.cs</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Arma3WebService\Arma3WebService.csproj" />
+    <ProjectReference Include="..\Components\Components.csproj" />
+    <ProjectReference Include="..\ServiceConnection\ServiceConnection.csproj" />
   </ItemGroup>
 </Project>
