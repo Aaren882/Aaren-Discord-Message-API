@@ -213,11 +213,7 @@ public static class EntryDelegates
         internal static int SendWebSocketMessage(OutputBuilder output, string[] args, int argCount)
         {
             var message = args[0];
-            var messageObj = new Arma3Payload
-            {
-	            MessageType = Arma3PayLoadType.Message,
-	            Message = new Arma3PayloadMessage(message),
-            };
+            var messageObj = new Arma3PayloadMessage(message);
             
             _ = ServiceInteractions.SendWebSocketMessage(messageObj);
             return 1;

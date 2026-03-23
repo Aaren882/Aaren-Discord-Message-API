@@ -26,10 +26,12 @@ public class ServiceInteractions
 		_wsClient.Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
 		_wsClient.MessageReceived += (message) =>
 		{
+			// if (message is null) return;
+			Logger.Trace("MessageReceived (message)", message.ToString());
 			switch (message.MessageType)
 			{
 				case Arma3PayLoadType.Command: { //- Remote command from websocket
-					Util.CallExtensionCallback(message.CallBack);
+					Util.CallExtensionCallback(message as Arma3PayloadCallBack);
 					break;
 				}
 				case Arma3PayLoadType.Rpt: //- Remote command to Send RPT

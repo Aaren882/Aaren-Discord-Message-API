@@ -8,34 +8,38 @@ public enum Arma3PayLoadType
 	Message = 1,
 	Rpt = 2, //- in game *.rpt logs
 	Command = 3,
+	GameInfo = 4,
 }
-public record struct Arma3Payload(
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(Arma3PayloadMessage), "message")]
+[JsonDerivedType(typeof(Arma3PayloadRPT), "rpt")]
+[JsonDerivedType(typeof(Arma3PayloadCallBack), "callback")]
+public record Arma3Payload
+(
 	Arma3PayLoadType MessageType
 )
 {
-	public Arma3PayloadMessage Message { get; init; }
-	public Arma3PayloadRPT Rpt { get; init; }
-	public Arma3PayloadCallBack CallBack { get; init; }
-	public DateTime Timestamp => DateTime.Now;
+	public static DateTime Timestamp => DateTime.Now;
 }
 
-public abstract record IArma3Payload;
-
-public record Arma3PayloadMessage(
+public record Arma3PayloadMessage
+(
 	string Message
-) : IArma3Payload;
+) : Arma3Payload(Arma3PayLoadType.Message);
 
-public record Arma3PayloadRPT(
+public record Arma3PayloadRPT
+(
 	string FileName,
 	long FileSize,
 	DateTime CreatedTime,
 	int TotalChunks
-) : IArma3Payload;
+) : Arma3Payload(Arma3PayLoadType.Rpt);
 
 public record Arma3PayloadCallBack(
 	string Function,
 	string Data
-) : IArma3Payload;
+) : Arma3Payload(Arma3PayLoadType.Command);
 
 //- Service
 public record struct ServiceAuthenticationHeader(
@@ -58,8 +62,9 @@ public record Arma3ServiceSecret(
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [JsonSerializable(typeof(Arma3Payload))]
-[JsonSerializable(typeof(Arma3PayloadRPT))]
-[JsonSerializable(typeof(Arma3PayloadCallBack))]
-[JsonSerializable(typeof(List<Arma3Payload>))] // Add all root types used
+// [JsonSerializable(typeof(List<Arma3Payload>))] // Add all root types used
+// [JsonSerializable(typeof(Arma3PayloadMessage))]
+// [JsonSerializable(typeof(Arma3PayloadRPT))]
+// [JsonSerializable(typeof(Arma3PayloadCallBack))]
 [JsonSerializable(typeof(Arma3ServiceSecret))]
 internal sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;
