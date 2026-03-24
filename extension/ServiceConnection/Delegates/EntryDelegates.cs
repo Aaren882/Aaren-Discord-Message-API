@@ -74,15 +74,10 @@ public static class EntryDelegates
             var jsonString = Util.ParseJson("Webhooks.json");
             Logger.Trace("Refresh_Webhooks", jsonString);
 
-            var webhooks = JsonSerializer.Deserialize(
+            ALLWebhooks = JsonSerializer.Deserialize(
                 jsonString,
-                Webhooks_Storage_JsonContext.Default.Webhooks_Storage
+                WebhooksStorage_JsonContext.Default.WebhooksStorage
             );
-            
-            webhooks.Webhooks = webhooks.Webhooks
-	            .Select(data => Util.EncryptString(data)).ToArray();
-            
-            ALLWebhooks = webhooks;
 
             var webhooksCount = ALLWebhooks?.Webhooks.Length ?? 0;
             var webhookSel = Math.Min(Int32.Parse(args[0]), webhooksCount - 1);

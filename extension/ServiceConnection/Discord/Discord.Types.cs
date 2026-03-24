@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Components.Entity;
+namespace ServiceConnection.Discord;
 
 /*public record DiscordMessage
 {
@@ -187,7 +187,15 @@ public record struct MsgPayload(string Url, int HandlerType, string? MessageID);
 ]
 public partial class MsgPayload_JsonContext : JsonSerializerContext;
 
-public record struct Webhooks_Storage(string[] Webhooks);
+public record struct WebhooksStorage
+{
+	private string[] _webhooks { get; set; }
+	public string[] Webhooks
+	{
+		get => _webhooks;
+		set => _webhooks = value.Select(Util.EncryptString).ToArray();
+	}
+};
 
-[JsonSerializable(typeof(Webhooks_Storage))]
-public partial class Webhooks_Storage_JsonContext : JsonSerializerContext;
+[JsonSerializable(typeof(WebhooksStorage))]
+public partial class WebhooksStorage_JsonContext : JsonSerializerContext;
