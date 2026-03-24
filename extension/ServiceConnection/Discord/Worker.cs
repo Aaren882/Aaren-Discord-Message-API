@@ -3,7 +3,7 @@ using System.Text.Json;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using Components.Entity;
 using ServiceConnection.Tools;
-using MsgPayload_JsonContext = Components.Entity.MsgPayload_JsonContext;
+using MsgPayload_JsonContext = ServiceConnection.Discord.MsgPayload_JsonContext;
 
 namespace ServiceConnection.Discord;
 
