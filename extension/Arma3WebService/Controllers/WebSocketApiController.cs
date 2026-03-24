@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
-	[Authorize(
+	/*[Authorize(
 		Policy = "GameRequest",
 		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
-	]
+	]*/
 	[Route("/api/ws")]
 	[ApiController]
 	public class WebSocketApiController(IWebSocketService service) : ControllerBase

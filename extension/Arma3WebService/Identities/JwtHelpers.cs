@@ -9,20 +9,11 @@ using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegiste
 
 namespace Arma3WebService.Identities
 {
-	public class JwtHelpers
+	public class JwtHelpers(IConfiguration Configuration)
 	{
-		private readonly IConfiguration Configuration;
-		private readonly string issuer;
-		private readonly string audience;
-		private readonly string signKey;
-
-		public JwtHelpers(IConfiguration configuration)
-		{
-			Configuration = configuration;
-			issuer = Configuration["Jwt:Issuer"]!;
-			audience = Configuration["Jwt:Audience"]!;
-			signKey = Configuration["Jwt:Key"]!;
-		}
+		private readonly string issuer = Configuration["Jwt:Issuer"]!;
+		private readonly string audience = Configuration["Jwt:Audience"]!;
+		private readonly string signKey = Configuration["Jwt:Key"]!;
 		
 		public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
 		{

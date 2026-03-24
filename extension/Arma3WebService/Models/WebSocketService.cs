@@ -14,23 +14,16 @@ namespace Arma3WebService.Models
 		public Task CreateConnection(WebsocketContextEntity context);
 	}
 
-	public sealed class WebSocketService : IHostedService, IWebSocketService
+	public sealed class WebSocketService(
+		ILogger<WebSocketService> logger,
+		IServiceProvider serviceProvider,
+		IConnectionFactory connectionFactory,
+		IConnectionManager connectionManager
+	) : IHostedService, IWebSocketService
 	{
-		private readonly ILogger _logger;
-		private readonly IServiceProvider _serviceProvider;
+		private readonly ILogger _logger = logger;
 
-		private readonly IConnectionFactory _connectionFactory;
-		private readonly IConnectionManager _connectionManager;
 		private static readonly ConcurrentDictionary<string, IConnection> Connections = new();
-
-		public WebSocketService(ILogger<WebSocketService> logger, IServiceProvider serviceProvider)
-		{
-			_logger = logger;
-			_serviceProvider = serviceProvider;
-
-			_connectionFactory = new ConnectionFactory();
-			_connectionManager = new ConnectionManager();
-		}
 
 		public async Task InvokeArmaCallBack(Arma3RemoteCommand command)
 		{
@@ -39,9 +32,10 @@ namespace Arma3WebService.Models
 			
 			await session.SendArmaCallback(command.payload);
 		}
+		
 		public Task StartAsync(CancellationToken cancellationToken)
 		{
-			var service = _serviceProvider.GetRequiredService<WebSocketService>();
+			var service = serviceProvider.GetRequiredService<WebSocketService>();
 
 			_logger.LogInformation("WebSocket is Listening now");
 
@@ -49,10 +43,14 @@ namespace Arma3WebService.Models
 		}
 		public Task StopAsync(CancellationToken cancellationToken)
 		{
+			_ = Connections.Values.Select( //- Disconnect all client 
+				async c => await c.Close());
+
 			_logger.LogInformation("WebSocket Has Stopped Listening...");
 
 			return Task.CompletedTask;
 		}
+		
 		public async Task CreateConnection(WebsocketContextEntity contextEntity)
 		{
 			var connectionIdentity = contextEntity.Identity;
@@ -67,13 +65,13 @@ namespace Arma3WebService.Models
 			try
 			{
 				var websocketEntity = new WebsocketEntity(contextEntity);
-				connection = _connectionFactory.CreateConnection(websocketEntity);
+				connection = connectionFactory.CreateConnection(websocketEntity);
 
 				Connections.TryAdd(contextEntity.Identity, connection);
 
 				_logger.LogInformation($"Accepted connection Name : '{connectionIdentity}'/'{contextEntity.Id}' - '{contextEntity.ClientIpAddress}'. Total connections: {Connections.Count}");
 
-				await _connectionManager.HandleConnection(connection);
+				await connectionManager.HandleConnection(connection);
 			}
 			catch (WebSocketException e)
 			{
