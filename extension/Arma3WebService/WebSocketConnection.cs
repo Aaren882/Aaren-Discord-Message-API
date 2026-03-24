@@ -21,8 +21,6 @@ namespace Arma3WebService
 
 	public class WebSocketConnection(WebsocketEntity websocketEntity) : IConnection
 	{
-		private readonly WebsocketEntity _websocketEntity = websocketEntity;
-		private readonly WebsocketContextEntity _websocketContextEntity = websocketEntity.ContextEntity;
 		private readonly WebSocket _webSocket = websocketEntity.AcceptConnection();
 
 		public async Task<WebSocketCloseStatus?> KeepReceiving()

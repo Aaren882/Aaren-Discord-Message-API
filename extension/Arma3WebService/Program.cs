@@ -1,11 +1,14 @@
 using System.Security.Claims;
+using Arma3WebService.Factory;
 using Arma3WebService.Handler;
 using Arma3WebService.Identities;
+using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Components.Entity;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService
 {
@@ -15,20 +18,24 @@ namespace Arma3WebService
 		{
 			Env.Load();
 			var builder = WebApplication.CreateBuilder(args);
-
+			
 			// Add services to the container.
 			builder.Services.AddSingleton<DiscordBotService>();
 			builder.Services.AddHostedService<DiscordBotService>();
-			//- Regiester Bot Service -//
+			//- Register Bot Service -//
 
 			builder.Services.AddSingleton<WebSocketService>();
 			builder.Services.AddHostedService<WebSocketService>();
-			//- Regiester WebSocket Service -//
+			//- Register WebSocket Service -//
 
 			//- Add controllers
-			builder.Services.AddScoped<IDiscordBotService, DiscordBotService>();
-			builder.Services.AddTransient<IWebSocketService, WebSocketService>();
-			builder.Services.AddSingleton<JwtHelpers>();
+			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
+			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
+			
+			builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
+			builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
+			builder.Services.AddScoped<JwtHelpers>();
+			
 			builder.Services.AddControllers();
 
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -40,30 +47,34 @@ namespace Arma3WebService
 			//- WebSocket
 			builder.Services.AddCors(options =>
 			{
-				options.AddPolicy("AllowAll",
-					policy =>
-					{
-						policy.AllowAnyOrigin()
-							  .AllowAnyHeader()
-							  .AllowAnyMethod();
-					});
-			});
-
-			builder.Services.AddAuthorization(options =>
-			{
-				options.AddPolicy("GameRequest", policy => 
-					policy.RequireClaim(ClaimTypes.NameIdentifier, IdentityRoles.GameServerGuid.ToString())
-				);
+				options.AddPolicy(
+					"InternalCommunication", 
+					policy =>  
+						policy
+							.AllowAnyMethod()
+							// .AllowAnyOrigin()
+							.WithHeaders(HeaderNames.ContentType, HeaderNames.Authorization)
+					);
 			});
 
 			builder.Services
+				.AddAuthorizationBuilder()
+				.AddPolicy("GameRequest", policy => 
+					policy.RequireClaim(
+						ClaimTypes.NameIdentifier,
+						IdentityRoles.GameServerGuid.ToString()
+					)
+				);
+
+			builder.Services
 				.AddAuthentication()
-				.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-				{
-					options.IncludeErrorDetails = true; // Show exception details
-					options.TokenValidationParameters =
-						new JwtHelpers(builder.Configuration).GetValidationParameters();
-				})
+				.AddJwtBearer(
+					JwtBearerDefaults.AuthenticationScheme, 
+					options => {
+						options.IncludeErrorDetails = true; // Show exception details
+						options.TokenValidationParameters =
+							new JwtHelpers(builder.Configuration).GetValidationParameters();
+					})
 				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
 
 
@@ -80,12 +91,12 @@ namespace Arma3WebService
 			//app.UseHttpsRedirection();
 
 			//- Websocket
-			app.UseCors("AllowAll");
 			app.UseWebSockets(new WebSocketOptions
 			{
 				KeepAliveInterval = TimeSpan.FromSeconds(30)
 			});
 			app.UseRouting();
+			app.UseCors("InternalCommunication");
 
 			app.UseAuthentication();
 			app.UseAuthorization();

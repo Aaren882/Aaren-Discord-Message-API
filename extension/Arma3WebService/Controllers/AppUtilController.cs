@@ -1,23 +1,18 @@
 using Arma3WebService.Identities;
 using Components.Entity;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
 	[Authorize(AuthenticationSchemes = "BasicAuth")]
+	[EnableCors("InternalCommunication")]
 	[Route("api/token")]
 	[ApiController]
-	public class AppUtilController : ControllerBase
+	public class AppUtilController(ILogger<AppUtilController> logger, JwtHelpers jwtHelpers) : ControllerBase
 	{
-		private readonly ILogger _logger;
-		private readonly JwtHelpers _jwtHelpers;
-
-		public AppUtilController(ILogger<AppUtilController> logger, JwtHelpers jwtHelpers)
-		{
-			_logger = logger;
-			_jwtHelpers = jwtHelpers;
-		}
+		private readonly ILogger _logger = logger;
 
 		[HttpPost]
 		public IActionResult GenToken(IdentityRolesPayload payload)
@@ -27,14 +22,13 @@ namespace Arma3WebService.Controllers
 				return BadRequest();
 			}
 
-			return Ok(_jwtHelpers.GenerateToken(payload));
+			return Ok(jwtHelpers.GenerateToken(payload));
 		}
 
 		[HttpGet]
-		public IActionResult VaildateToken(IdentityRolesPayload payload)
+		public async Task<IActionResult> ValidateToken(IdentityRolesPayload payload)
 		{
-			var vaildation = _jwtHelpers.VaildateToken(payload)
-				.GetAwaiter().GetResult();
+			var vaildation = await jwtHelpers.VaildateToken(payload);
 			
 			return Ok(new {
 				Vaild = vaildation.IsValid

@@ -11,7 +11,12 @@ public sealed record WebsocketContextEntity(HttpContext Context, Arma3PayLoadTyp
 	public readonly IPAddress? ClientIpAddress = Context.Connection.RemoteIpAddress;
 };
 
-public sealed record WebsocketEntity(WebsocketContextEntity ContextEntity)
+public interface IWebsocketEntity
+{
+	WebSocket AcceptConnection();
+}
+
+public sealed record WebsocketEntity(WebsocketContextEntity ContextEntity): IWebsocketEntity
 {
 	public WebSocket AcceptConnection()
 	{
