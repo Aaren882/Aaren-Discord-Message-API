@@ -10,22 +10,19 @@ namespace Arma3WebService.Models
 		public Task<IUserMessage> PostBotOnline(string text);
 	}
 
-	public sealed class DiscordBotService : IHostedService, IDiscordBotService
+	public sealed class DiscordBotService(ILogger<DiscordBotService> logger, IServiceProvider serviceProvider)
+		: BackgroundService, IDiscordBotService
 	{
-		private readonly ILogger<DiscordBotService> _logger;
-		private readonly IServiceProvider _serviceProvider;
 		private static readonly DiscordSocketClient? _client = new();
 
 		private static readonly string TestChannel = Environment.GetEnvironmentVariable("TestChannel")!;
 
-		// Inject IServiceProvider to manually scope and resolve other services
-		public DiscordBotService(ILogger<DiscordBotService> logger, IServiceProvider serviceProvider)
+		protected override Task ExecuteAsync(CancellationToken stoppingToken)
 		{
-			_logger = logger;
-			_serviceProvider = serviceProvider;
+			return StartupBot();
 		}
 
-		public async Task StartAsync(CancellationToken cancellationToken)
+		/*public async Task StartAsync(CancellationToken cancellationToken)
 		{
 			using var scope = _serviceProvider.CreateScope();
 			
@@ -40,7 +37,7 @@ namespace Arma3WebService.Models
 		{
 			// Return Task.CompletedTask if the work is synchronous
 			return Task.CompletedTask;
-		}
+		}*/
 
 		public DiscordSocketClient GetClient()
 		{
@@ -131,22 +128,22 @@ namespace Arma3WebService.Models
 			switch (msg.Severity)
 			{
 				case LogSeverity.Critical:
-					_logger.LogCritical(msg.Exception, template);
+					logger.LogCritical(msg.Exception, template);
 					break;
 				case LogSeverity.Error:
-					_logger.LogError(msg.Exception, template);
+					logger.LogError(msg.Exception, template);
 					break;
 				case LogSeverity.Warning:
-					_logger.LogWarning(template);
+					logger.LogWarning(template);
 					break;
 				case LogSeverity.Info:
-					_logger.LogInformation(template);
+					logger.LogInformation(template);
 					break;
 				case LogSeverity.Verbose:
-					_logger.LogInformation(template);
+					logger.LogInformation(template);
 					break;
 				case LogSeverity.Debug:
-					_logger.LogDebug(template);
+					logger.LogDebug(template);
 					break;
 			}
 			return Task.CompletedTask;

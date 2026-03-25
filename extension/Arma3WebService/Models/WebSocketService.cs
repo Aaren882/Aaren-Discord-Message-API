@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Arma3WebService.Entity;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 
@@ -19,10 +17,10 @@ namespace Arma3WebService.Models
 		IServiceProvider serviceProvider,
 		IConnectionFactory connectionFactory,
 		IConnectionManager connectionManager
-	) : IHostedService, IWebSocketService
+	) : IHostedService, IWebSocketService, IDisposable
 	{
 		private readonly ILogger _logger = logger;
-
+		private readonly CancellationTokenSource _stoppingCts = new();
 		private static readonly ConcurrentDictionary<string, IConnection> Connections = new();
 
 		public async Task InvokeArmaCallBack(Arma3RemoteCommand command)
@@ -41,14 +39,27 @@ namespace Arma3WebService.Models
 
 			return Task.CompletedTask;
 		}
-		public Task StopAsync(CancellationToken cancellationToken)
+		public async Task StopAsync(CancellationToken cancellationToken)
 		{
-			_ = Connections.Values.Select( //- Disconnect all client 
-				async c => await c.Close());
+			try
+			{
+				// Signal cancellation to the executing method
+				await _stoppingCts.CancelAsync();
+			}
+			finally
+			{
+				// Wait until the task completes or the stop token triggers
+				var connections = Connections.Values
+					.ToAsyncEnumerable()
+					.WithCancellation(cancellationToken);
+				
+				await foreach (var connection in connections)
+				{
+					await connection.Close();
+				}
+			}
 
 			_logger.LogInformation("WebSocket Has Stopped Listening...");
-
-			return Task.CompletedTask;
 		}
 		
 		public async Task CreateConnection(WebsocketContextEntity contextEntity)
@@ -57,7 +68,11 @@ namespace Arma3WebService.Models
 
 			if (Connections.ContainsKey(connectionIdentity))
 			{
-				_logger.LogError($"Refuse Request. Connection already exist. Name : '{connectionIdentity}'/'{contextEntity.Context.Connection.Id}'");
+				_logger.LogError(
+					"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'", 
+					connectionIdentity, 
+					contextEntity.Id
+				);
 				return;
 			}
 
@@ -69,17 +84,59 @@ namespace Arma3WebService.Models
 
 				Connections.TryAdd(contextEntity.Identity, connection);
 
-				_logger.LogInformation($"Accepted connection Name : '{connectionIdentity}'/'{contextEntity.Id}' - '{contextEntity.ClientIpAddress}'. Total connections: {Connections.Count}");
+				_logger.LogInformation(
+					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
+					connectionIdentity,
+					contextEntity.Id, 
+					contextEntity.ClientIpAddress,
+					Connections.Count
+				);
 
 				await connectionManager.HandleConnection(connection);
 			}
+			catch (OperationCanceledException)
+			{
+				// This exception is expected if the token is cancelled
+				_logger.LogInformation(
+					"WebSocket '{Identity}'/'{ContextId}' - '{ClientIpAddress}' connection was cancelled. Total connections: {Counts}",
+					connectionIdentity,
+					contextEntity.Id, 
+					contextEntity.ClientIpAddress,
+					Connections.Count
+				);
+			}
+			catch (WebSocketException e) when (e.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
+			{
+				// Handle unexpected client disconnects
+				_logger.LogWarning(
+					"Client '{Identity}'/'{ContextId}' - '{ClientIpAddress}' unexpectedly disconnected. Total connections: {Counts}",
+					connectionIdentity,
+					contextEntity.Id, 
+					contextEntity.ClientIpAddress,
+					Connections.Count
+				);
+			}
 			catch (WebSocketException e)
 			{
-				_logger.LogWarning(e.Message);
+				_logger.LogError(
+					e,
+					"Client '{Identity}'/'{ContextId}' - '{ClientIpAddress}' \n disconnected. Total connections: {Counts}",
+					connectionIdentity,
+					contextEntity.Id, 
+					contextEntity.ClientIpAddress,
+					Connections.Count
+				);
 			}
 			catch (Exception e)
 			{
-				_logger.LogError(e.Message);
+				_logger.LogError(
+					e,
+					"Client '{Identity}'/'{ContextId}' - '{ClientIpAddress}' \n disconnected. Total connections: {Counts}",
+					connectionIdentity,
+					contextEntity.Id, 
+					contextEntity.ClientIpAddress,
+					Connections.Count
+				);
 			}
 			finally
 			{
@@ -92,6 +149,11 @@ namespace Arma3WebService.Models
 					Connections.Count
 				);
 			}
+		}
+
+		public void Dispose()
+		{
+			_stoppingCts.Cancel();
 		}
 	}
 }
