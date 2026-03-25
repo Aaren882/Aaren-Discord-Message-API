@@ -20,7 +20,6 @@ namespace Arma3WebService
 			var builder = WebApplication.CreateBuilder(args);
 			
 			// Add services to the container.
-			builder.Services.AddSingleton<DiscordBotService>();
 			builder.Services.AddHostedService<DiscordBotService>();
 			//- Register Bot Service -//
 

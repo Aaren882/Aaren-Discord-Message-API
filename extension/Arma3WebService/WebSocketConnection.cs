@@ -22,6 +22,7 @@ namespace Arma3WebService
 	public class WebSocketConnection(WebsocketEntity websocketEntity) : IConnection
 	{
 		private readonly WebSocket _webSocket = websocketEntity.AcceptConnection();
+		private readonly CancellationToken _cts = websocketEntity.ContextEntity.Context.RequestAborted;
 
 		public async Task<WebSocketCloseStatus?> KeepReceiving()
 		{
@@ -80,9 +81,9 @@ namespace Arma3WebService
 			WebSocketReceiveResult result;
 			do
 			{
-				result = await _webSocket.ReceiveAsync(readBuffer, CancellationToken.None);
+				result = await _webSocket.ReceiveAsync(readBuffer, _cts);
 				await memoryStream.WriteAsync(readBuffer.Array!, readBuffer.Offset, result.Count,
-					CancellationToken.None);
+					_cts);
 			} while (!result.EndOfMessage);
 
 			return result;
@@ -94,8 +95,8 @@ namespace Arma3WebService
 			WebSocketReceiveResult result;
 			do
 			{
-				result = await _webSocket.ReceiveAsync(readBuffer, CancellationToken.None);
-				await fileStream!.WriteAsync(readBuffer.Array!, 0, result.Count);
+				result = await _webSocket.ReceiveAsync(readBuffer, _cts);
+				await fileStream.WriteAsync(readBuffer.Array!, 0, result.Count, _cts);
 			} while (!result.EndOfMessage);
 
 			return result;
@@ -110,13 +111,16 @@ namespace Arma3WebService
 			);
 			var bytes = Encoding.UTF8.GetBytes(package);
 			await _webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, true,
-				CancellationToken.None);
+				_cts);
 		}
 		public async Task Send(string message)
 		{
 			var bytes = Encoding.UTF8.GetBytes(message);
-			await _webSocket.SendAsync(new ArraySegment<byte>(bytes, 0, bytes.Length), WebSocketMessageType.Text, true,
-				CancellationToken.None);
+			await _webSocket.SendAsync(
+				new ArraySegment<byte>(bytes, 0, bytes.Length), 
+				WebSocketMessageType.Text, 
+				true,
+				_cts);
 		}
 
 		public async Task Close()
@@ -126,7 +130,7 @@ namespace Arma3WebService
 		
 		public string? CloseStatusDescription()
 		{
-			return _webSocket.CloseStatusDescription ?? "No Close Description";
+			return _webSocket.CloseStatusDescription ?? _cts.ToString();
 		}
 	}
 }

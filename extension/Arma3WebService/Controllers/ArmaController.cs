@@ -17,11 +17,13 @@ namespace Arma3WebService.Controllers
 	{
 		private readonly ILogger<ArmaController> _logger;
 		private readonly IServiceProvider _serviceProvider;
+		private readonly IWebSocketService _webSocketService;
 
-		public ArmaController(ILogger<ArmaController> logger, IServiceProvider serviceProvider)
+		public ArmaController(ILogger<ArmaController> logger, IWebSocketService webSocketService, IServiceProvider serviceProvider)
 		{
 			_logger = logger;
 			_serviceProvider = serviceProvider;
+			_webSocketService = webSocketService;
 		}
 
 		[HttpPost(Name = "ArmaController")]
@@ -36,8 +38,8 @@ namespace Arma3WebService.Controllers
 		{
 			try
 			{
-				var service = _serviceProvider.GetRequiredService<WebSocketService>();
-				await service.InvokeArmaCallBack(command);
+				// var service = _serviceProvider.GetRequiredService<WebSocketService>();
+				await _webSocketService.InvokeArmaCallBack(command);
 				return Ok();
 			}
 			catch (Exception e)
