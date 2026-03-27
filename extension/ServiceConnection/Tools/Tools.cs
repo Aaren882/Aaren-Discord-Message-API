@@ -1,10 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
 using Components.Entity;
-using ServiceConnection.Tools;
+using ServiceConnection.Entity;
 using static ServiceConnection.ServiceConnectionEntry;
 
-namespace ServiceConnection;
+namespace ServiceConnection.Tools;
+
 public class Util
 {
 	public static readonly string AssemblyPath = Path.Combine(AppContext.BaseDirectory, "Discord_Message_API");
@@ -14,8 +15,6 @@ public class Util
 	{
 		// if no disk "dir" defined
 		var dir = file.IndexOf(":") < 0 ? Path.Combine(AssemblyPath, file) : file;
-		Logger.Trace("ParseJson => \"file\"", file);
-		Logger.Trace("ParseJson => \"dir\"", dir);
 		return File.ReadAllText(dir);
 	}
 
@@ -117,13 +116,11 @@ public class Util
 
 		var list = dict.OrderByDescending(x => x.Value).ToList();
 	
-		Logger.Trace("GetLastestRpt (Return)", list[0].Key);
 		return list[0].Key;
 	}
 
 	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3PayloadCallBack? callBack)
 	{
-		Logger.Trace("MessageReceived [callBack] =>", callBack.ToString());
 		return extensionCallback("DISCORD_API", callBack.Function, callBack.Data);
 	}
 

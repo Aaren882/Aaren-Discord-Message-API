@@ -1,15 +1,14 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Components.Entity;
+using ServiceConnection;
+using ServiceConnection.Entity;
 using ServiceConnection.Tools;
-using static ServiceConnection.Delegates.EntryDelegates;
-using static ServiceConnection.ServiceConnectionEntry;
+using ServiceConnection.WebService;
 
 namespace DiscordMessageAPI;
 
 public class DllEntry
 {
-	
 	/// <summary>
 	/// Register callback for Arma
 	/// </summary>
@@ -19,13 +18,13 @@ public class DllEntry
 	{
 		try
 		{
-			Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
-			Logger.Trace("RVExtensionRegisterCallback", "CallBack Initiated");
+			ServiceConnectionEntry.Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
+			LoggerBase.Trace("RVExtensionRegisterCallback", "CallBack Initiated");
 		}
 		catch (Exception e)
 		{
-			Logger.Trace("RVExtensionRegisterCallback", "ERROR...");
-			Logger.Log(e);
+			LoggerBase.Trace("RVExtensionRegisterCallback", "ERROR...");
+			LoggerBase.Log(e);
 		}
 	}
 
@@ -39,7 +38,13 @@ public class DllEntry
 	public static void RVExtensionVersion(nint outputPrt, int outputSize)
 	{
 		//- Clean up logs
-		Logger.CleanLogs();
+		LoggerBase.CleanLogs();
+		
+		//- Setup Service Configuration
+		ServiceConnectionEntry.InitConfiguration(
+			LoggerBase.Trace,
+			LoggerBase.Log
+		);
 		
 		var version = typeof(DllEntry).GetTypeInfo().Assembly 
 			.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
@@ -48,8 +53,8 @@ public class DllEntry
 		version = version
 			.Substring(0, version.LastIndexOf('+') + 9);
 		
-		Logger.Log(null, $"Extension Version : [{version}]");
-		OutputBuilder.Output(outputPrt, outputSize, version);
+		LoggerBase.Log(null, $"Extension Version : [{version}]");
+		ServiceConnectionEntry.Output(outputPrt, outputSize, version);
 	}
 	
 	/// <summary>
@@ -68,14 +73,14 @@ public class DllEntry
 			args[i] = str;
 		}
 
-		contextInfo = new CallContext(
+		ServiceConnectionEntry.ContextInfo = new CallContext(
 			Convert.ToUInt64(args[0]),
-			args[1],
-			args[2],
-			args[3],
+			args[1]!,
+			args[2]!,
+			args[3]!,
 			Convert.ToInt16(args[4])
 		);
-		Logger.Trace(nameof(contextInfo),contextInfo.ToString());
+		LoggerBase.Trace(nameof(ServiceConnectionEntry.ContextInfo),ServiceConnectionEntry.ContextInfo.ToString());
 	}
 
 	/// <summary>
@@ -91,14 +96,14 @@ public class DllEntry
 
 		try
 		{
-			Callback("CallBack Name", inputKey, "data");
+			ServiceConnectionEntry.Callback!("CallBack Name", inputKey, "data");
 		}
 		catch (Exception e)
 		{
-			Logger.Log(e);
+			LoggerBase.Log(e);
 		}
 
-		OutputBuilder.Output(outputPrt, outputSize, inputKey);
+		ServiceConnectionEntry.Output(outputPrt, outputSize, inputKey);
 	}
 
 	/// <summary>
@@ -115,11 +120,7 @@ public class DllEntry
 	[UnmanagedCallersOnly(EntryPoint = "RVExtensionArgs")]
 	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint function, nint argsPrt, int argCount)
 	{
-		OutputBuilder output = new(outputPrt, outputSize);
-
-		var inputKey = Marshal.PtrToStringUTF8(function)!;
 		var args = new string[argCount];
-
 		for (var i = 0; i < argCount; i++)
 		{
 			var str = Marshal.PtrToStringUTF8(
@@ -129,27 +130,14 @@ public class DllEntry
 				.Replace("\"\"", "\"");
 
 			args[i] = str;
-			Logger.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
+			LoggerBase.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
 			//args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
 		}
+		
+		var functionName = Marshal.PtrToStringUTF8(function)!;
+		var output = new OutputBuilder(outputPrt, outputSize);
+		var argsAction = new ArgsAction(output, args, functionName);
 
-		try
-		{
-			Logger.Trace("DLL Entry", inputKey);
-			
-			if (!ActionsDict.TryGetValue(inputKey, out var action))
-				throw new NullReferenceException($"Function \"{inputKey}\" is not exist.");
-
-			var actionReturn = action(output, args, argCount);
-			
-			return actionReturn;
-		}
-		catch (Exception e)
-		{
-			output.Append($"Error!! \"{e.Message}\"");
-			Logger.Log(e);
-
-			return -11;
-		}
+		return ServiceConnectionEntry.ExecuteArgsAction(argsAction);
 	}
 }

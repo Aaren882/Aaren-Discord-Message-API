@@ -1,19 +1,18 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using ServiceConnection;
-using ServiceConnection.Tools;
 using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
 using Arma3PayloadRPT = Components.Entity.Arma3PayloadRPT;
+using static ServiceConnection.ServiceConnectionEntry;
 
-namespace DiscordMessageAPI.ServiceConnection.WebService;
+namespace ServiceConnection.WebService;
 
 public class WebSocketClient(string serverUri)
 {
 	private ClientWebSocket? _webSocket;
 	private CancellationTokenSource? _cancellationTokenSource;
 
-	public event Action<global::Components.Entity.Arma3Payload>? MessageReceived;
+	public event Action<Components.Entity.Arma3Payload>? MessageReceived;
 	public event Action? Connected;
 	public event Action? Disconnected;
 
@@ -35,10 +34,10 @@ public class WebSocketClient(string serverUri)
 			
 			_cancellationTokenSource = new CancellationTokenSource();
 
-			Logger.Log(null ,$"Connecting to {serverUri}...");
+			Logger(null ,$"Connecting to {serverUri}...");
 			await _webSocket.ConnectAsync(new Uri(serverUri), _cancellationTokenSource.Token);
 
-			Logger.Log(null ,"Connected successfully!");
+			Logger(null ,"Connected successfully!");
 			Connected?.Invoke();
 
 			// Start listening for messages
@@ -46,7 +45,7 @@ public class WebSocketClient(string serverUri)
 		}
 		catch (Exception ex)
 		{
-			Logger.Log(null ,$"Connection failed: {ex.Message}");
+			Logger(null ,$"Connection failed: {ex.Message}");
 		}
 	}
 	public async Task SendBinaryAsync(string filePath, int chunkSize = 64 * 1024)
@@ -89,11 +88,11 @@ public class WebSocketClient(string serverUri)
 					await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == totalChunks - 1), CancellationToken.None);
 				}
 			}
-			Logger.Log(null ,$"Sent Binary: {filePath}");
+			Logger(null ,$"Sent Binary: {filePath}");
 		}
 		else
 		{
-			Logger.Log(null ,"WebSocket is not connected. Cannot send message.");
+			Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
 	}
 
@@ -109,11 +108,11 @@ public class WebSocketClient(string serverUri)
 				true,
 				_cancellationTokenSource?.Token ?? CancellationToken.None);
 
-			Logger.Log(null ,$"Sent: {messagePayload}");
+			Logger(null ,$"Sent: {messagePayload}");
 		}
 		else
 		{
-			Logger.Log(null ,"WebSocket is not connected. Cannot send message.");
+			Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
 	}
 
@@ -132,7 +131,7 @@ public class WebSocketClient(string serverUri)
 				if (result.MessageType == WebSocketMessageType.Text)
 				{
 					var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-					Logger.Log(null ,$"Received: {message}");
+					Logger(null ,$"Received: {message}");
 					
 					var payload = JsonSerializer.Deserialize(
 						message, 
@@ -144,18 +143,18 @@ public class WebSocketClient(string serverUri)
 				}
 				else if (result.MessageType == WebSocketMessageType.Close)
 				{
-					Logger.Log(null ,"Server closed the connection.");
+					Logger(null ,"Server closed the connection.");
 					break;
 				}
 			}
 		}
 		catch (OperationCanceledException)
 		{
-			Logger.Log(null ,"Connection cancelled.");
+			Logger(null ,"Connection cancelled.");
 		}
 		catch (Exception ex)
 		{
-			Logger.Log(null ,$"Error receiving message: \"{ex.Message}\"");
+			Logger(null ,$"Error receiving message: \"{ex.Message}\"");
 		}
 		finally
 		{
@@ -179,11 +178,11 @@ public class WebSocketClient(string serverUri)
 			_webSocket?.Dispose();
 			_cancellationTokenSource?.Dispose();
 
-			Logger.Log(null ,"Disconnected successfully.");
+			Logger(null ,"Disconnected successfully.");
 		}
 		catch (Exception ex)
 		{
-			Logger.Log(null ,$"Error during disconnect: {ex.Message}");
+			Logger(null ,$"Error during disconnect: {ex.Message}");
 		}
 	}
 }

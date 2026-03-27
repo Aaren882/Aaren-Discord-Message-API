@@ -5,11 +5,11 @@ using System.Text;
 using System.Text.Json;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
-using ServiceConnection;
 using ServiceConnection.Tools;
 using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
+using static ServiceConnection.ServiceConnectionEntry;
 
-namespace DiscordMessageAPI.DiscordMessageAPI.WebService;
+namespace ServiceConnection.WebService;
 
 public class ServiceInteractions
 {
@@ -17,23 +17,23 @@ public class ServiceInteractions
 	private static readonly Arma3ServiceSecret ServiceSecret = GetServiceSecret();
 	
 	private string? AccessName;
-	internal readonly string RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
+	public readonly string RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
 
 	public event Action<IdentityRolesReturnPayload>? AccessTokenReceived;
 	private readonly WebSocketClient _wsClient = new(ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
 
 	public ServiceInteractions()
 	{
-		_wsClient.Connected += () => Logger.Log(null, "Event: Connected to server");
-		_wsClient.Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
+		_wsClient.Connected += () => Logger(null, "Event: Connected to server");
+		_wsClient.Disconnected += () => Logger(null, "Event: Disconnected from server");
 		_wsClient.MessageReceived += (message) =>
 		{
 			// if (message is null) return;
-			Logger.Trace("MessageReceived (message)", message.ToString());
+			Tracer("MessageReceived (message)", message.ToString());
 			switch (message.MessageType)
 			{
 				case Arma3PayLoadType.Command: { //- Remote command from websocket
-					Util.CallExtensionCallback(ServiceConnectionEntry.Callback, message as Arma3PayloadCallBack);
+					Util.CallExtensionCallback(Callback, message as Arma3PayloadCallBack);
 					break;
 				}
 				case Arma3PayLoadType.Rpt: //- Remote command to Send RPT
@@ -45,27 +45,27 @@ public class ServiceInteractions
 		};
 	}
 	
-	internal async Task EstablishWebSocketConnection(string accessName)
+	public async Task EstablishWebSocketConnection(string? accessName)
 	{
 		if (_wsClient.Status() == WebSocketState.Open)
 		{
-			Logger.Log(null, "WebSocket connection already established.");
+			Logger(null, "WebSocket connection already established.");
 			return;
 		}
 		
 		var tokenPayload = await GetAccessToken(accessName);
 		await _wsClient.ConnectAsync(tokenPayload.AuthToken);
 	}
-	internal async Task DisconnectWebSocket(string description = "Client disconnect")
+	public async Task DisconnectWebSocket(string description = "Client disconnect")
 	{
 		await _wsClient.DisconnectAsync(description);
 	}
-	internal async Task ReconnectWebSocket()
+	public async Task ReconnectWebSocket()
 	{
 		await DisconnectWebSocket("Client Reconnecting");
 		await EstablishWebSocketConnection(AccessName);
 	}
-	internal Task SendWebSocketMessage(Arma3Payload messageObj)
+	public Task SendWebSocketMessage(Arma3Payload messageObj)
 	{
 		var context = messageObj.MessageType switch
 		{
@@ -79,9 +79,9 @@ public class ServiceInteractions
 		var messageJson = JsonSerializer.Serialize(messageObj, context);
 		return _wsClient.SendMessageAsync(messageJson);
 	}
-	internal Task SendWebSocketBinary(string filePath)
+	public async Task SendWebSocketBinary(string filePath)
     {
-		return _wsClient.SendBinaryAsync(filePath);
+		await _wsClient.SendBinaryAsync(filePath);
     }
 	
 	/// <summary>
@@ -127,12 +127,12 @@ public class ServiceInteractions
 				result,
 				IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesReturnPayload
 			)!;
-			Logger.Trace("Token Manager (result)", authTokenPayload.ToString());
+			Tracer("Token Manager (result)", authTokenPayload.ToString());
 
 			if (authTokenPayload is { AuthToken: null })
 				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");
 			
-			Logger.Trace("Token Manager", authTokenPayload.ToString());
+			Tracer("Token Manager", authTokenPayload.ToString());
 			
 			//- Establish Socket Connection
 			AccessTokenReceived?.Invoke(authTokenPayload);
@@ -141,7 +141,7 @@ public class ServiceInteractions
 		}
 		catch (Exception e)
 		{
-			Logger.Log(e);
+			Logger(e, "");
 			throw;
 		}
 	}
@@ -153,7 +153,7 @@ public class ServiceInteractions
 			Arma3PayloadJsonSerializerContext.Default.Arma3ServiceSecret
 		)!;
 		
-		Logger.Trace("GetServiceSecret", secretString);
+		Tracer("GetServiceSecret", secretString);
 		return tokenPayload;
 	}
 	private static string GetBasicAuthenticationBearer(Arma3ServiceSecret serviceSecret)
