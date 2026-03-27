@@ -11,3 +11,5 @@ releases
 *.dll.*
 *.pdb
 *.env
+
+extension/featureTest/Discord_Message_API/*
