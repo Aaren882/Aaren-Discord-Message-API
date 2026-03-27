@@ -1,6 +1,8 @@
+using ServiceConnection.Entity;
+
 namespace ServiceConnection.Tools;
 
-public class Logger
+public class LoggerBase: ILogger
 {
 	private static readonly string ExtFilePath = Util.AssemblyPath!;
 	private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
@@ -8,14 +10,6 @@ public class Logger
 		LogFilePath,
 		$"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.log");
 
-	/// <summary>
-	/// Writes a trace message to the logger if debugging is enabled.
-	/// </summary>
-	/// <remarks>No output is generated if debugging is not enabled. This method is intended for
-	/// internal diagnostic purposes.</remarks>
-	/// <param name="Name">The name or category associated with the trace message. Used to identify the source or context of the trace
-	/// output.</param>
-	/// <param name="content">The content of the trace message to be logged.</param>
 	public static void Trace(string Name, string content)
 	{
 #if DEBUG
@@ -23,26 +17,19 @@ public class Logger
 #endif
 	}
 
-	public static void Log(Exception? e, string s = "", bool loop = false)
+	public static void Log(Exception? e, string s = "")
 	{
-		try
-		{
-			if (!Directory.Exists(ExtFilePath))
-				Directory.CreateDirectory(ExtFilePath);
-			if (!Directory.Exists(LogFilePath))
-				Directory.CreateDirectory(LogFilePath);
+		if (!Directory.Exists(ExtFilePath))
+			Directory.CreateDirectory(ExtFilePath);
+		if (!Directory.Exists(LogFilePath))
+			Directory.CreateDirectory(LogFilePath);
 
-			using var file = new StreamWriter(LogFileName, true);
-			if (string.IsNullOrEmpty(s))
-				s = e!.Message;
-			if (s.Length > 0)
-				file.WriteLine($"{DateTime.Now:T} - {s}");
-		}
-		catch (Exception i)
-		{
-			if (!loop)
-				Log(i, null, true);
-		}
+		using var file = new StreamWriter(LogFileName, true);
+		if (string.IsNullOrEmpty(s))
+			s = e!.Message;
+		
+		if (s.Length > 0)
+			file.WriteLine($"{DateTime.Now:T} - {s}");
 	}
 
 	public static void CleanLogs()

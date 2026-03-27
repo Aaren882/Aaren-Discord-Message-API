@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Components.Entity;
 using ServiceConnection.Discord;
+using ServiceConnection.Entity;
 using ServiceConnection.Tools;
 using static ServiceConnection.ServiceConnectionEntry;
 
@@ -11,8 +12,10 @@ namespace ServiceConnection.Delegates;
 public static class EntryDelegates
 {
 	public static readonly IDictionary<string, InitActions> ActionsDict = _initActionsMap(typeof(Actions));
-	public delegate int InitActions(OutputBuilder output, string[] args, int argCount);
-
+	
+	public delegate int InitActions(IOutputBuilder output, string[] args, int argCount);
+	public delegate Task<int> InitTaskActions(IOutputBuilder output, string[] args, int argCount);
+	
     private static Dictionary<string, InitActions> _initActionsMap(
 	    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicMethods)] Type actionType
 	)
@@ -41,7 +44,7 @@ public static class EntryDelegates
         /// <param name="output"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        internal static int Init_Player(OutputBuilder output, string[] args, int argCount)
+        internal static int Init_Player(IOutputBuilder output, string[] args, int argCount)
         {
             /*if (ExtensionInit)
             {
@@ -49,16 +52,14 @@ public static class EntryDelegates
             }*/
             InitTime = args[0]; //- From Server
 			
-            return 0;
+            return 1;
         }
 
-	    public static string InitTime { get; set; }
-
-	    internal static int Init_Server(OutputBuilder output, string[] args, int argCount)
+	    internal static int Init_Server(IOutputBuilder output, string[] args, int argCount)
         {
 	        // var webhooksCount = 0;
 	        // if (ExtensionInit) return webhooksCount;
-	        ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
+	        _ = ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
 	        var webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
 
 	        return webhooksCount;
@@ -69,10 +70,10 @@ public static class EntryDelegates
         /// <param name="output"></param>
         /// <param name="args"></param>
         /// <returns></returns>
-        internal static int Refresh_Webhooks(OutputBuilder output, string[] args, int argCount)
+        internal static int Refresh_Webhooks(IOutputBuilder output, string[] args, int argCount)
         {
             var jsonString = Util.ParseJson("Webhooks.json");
-            Logger.Trace("Refresh_Webhooks", jsonString);
+            Tracer("Refresh_Webhooks", jsonString);
 
             ALLWebhooks = JsonSerializer.Deserialize(
                 jsonString,
@@ -105,12 +106,13 @@ public static class EntryDelegates
         /// parse.</param>
         /// <param name="argCount">The number of arguments provided in the args array.</param>
         /// <returns>Always returns 1 to indicate successful processing of the first argument.</returns>
-        internal static int ParseJson(OutputBuilder output, string[] args, int argCount)
+        internal static int ParseJson(IOutputBuilder output, string[] args, int argCount)
         {
             var utf = Util.StringToCode32(Util.ParseJson(args[0]));
             output.Append($"[{string.Join(",", utf)}]");
             return 1;
         }
+        
         /// <summary>
         /// Handles a JSON-related command using the specified arguments.
         /// </summary>
@@ -119,9 +121,9 @@ public static class EntryDelegates
         /// <param name="args">An array of command-line arguments to process.</param>
         /// <param name="argCount">The number of arguments provided in the <paramref name="args"/> array.</param>
         /// <returns>Always returns 1 to indicate successful handling of the command.</returns>
-        internal static int HandlerJson(OutputBuilder output, string[] args, int argCount)
+        internal static int HandlerJson(IOutputBuilder output, string[] args, int argCount)
         {
-            _ = Worker.HandlerJson(args);
+	        _ = Worker.HandlerJson(args);
             return 1;
         }
         /// <summary>
@@ -132,7 +134,7 @@ public static class EntryDelegates
         /// <param name="args">An array of arguments, where the first element is expected to be a JSON-formatted string to process.</param>
         /// <param name="argCount">The number of arguments provided in the <paramref name="args"/> array.</param>
         /// <returns>Always returns 1 to indicate successful processing.</returns>
-        internal static int HandlerJsonFormat(OutputBuilder output, string[] args, int argCount)
+        internal static int HandlerJsonFormat(IOutputBuilder output, string[] args, int argCount)
         {
 	        _ = Worker.HandlerJsonFormat(args);
             return 1;
@@ -149,7 +151,7 @@ public static class EntryDelegates
         /// <param name="argCount">The number of arguments provided in the <paramref name="args"/> array. Must be exactly 8.</param>
         /// <returns>An integer value of 1 if the message is processed and sent successfully.</returns>
         /// <exception cref="Exception">Thrown if <paramref name="argCount"/> is not equal to 8.</exception>
-        internal static int SendMessage(OutputBuilder output, string[] args, int argCount)
+        internal static int SendMessage(IOutputBuilder output, string[] args, int argCount)
         {
             if (argCount != 8) // async without await because we don't expect a reply
                 throw new Exception("INCORRECT NUMBER OF ARGUMENTS");
@@ -159,7 +161,7 @@ public static class EntryDelegates
             if (codePointStrings.Length > 1)
                 args[5] = string.Concat(codePointStrings.Select(cp => char.ConvertFromUtf32(int.Parse(cp))));
 
-			_ = Worker.HandleRequest(args);
+            _ = Worker.HandleRequest(args);
             return 1;
         }
         
@@ -171,13 +173,13 @@ public static class EntryDelegates
         /// <param name="argCount"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        internal static int ConnectWebSocket(OutputBuilder output, string[] args, int argCount)
+        internal static int ConnectWebSocket(IOutputBuilder output, string[] args, int argCount)
         {
 	        var accessName = args[0];
 	        if (string.IsNullOrEmpty(accessName)) 
 		        throw new Exception("No access name provided.");
 	        
-	        _ = ServiceInteractions.EstablishWebSocketConnection(accessName);
+	        _ = serviceInteractions.EstablishWebSocketConnection(accessName);
 	        return 1;
         }
         /// <summary>
@@ -187,9 +189,9 @@ public static class EntryDelegates
         /// <param name="args"></param>
         /// <param name="argCount"></param>
         /// <returns></returns>
-        internal static int DisconnectWebSocket(OutputBuilder output, string[] args, int argCount)
+        internal static int DisconnectWebSocket(IOutputBuilder output, string[] args, int argCount)
         {
-	        _ = ServiceInteractions.DisconnectWebSocket();
+	        _ = serviceInteractions.DisconnectWebSocket();
 	        return 1;
         }
         /// <summary>
@@ -199,9 +201,9 @@ public static class EntryDelegates
         /// <param name="args"></param>
         /// <param name="argCount"></param>
         /// <returns></returns>
-        internal static int ReconnectWebSocket(OutputBuilder output, string[] args, int argCount)
+        internal static int ReconnectWebSocket(IOutputBuilder output, string[] args, int argCount)
         {
-	        _ = ServiceInteractions.ReconnectWebSocket();
+	        _ = serviceInteractions.ReconnectWebSocket();
 	        return 1;
         }
         
@@ -212,17 +214,17 @@ public static class EntryDelegates
         /// <param name="args"></param>
         /// <param name="argCount"></param>
         /// <returns></returns>
-        internal static int SendWebSocketMessage(OutputBuilder output, string[] args, int argCount)
+        internal static int SendWebSocketMessage(IOutputBuilder output, string[] args, int argCount)
         {
             var message = args[0];
             var messageObj = new Arma3PayloadMessage(message);
             
-            _ = ServiceInteractions.SendWebSocketMessage(messageObj);
+            _ = serviceInteractions.SendWebSocketMessage(messageObj);
             return 1;
         }
-        internal static int SendWebSocketRPT(OutputBuilder output, string[] args, int argCount)
+        internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
-            _ = ServiceInteractions.SendWebSocketBinary(Util.GetLastestFile(ServiceInteractions.RPTDirectory));
+	        _ = serviceInteractions.SendWebSocketBinary(Util.GetLastestFile(serviceInteractions.RPTDirectory));
             return 1;
         }
     }

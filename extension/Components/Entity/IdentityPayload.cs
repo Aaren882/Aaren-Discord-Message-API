@@ -4,7 +4,7 @@ namespace Components.Entity;
 
 public enum Role
 {
-	Admin = 1,
+	Admin,
 	GameServer = 2,
 }
 
