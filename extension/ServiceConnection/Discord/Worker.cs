@@ -24,7 +24,7 @@ public static class Worker
 		var json = args[1];
 
 		using var package = new MultipartFormDataContent();
-		
+		Tracer("HandlerJsonFormat", json);
 		package.Add(new StringContent(json, Encoding.UTF8), "payload_json");
 		await DiscordMsg(args[0], package);
 	}
@@ -109,12 +109,12 @@ public static class Worker
 		{
 			case { HandlerType : 1 }: //- Http(s) (Patch) request for Editing Message 
 			{
-				var response = await APIRequest.PatchRequest($"https://discord.com/api/webhooks/{url}/messages/{handlerType.MessageID}", package);
+				_ = await APIRequest.PatchRequest($"https://discord.com/api/webhooks/{url}/messages/{handlerType.MessageID}", package);
 				break;
 			}
 			default:
 			{
-				var response = await APIRequest.PostRequest($"https://discord.com/api/webhooks/{url}", package);
+				_ = await APIRequest.PostRequest($"https://discord.com/api/webhooks/{url}", package);
 				break;
 			}
 		}

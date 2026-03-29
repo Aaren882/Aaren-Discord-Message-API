@@ -13,9 +13,9 @@ public class ServiceConnectionEntry
 	internal static Action<Exception?, string> Logger;
 	
 	public static string? InitTime;
-	public static bool ExtensionInit { get; set; } = false;
+	public static bool ExtensionInit { get; set; }
 	public static WebhooksStorage? ALLWebhooks;
-	public static ServiceInteractions serviceInteractions;
+	public static ServiceInteractions? serviceInteractions;
 	
 	public static CallContext ContextInfo;
 	public static ExtensionCallback? Callback;
