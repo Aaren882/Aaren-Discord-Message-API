@@ -1,17 +1,17 @@
 using System.Text.Json.Serialization;
-using ServiceConnection.Tools;
 
 namespace ServiceConnection.Discord;
 
-/*public record DiscordMessage
+public record DiscordMessage
 {
-	public string? Content { get; init; }
-	public bool? Tts { get; init; }
-	public string? Username { get; init; }
-	public string? AvatarUrl { get; init; }
-	public string? File { get; init; }
-	public string? File { get; init; }
-	private List<EmbedData>? _embeds;
+	public string? Content { get; set; }
+	public bool? Tts { get; set; }
+	public string? Username { get; set; }
+	public string? Avatar_Url { get; set; }
+	public string? File { get; set; }
+
+	public List<EmbedData>? Embeds { get; set; }
+	/*private List<EmbedData>? _embeds;
 
 	public string? Embeds
 	{
@@ -36,9 +36,9 @@ namespace ServiceConnection.Discord;
 		this.AvatarUrl = AvatarUrl;
 		this.File = File;
 		_embeds = Embeds;
-	}
+	}*/
 
-	public async Task<MultipartFormDataContent> GetMultipartContent()
+	/*public async Task<MultipartFormDataContent> GetMultipartContent()
 	{
 		var form = new MultipartFormDataContent();
 		var dictionary = this.GetType()
@@ -79,8 +79,8 @@ namespace ServiceConnection.Discord;
 		}
 		
 		return form;
-	}
-};*/
+	}*/
+};
 
 public record struct EmbedData
 {
@@ -162,11 +162,11 @@ public record struct Types
     public readonly record struct Thumbnail(string? url);
     public readonly record struct Footer(string? text, string? icon_url);
     public readonly record struct AuthorEmbed(string? name, string? url, string? icon_url);
-    public readonly record struct FieldEmbed
+    public record struct FieldEmbed
     {
-        public string name { get; }
-        public string value { get; }
-        public bool? inline { get; }
+        public string name { get; set; }
+        public string value { get; set; }
+        public bool inline { get; set; }
 
         public FieldEmbed(List<string> data)
         {
@@ -181,22 +181,11 @@ public record struct Types
 
 public record struct MsgPayload(string Url, int HandlerType, string? MessageID);
 
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [
 	JsonSerializable(typeof(MsgPayload)),
+	JsonSerializable(typeof(DiscordMessage)),
 	JsonSerializable(typeof(EmbedData)),
 	JsonSerializable(typeof(List<EmbedData>))
 ]
 public partial class MsgPayload_JsonContext : JsonSerializerContext;
-
-public record struct WebhooksStorage
-{
-	private string[] _webhooks { get; set; }
-	public string[] Webhooks
-	{
-		get => _webhooks;
-		set => _webhooks = value.Select(Util.EncryptString).ToArray();
-	}
-};
-
-[JsonSerializable(typeof(WebhooksStorage))]
-public partial class WebhooksStorage_JsonContext : JsonSerializerContext;
