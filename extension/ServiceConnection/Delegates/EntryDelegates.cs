@@ -6,7 +6,8 @@ using Components.Entity;
 using ServiceConnection.Discord;
 using ServiceConnection.Entity;
 using ServiceConnection.Tools;
-using static ServiceConnection.ServiceConnectionEntry;
+using static ServiceConnection.ServiceStartup;
+using static ServiceConnection.LocalServices;
 
 namespace ServiceConnection.Delegates;
 public static class EntryDelegates
@@ -179,7 +180,8 @@ public static class EntryDelegates
 	        if (string.IsNullOrEmpty(accessName)) 
 		        throw new Exception("No access name provided.");
 	        
-	        _ = serviceInteractions.EstablishWebSocketConnection(accessName);
+	        _ = InitializeAsync(accessName);
+	        
 	        return 1;
         }
         /// <summary>
@@ -191,7 +193,7 @@ public static class EntryDelegates
         /// <returns></returns>
         internal static int DisconnectWebSocket(IOutputBuilder output, string[] args, int argCount)
         {
-	        _ = serviceInteractions.DisconnectWebSocket();
+	        _ = ShutdownAsync();
 	        return 1;
         }
         /// <summary>

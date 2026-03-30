@@ -8,7 +8,7 @@ public class LoggerBase: ILogger
 	private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
 	private static readonly string LogFileName = Path.Combine(
 		LogFilePath,
-		$"{DateTime.Now.ToString("yyyy-MM-dd.HH-mm-ss")}.log");
+		$"{DateTime.Now:yyyy-MM-dd.HH-mm-ss}.log");
 
 	public static void Trace(string Name, string content)
 	{

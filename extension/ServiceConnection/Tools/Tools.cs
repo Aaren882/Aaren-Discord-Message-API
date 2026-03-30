@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Components.Entity;
 using ServiceConnection.Entity;
-using static ServiceConnection.ServiceConnectionEntry;
+using static ServiceConnection.ServiceStartup;
 
 namespace ServiceConnection.Tools;
 

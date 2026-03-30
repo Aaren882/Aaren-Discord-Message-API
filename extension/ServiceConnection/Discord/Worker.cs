@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using ServiceConnection.Tools;
-using static ServiceConnection.ServiceConnectionEntry;
+using static ServiceConnection.LocalServices;
 
 namespace ServiceConnection.Discord;
 
@@ -24,7 +24,7 @@ public static class Worker
 		var json = args[1];
 
 		using var package = new MultipartFormDataContent();
-		Tracer("HandlerJsonFormat", json);
+		ServiceStartup.Tracer("HandlerJsonFormat", json);
 		package.Add(new StringContent(json, Encoding.UTF8), "payload_json");
 		await DiscordMsg(args[0], package);
 	}
@@ -56,7 +56,7 @@ public static class Worker
 				embed.AddRange(field);
 			}
 		}
-		Tracer("HandleRequest (fieldsData)", args[7]);
+		ServiceStartup.Tracer("HandleRequest (fieldsData)", args[7]);
 		//- pass Data into "class Types.EmbedData"
 		var embeds = embedsData.Select(data =>
 			new EmbedData(data, fieldsData)
@@ -64,7 +64,7 @@ public static class Worker
 
 		// Prepare the embeds JSON data
 		var embedsJson = BuildEmbedsJson(embeds);
-		Tracer("HandleRequest (embedsJson)", embedsJson);
+		ServiceStartup.Tracer("HandleRequest (embedsJson)", embedsJson);
 
 		// Bare bones
 		package.Add(new StringContent(content), "content");
@@ -73,7 +73,7 @@ public static class Worker
 		//- Send File .png
 		if (filePath.Length > 0)
 		{
-			Tracer("HandleRequest [filePath] : ", filePath);
+			ServiceStartup.Tracer("HandleRequest [filePath] : ", filePath);
 			filePath = Path.GetFullPath(filePath);
 				
 			await using var fileStream = new FileStream(filePath, FileMode.Open);
@@ -91,16 +91,16 @@ public static class Worker
 
 	private static async Task DiscordMsg(string handlerPayload, MultipartFormDataContent package)
 	{
-		Tracer("DiscordMsg => \"handlerPayload\"", handlerPayload);
-        Tracer("DiscordMsg => \"package\"", package.ToString()!);
+		ServiceStartup.Tracer("DiscordMsg => \"handlerPayload\"", handlerPayload);
+        ServiceStartup.Tracer("DiscordMsg => \"package\"", package.ToString()!);
 
         //- [ Handler<int> , Required Payload<object> ]
         var handlerType = JsonSerializer.Deserialize(handlerPayload, MsgPayload_JsonContext.Default.MsgPayload);
 
-		Tracer("DiscordMsg", "========================");
-		Tracer("DiscordMsg => \"Url\"", handlerType!.Url);
-        Tracer("DiscordMsg => \"HandlerType\"", handlerType.HandlerType.ToString());
-		Tracer("DiscordMsg => \"MessageID\"", handlerType.MessageID!);
+		ServiceStartup.Tracer("DiscordMsg", "========================");
+		ServiceStartup.Tracer("DiscordMsg => \"Url\"", handlerType!.Url);
+        ServiceStartup.Tracer("DiscordMsg => \"HandlerType\"", handlerType.HandlerType.ToString());
+		ServiceStartup.Tracer("DiscordMsg => \"MessageID\"", handlerType.MessageID!);
         var url = handlerType.Url;
 
         url = Util.DecryptString(url);
@@ -166,7 +166,7 @@ public static class Worker
 	{
 		var embedsJson = new StringBuilder();
 		embedsJson.Append("{ \"embeds\": ");
-		Tracer("BuildEmbedsJson (embeds.Count)", $"{embeds.Count}");
+		ServiceStartup.Tracer("BuildEmbedsJson (embeds.Count)", $"{embeds.Count}");
 		embedsJson.Append(
 			JsonSerializer.Serialize(
 				embeds,
