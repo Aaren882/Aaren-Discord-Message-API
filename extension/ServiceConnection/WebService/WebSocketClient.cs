@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
 using Arma3PayloadRPT = Components.Entity.Arma3PayloadRPT;
-using static ServiceConnection.ServiceConnectionEntry;
 
 namespace ServiceConnection.WebService;
 
@@ -34,10 +33,10 @@ public class WebSocketClient(string serverUri)
 			
 			_cancellationTokenSource = new CancellationTokenSource();
 
-			Logger(null ,$"Connecting to {serverUri}...");
+			ServiceStartup.Logger(null ,$"Connecting to {serverUri}...");
 			await _webSocket.ConnectAsync(new Uri(serverUri), _cancellationTokenSource.Token);
 
-			Logger(null ,"Connected successfully!");
+			ServiceStartup.Logger(null ,"Connected successfully!");
 			Connected?.Invoke();
 
 			// Start listening for messages
@@ -45,7 +44,7 @@ public class WebSocketClient(string serverUri)
 		}
 		catch (Exception ex)
 		{
-			Logger(null ,$"Connection failed: {ex.Message}");
+			ServiceStartup.Logger(null ,$"Connection failed: {ex.Message}");
 		}
 	}
 	public async Task SendBinaryAsync(string filePath, int chunkSize = 64 * 1024)
@@ -88,11 +87,11 @@ public class WebSocketClient(string serverUri)
 					await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == totalChunks - 1), CancellationToken.None);
 				}
 			}
-			Logger(null ,$"Sent Binary: {filePath}");
+			ServiceStartup.Logger(null ,$"Sent Binary: {filePath}");
 		}
 		else
 		{
-			Logger(null ,"WebSocket is not connected. Cannot send message.");
+			ServiceStartup.Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
 	}
 
@@ -108,11 +107,11 @@ public class WebSocketClient(string serverUri)
 				true,
 				_cancellationTokenSource?.Token ?? CancellationToken.None);
 
-			Logger(null ,$"Sent: {messagePayload}");
+			ServiceStartup.Logger(null ,$"Sent: {messagePayload}");
 		}
 		else
 		{
-			Logger(null ,"WebSocket is not connected. Cannot send message.");
+			ServiceStartup.Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
 	}
 
@@ -131,7 +130,7 @@ public class WebSocketClient(string serverUri)
 				if (result.MessageType == WebSocketMessageType.Text)
 				{
 					var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-					Logger(null ,$"Received: {message}");
+					ServiceStartup.Logger(null ,$"Received: {message}");
 					
 					var payload = JsonSerializer.Deserialize(
 						message, 
@@ -143,18 +142,18 @@ public class WebSocketClient(string serverUri)
 				}
 				else if (result.MessageType == WebSocketMessageType.Close)
 				{
-					Logger(null ,"Server closed the connection.");
+					ServiceStartup.Logger(null ,"Server closed the connection.");
 					break;
 				}
 			}
 		}
 		catch (OperationCanceledException)
 		{
-			Logger(null ,"Connection cancelled.");
+			ServiceStartup.Logger(null ,"Connection cancelled.");
 		}
 		catch (Exception ex)
 		{
-			Logger(null ,$"Error receiving message: \"{ex.Message}\"");
+			ServiceStartup.Logger(null ,$"Error receiving message: \"{ex.Message}\"");
 		}
 		finally
 		{
@@ -178,11 +177,11 @@ public class WebSocketClient(string serverUri)
 			_webSocket?.Dispose();
 			_cancellationTokenSource?.Dispose();
 
-			Logger(null ,"Disconnected successfully.");
+			ServiceStartup.Logger(null ,"Disconnected successfully.");
 		}
 		catch (Exception ex)
 		{
-			Logger(null ,$"Error during disconnect: {ex.Message}");
+			ServiceStartup.Logger(null ,$"Error during disconnect: {ex.Message}");
 		}
 	}
 }

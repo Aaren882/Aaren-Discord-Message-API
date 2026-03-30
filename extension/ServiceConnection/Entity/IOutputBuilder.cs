@@ -1,4 +1,4 @@
-using static ServiceConnection.ServiceConnectionEntry;
+using static ServiceConnection.LocalServices;
 
 namespace ServiceConnection.Entity;
 
@@ -18,6 +18,6 @@ public record struct OutputBuilder(nint Destination, int OutputSize): IOutputBui
 	/// <param name="data">String data that will be output</param>
 	public void Append(string data)
 	{
-		Output(Destination, OutputSize, data);
+		ServiceStartup.localServices.Output(Destination, OutputSize, data);
 	}
 }

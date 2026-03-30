@@ -7,7 +7,7 @@ using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using ServiceConnection.Tools;
 using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
-using static ServiceConnection.ServiceConnectionEntry;
+using static ServiceConnection.ServiceStartup;
 
 namespace ServiceConnection.WebService;
 
@@ -20,7 +20,7 @@ public class ServiceInteractions
 	public readonly string RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
 
 	public event Action<IdentityRolesReturnPayload>? AccessTokenReceived;
-	private readonly WebSocketClient _wsClient = new(ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
+	private readonly WebSocketClient _wsClient = new (ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
 
 	public ServiceInteractions()
 	{

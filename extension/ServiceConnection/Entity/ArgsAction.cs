@@ -1,5 +1,5 @@
 using static ServiceConnection.Delegates.EntryDelegates;
-using static ServiceConnection.ServiceConnectionEntry;
+using static ServiceConnection.LocalServices;
 
 namespace ServiceConnection.Entity;
 
@@ -17,7 +17,7 @@ public readonly record struct ArgsAction(IOutputBuilder Output, string[] Args, s
 {
 	public InitActions GetAction()
 	{
-		Tracer("DLL Entry", FunctionName);
+		ServiceStartup.Tracer("DLL Entry", FunctionName);
 
 		if (!ActionsDict.TryGetValue(FunctionName, out var action))
 			throw new NullReferenceException($"Function \"{FunctionName}\" is not exist.");

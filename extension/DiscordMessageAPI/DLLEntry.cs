@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.DependencyInjection;
 using ServiceConnection;
 using ServiceConnection.Entity;
 using ServiceConnection.Tools;
@@ -18,7 +19,7 @@ public class DllEntry
 	{
 		try
 		{
-			ServiceConnectionEntry.Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
+			ServiceStartup.Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
 			LoggerBase.Trace("RVExtensionRegisterCallback", "CallBack Initiated");
 		}
 		catch (Exception e)
@@ -40,10 +41,17 @@ public class DllEntry
 		//- Clean up logs
 		LoggerBase.CleanLogs();
 		
+		var services = new ServiceCollection();
+		services.AddSingleton<ServiceInteractions>();
+		services.AddSingleton<ILocalServices,LocalServices>();
+
+		var serviceProvider = services.BuildServiceProvider();
+		
 		//- Setup Service Configuration
-		ServiceConnectionEntry.InitConfiguration(
+		ServiceStartup.InitConfiguration(
 			LoggerBase.Trace,
-			LoggerBase.Log
+			LoggerBase.Log,
+			serviceProvider
 		);
 		
 		var version = typeof(DllEntry).GetTypeInfo().Assembly 
@@ -52,9 +60,9 @@ public class DllEntry
 		
 		version = version
 			.Substring(0, version.LastIndexOf('+') + 9);
-		
+
 		LoggerBase.Log(null, $"Extension Version : [{version}]");
-		ServiceConnectionEntry.Output(outputPrt, outputSize, version);
+		ServiceStartup.localServices.Output(outputPrt, outputSize, version);
 	}
 	
 	/// <summary>
@@ -73,14 +81,14 @@ public class DllEntry
 			args[i] = str;
 		}
 
-		ServiceConnectionEntry.ContextInfo = new CallContext(
+		ServiceStartup.ContextInfo = new CallContext(
 			Convert.ToUInt64(args[0]),
 			args[1]!,
 			args[2]!,
 			args[3]!,
 			Convert.ToInt16(args[4])
 		);
-		LoggerBase.Trace(nameof(ServiceConnectionEntry.ContextInfo),ServiceConnectionEntry.ContextInfo.ToString());
+		LoggerBase.Trace(nameof(ServiceStartup.ContextInfo),ServiceStartup.ContextInfo.ToString());
 	}
 
 	/// <summary>
@@ -96,14 +104,14 @@ public class DllEntry
 
 		try
 		{
-			ServiceConnectionEntry.Callback!("CallBack Name", inputKey, "data");
+			ServiceStartup.Callback!("CallBack Name", inputKey, "data");
 		}
 		catch (Exception e)
 		{
 			LoggerBase.Log(e);
 		}
 
-		ServiceConnectionEntry.Output(outputPrt, outputSize, inputKey);
+		ServiceStartup.localServices.Output(outputPrt, outputSize, inputKey);
 	}
 
 	/// <summary>
@@ -138,6 +146,6 @@ public class DllEntry
 		var output = new OutputBuilder(outputPrt, outputSize);
 		var argsAction = new ArgsAction(output, args, functionName);
 
-		return ServiceConnectionEntry.ExecuteArgsAction(argsAction);
+		return ServiceStartup.localServices.ExecuteArgsAction(argsAction);
 	}
 }
