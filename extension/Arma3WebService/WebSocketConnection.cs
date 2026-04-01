@@ -2,7 +2,9 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Arma3WebService.Entity;
+using Arma3WebService.Models;
 using Components.Entity;
+using Discord;
 using Arma3PayloadCallBack = Components.Entity.Arma3PayloadCallBack;
 using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
 using Arma3PayloadMessage = Components.Entity.Arma3PayloadMessage;
@@ -23,6 +25,7 @@ namespace Arma3WebService
 	{
 		private readonly WebSocket _webSocket = websocketEntity.AcceptConnection();
 		private readonly CancellationToken _cts = websocketEntity.ContextEntity.Context.RequestAborted;
+		private readonly IWebSocketService _service = websocketEntity.ContextEntity.WebSocketService;
 
 		public async Task<WebSocketCloseStatus?> KeepReceiving()
 		{
@@ -45,12 +48,21 @@ namespace Arma3WebService
 				
 				switch (deserialized.MessageType) 
 				{
+					case Arma3PayLoadType.Text :
+					{
+						var messagePayload = deserialized as Arma3PayloadText;
+						Console.WriteLine($"Received Text '{messagePayload.Message}'");
+						
+						await Send(receivedMessage);
+						break;
+					}
 					case Arma3PayLoadType.Message :
 					{
 						var messagePayload = deserialized as Arma3PayloadMessage;
 						Console.WriteLine($"Received message '{messagePayload.Message}'");
 						
-						await Send(receivedMessage);
+						await _service!.InvokeDiscordBotMessage(messagePayload.Message);
+						
 						break;
 					}
 					case Arma3PayLoadType.Rpt : //- Must use metaData first

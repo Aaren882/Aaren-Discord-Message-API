@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using ServiceConnection.Discord;
 
 namespace Arma3WebService.Models
 {
@@ -8,6 +10,8 @@ namespace Arma3WebService.Models
 	{
 		public DiscordSocketClient GetClient();
 		public Task<IUserMessage> PostBotOnline(string text);
+		public Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessage message);
+		public Task<IUserMessage> SendMessageAsync(DiscordMessage message);
 	}
 
 	public sealed class DiscordBotService(ILogger<DiscordBotService> logger, IServiceProvider serviceProvider)
@@ -53,14 +57,70 @@ namespace Arma3WebService.Models
 			);
 			await _client.StartAsync();
 		}
+		
+		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessage message)
+		{
+			var channel = await _client!
+				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
+
+			var modifyResult = await channel!.ModifyMessageAsync(messageID, msg =>
+			{
+				msg.Content = message.Content;
+				msg.Embeds = ConvertEmbeds(message.Embeds).ToArray();
+				msg.Components = new Optional<MessageComponent>();
+			});
+			
+			return modifyResult;
+		}
+		public async Task<IUserMessage> SendMessageAsync(DiscordMessage message)
+		{
+			var channel = await _client!
+				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
+
+			// var builder = ComponentBuilder.FromComponents(ConvertComponents(message.Components));
+			// var text = new Types.TextDisplayComponent("Test Display");
+			// var media = new UnfurledMediaItemProperties("https://websitewithopensourceimages/gamepreview.webp");
+			// var thumbnailComponent = new Types.ThumbnailComponent(media, "");
+			// var builder = new Types.SectionComponent([text], thumbnailComponent).Convert();
+
+			MessageComponent? component = null;
+			if (message.Components is not null)
+			{
+				component = new ComponentBuilderV2(ConvertComponents(message.Components))
+					.Build();
+			}
+
+			var sentMessage = (message) switch
+			{
+				{ File: not null } => channel!
+					.SendFileAsync(
+						filePath: message.File,
+						text: message.Content,
+						isTTS: message.Tts ?? false,
+						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
+						components: component
+					),
+				_ => channel!
+					.SendMessageAsync(
+						text: message.Content,
+						isTTS: message.Tts ?? false,
+						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
+						components: component
+					)
+			};
+
+			return await sentMessage;
+		}
+
+		private IEnumerable<IMessageComponentBuilder> ConvertComponents(IReadOnlyCollection<Types.IComponent>? components)
+		{
+			return components?.Select(x => x.Convert()) ?? throw new InvalidOperationException();
+		}
 
 		public async Task<IUserMessage> PostBotOnline(string text)
 		{
 			var channel = await _client!
 				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
-			
-			var requestURL= $"{Environment.GetEnvironmentVariable("ASPNETCORE_URLS")}/DiscordBot/File/.env";
-
 
 			var buttton = ButtonBuilder
 				.CreatePrimaryButton("I'm button", "custom-id-1");
@@ -147,6 +207,37 @@ namespace Arma3WebService.Models
 					break;
 			}
 			return Task.CompletedTask;
+		}
+
+		private IEnumerable<Embed>? ConvertEmbeds(IEnumerable<EmbedData>? embeds)
+		{
+			return embeds?.Select(x => 
+				new EmbedBuilder
+				{
+					Author = new EmbedAuthorBuilder
+					{
+						IconUrl	= x.author.icon_url,
+						Name = x.author.name,
+						Url = x.author.url
+					},
+					ThumbnailUrl = x.thumbnail.url,
+					ImageUrl = x.image.url,
+					Description = x.description,
+					Fields = x.fields
+						.Select(f => new EmbedFieldBuilder
+						{
+							IsInline = f.inline,
+							Name = f.name,
+							Value = f.value 
+						})
+						.ToList(),
+					Footer = new EmbedFooterBuilder
+					{
+						IconUrl	= x.footer.icon_url,
+						Text = x.footer.text
+					}
+				}.Build()
+			);
 		}
 	}
 }

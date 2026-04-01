@@ -12,4 +12,8 @@
         <Version>$(AssemblyVersion)</Version>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Discord.Net.Core" Version="3.19.1" />
+    </ItemGroup>
+
 </Project>
