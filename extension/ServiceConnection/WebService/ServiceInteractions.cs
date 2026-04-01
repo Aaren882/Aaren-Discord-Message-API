@@ -67,16 +67,7 @@ public class ServiceInteractions
 	}
 	public Task SendWebSocketMessage(Arma3Payload messageObj)
 	{
-		var context = messageObj.MessageType switch
-		{
-			Arma3PayLoadType.Message => Arma3PayloadJsonSerializerContext.Default.Arma3Payload,
-			_ => null
-		};
-		
-		if (context == null)
-			throw new NoNullAllowedException("Websocket message context is not exist.");
-		
-		var messageJson = JsonSerializer.Serialize(messageObj, context);
+		var messageJson = JsonSerializer.Serialize(messageObj, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 		return _wsClient.SendMessageAsync(messageJson);
 	}
 	public async Task SendWebSocketBinary(string filePath)

@@ -216,14 +216,22 @@ public static class EntryDelegates
         /// <param name="args"></param>
         /// <param name="argCount"></param>
         /// <returns></returns>
-        internal static int SendWebSocketMessage(IOutputBuilder output, string[] args, int argCount)
+        internal static int SendWebSocketText(IOutputBuilder output, string[] args, int argCount)
+        {
+            var message = args[0];
+            var messageObj = new Arma3PayloadText(message);
+            
+            _ = serviceInteractions.SendWebSocketMessage(messageObj);
+            return 1;
+        }
+        /*internal static int SendWebSocketMessage(IOutputBuilder output, string[] args, int argCount)
         {
             var message = args[0];
             var messageObj = new Arma3PayloadMessage(message);
             
             _ = serviceInteractions.SendWebSocketMessage(messageObj);
             return 1;
-        }
+        }*/
         internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
 	        _ = serviceInteractions.SendWebSocketBinary(Util.GetLastestFile(serviceInteractions.RPTDirectory));

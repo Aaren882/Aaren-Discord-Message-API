@@ -30,11 +30,12 @@ public class ServiceStartup
 		Tracer = tracer;
 		Logger = logger;
 		ServiceProvider = serviceProvider;
+		serviceInteractions = serviceProvider.GetService<ServiceInteractions>();
 
 		try
 		{
-			serviceInteractions = serviceProvider.GetService<ServiceInteractions>();
 			localServices = serviceProvider.GetRequiredService<ILocalServices>();
+			Tracer(nameof(localServices), "Local Services Initialized");
 		}
 		catch (Exception e)
 		{
@@ -51,7 +52,8 @@ public class ServiceStartup
 
 		await serviceInteractions.EstablishWebSocketConnection(accessName);
 		ExtensionInit = true;
-		InitTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+		Logger(null, "Initializing WebSocket Connection");
+		// InitTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 	}
 
 	public static async Task ShutdownAsync()
@@ -61,6 +63,7 @@ public class ServiceStartup
 			throw new InvalidOperationException("ServiceInteractions not initialized. Call InitConfiguration first.");
 		}
 		
+		Logger(null, "Shutting down WebSocket Connection");
 		await serviceInteractions.DisconnectWebSocket("Extension Shutting Down");
 		ExtensionInit = false;
 	}

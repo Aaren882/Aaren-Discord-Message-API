@@ -1,7 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using ServiceConnection.Entity;
-using ServiceConnection.WebService;
 
 namespace ServiceConnection;
 
