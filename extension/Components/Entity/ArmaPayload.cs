@@ -1,31 +1,36 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using ServiceConnection.Discord;
 
 namespace Components.Entity;
 
 public enum Arma3PayLoadType
 {
-	Message = 1,
+	Text = 1,
 	Rpt = 2, //- in game *.rpt logs
 	Command = 3,
 	GameInfo = 4,
+	Message = 5,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(Arma3PayloadText), "text")]
 [JsonDerivedType(typeof(Arma3PayloadMessage), "message")]
 [JsonDerivedType(typeof(Arma3PayloadRPT), "rpt")]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), "callback")]
-public record Arma3Payload
-(
-	Arma3PayLoadType MessageType
-)
+public record Arma3Payload(Arma3PayLoadType MessageType)
 {
 	public static DateTime Timestamp => DateTime.Now;
 }
 
-public record Arma3PayloadMessage
+public record Arma3PayloadText
 (
 	string Message
+) : Arma3Payload(Arma3PayLoadType.Message);
+
+public record Arma3PayloadMessage
+(
+	DiscordMessage Message
 ) : Arma3Payload(Arma3PayLoadType.Message);
 
 public record Arma3PayloadRPT
@@ -62,9 +67,5 @@ public record Arma3ServiceSecret(
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [JsonSerializable(typeof(Arma3Payload))]
-// [JsonSerializable(typeof(List<Arma3Payload>))] // Add all root types used
-// [JsonSerializable(typeof(Arma3PayloadMessage))]
-// [JsonSerializable(typeof(Arma3PayloadRPT))]
-// [JsonSerializable(typeof(Arma3PayloadCallBack))]
 [JsonSerializable(typeof(Arma3ServiceSecret))]
 public sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;
