@@ -9,6 +9,7 @@ using Arma3PayloadCallBack = Components.Entity.Arma3PayloadCallBack;
 using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
 using Arma3PayloadMessage = Components.Entity.Arma3PayloadMessage;
 using Arma3PayloadRPT = Components.Entity.Arma3PayloadRPT;
+using MsgPayload_JsonContext = Arma3WebService.Entity.MsgPayload_JsonContext;
 
 namespace Arma3WebService
 {
@@ -60,9 +61,11 @@ namespace Arma3WebService
 					{
 						var messagePayload = deserialized as Arma3PayloadMessage;
 						Console.WriteLine($"Received message '{messagePayload.Message}'");
-						
-						await _service!.InvokeDiscordBotMessage(messagePayload.Message);
-						
+
+						var dto = JsonSerializer.Deserialize(messagePayload.Message, MsgPayload_JsonContext.Default.DiscordMessageDto);
+
+						if (dto != null) await _service!.InvokeDiscordBotMessage(dto);
+
 						break;
 					}
 					case Arma3PayLoadType.Rpt : //- Must use metaData first

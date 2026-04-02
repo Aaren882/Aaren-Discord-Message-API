@@ -1,6 +1,5 @@
-using System.Diagnostics;
+using Arma3WebService.Entity;
 using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using ServiceConnection.Discord;
 
@@ -10,8 +9,8 @@ namespace Arma3WebService.Models
 	{
 		public DiscordSocketClient GetClient();
 		public Task<IUserMessage> PostBotOnline(string text);
-		public Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessage message);
-		public Task<IUserMessage> SendMessageAsync(DiscordMessage message);
+		public Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message);
+		public Task<IUserMessage> SendMessageAsync(DiscordMessageDto message);
 	}
 
 	public sealed class DiscordBotService(ILogger<DiscordBotService> logger, IServiceProvider serviceProvider)
@@ -58,7 +57,7 @@ namespace Arma3WebService.Models
 			await _client.StartAsync();
 		}
 		
-		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessage message)
+		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
 		{
 			var channel = await _client!
 				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
@@ -72,7 +71,7 @@ namespace Arma3WebService.Models
 			
 			return modifyResult;
 		}
-		public async Task<IUserMessage> SendMessageAsync(DiscordMessage message)
+		public async Task<IUserMessage> SendMessageAsync(DiscordMessageDto message)
 		{
 			var channel = await _client!
 				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
@@ -92,6 +91,14 @@ namespace Arma3WebService.Models
 
 			var sentMessage = (message) switch
 			{
+				{ Attachments: not null } => channel!
+					.SendFilesAsync(
+						message.Attachments,
+						text: message.Content,
+						isTTS: message.Tts ?? false,
+						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
+						components: component
+					),
 				{ File: not null } => channel!
 					.SendFileAsync(
 						filePath: message.File,
@@ -112,7 +119,7 @@ namespace Arma3WebService.Models
 			return await sentMessage;
 		}
 
-		private IEnumerable<IMessageComponentBuilder> ConvertComponents(IReadOnlyCollection<Types.IComponent>? components)
+		private IEnumerable<IMessageComponentBuilder> ConvertComponents(IReadOnlyCollection<DiscordDto.ComponentBase>? components)
 		{
 			return components?.Select(x => x.Convert()) ?? throw new InvalidOperationException();
 		}
