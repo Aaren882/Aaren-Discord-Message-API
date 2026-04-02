@@ -12,25 +12,33 @@ public enum Arma3PayLoadType
 	Message = 5,
 }
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(Arma3PayloadText), "text")]
-[JsonDerivedType(typeof(Arma3PayloadMessage), "message")]
-[JsonDerivedType(typeof(Arma3PayloadRPT), "rpt")]
-[JsonDerivedType(typeof(Arma3PayloadCallBack), "callback")]
-public record Arma3Payload(Arma3PayLoadType MessageType)
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
+[JsonDerivedType(typeof(Arma3PayloadMessage), (int)Arma3PayLoadType.Message)]
+[JsonDerivedType(typeof(Arma3PayloadRPT), (int)Arma3PayLoadType.Rpt)]
+[JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
+public abstract record Arma3Payload
 {
+	public abstract Arma3PayLoadType Type { get; }
 	public static DateTime Timestamp => DateTime.Now;
 }
 
-public record Arma3PayloadText
-(
+public record Arma3PayloadText(
 	string Message
-) : Arma3Payload(Arma3PayLoadType.Text);
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Text;
+};
 
 public record Arma3PayloadMessage
 (
 	string Message
-) : Arma3Payload(Arma3PayLoadType.Message);
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Message;
+};
 
 public record Arma3PayloadRPT
 (
@@ -38,12 +46,20 @@ public record Arma3PayloadRPT
 	long FileSize,
 	DateTime CreatedTime,
 	int TotalChunks
-) : Arma3Payload(Arma3PayLoadType.Rpt);
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Rpt;
+};
 
 public record Arma3PayloadCallBack(
 	string Function,
 	string Data
-) : Arma3Payload(Arma3PayLoadType.Command);
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Command;
+};
 
 //- Service
 public record struct ServiceAuthenticationHeader(

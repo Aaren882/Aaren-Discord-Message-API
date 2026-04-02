@@ -4,12 +4,6 @@ using System.Text.Json;
 using Arma3WebService.Entity;
 using Arma3WebService.Models;
 using Components.Entity;
-using Discord;
-using Arma3PayloadCallBack = Components.Entity.Arma3PayloadCallBack;
-using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
-using Arma3PayloadMessage = Components.Entity.Arma3PayloadMessage;
-using Arma3PayloadRPT = Components.Entity.Arma3PayloadRPT;
-using MsgPayload_JsonContext = Arma3WebService.Entity.MsgPayload_JsonContext;
 
 namespace Arma3WebService
 {
@@ -47,7 +41,7 @@ namespace Arma3WebService
 					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 				)!;
 				
-				switch (deserialized.MessageType) 
+				switch (deserialized.Type) 
 				{
 					case Arma3PayLoadType.Text :
 					{
