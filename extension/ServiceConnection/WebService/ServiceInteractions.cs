@@ -30,7 +30,7 @@ public class ServiceInteractions
 		{
 			// if (message is null) return;
 			Tracer("MessageReceived (message)", message.ToString());
-			switch (message.MessageType)
+			switch (message.Type)
 			{
 				case Arma3PayLoadType.Command: { //- Remote command from websocket
 					Util.CallExtensionCallback(Callback, message as Arma3PayloadCallBack);
