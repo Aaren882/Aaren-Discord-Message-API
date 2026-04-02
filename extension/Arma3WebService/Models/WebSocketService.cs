@@ -1,9 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Arma3WebService.Entity;
-using Components.Entity;
-using Discord;
-using ServiceConnection.Discord;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 
@@ -11,7 +8,7 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
-		public Task InvokeDiscordBotMessage(DiscordMessage message);
+		public Task InvokeDiscordBotMessage(DiscordMessageDto message);
 		public Task InvokeArmaCallBack(Arma3RemoteCommand command);
 		public Task CreateConnection(WebsocketContextEntity context);
 	}
@@ -35,7 +32,7 @@ namespace Arma3WebService.Models
 			await session.SendArmaCallback(command.payload);
 		}
 		
-		public async Task InvokeDiscordBotMessage(DiscordMessage message)
+		public async Task InvokeDiscordBotMessage(DiscordMessageDto message)
 		{
 			var botService = serviceProvider.GetService<IDiscordBotService>();
 			await botService?.SendMessageAsync(message)!;

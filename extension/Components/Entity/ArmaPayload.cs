@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json.Serialization;
-using ServiceConnection.Discord;
 
 namespace Components.Entity;
 
@@ -30,7 +29,7 @@ public record Arma3PayloadText
 
 public record Arma3PayloadMessage
 (
-	DiscordMessage Message
+	string Message
 ) : Arma3Payload(Arma3PayLoadType.Message);
 
 public record Arma3PayloadRPT
