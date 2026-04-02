@@ -9,12 +9,12 @@ public enum Arma3PayLoadType
 	Rpt = 2, //- in game *.rpt logs
 	Command = 3,
 	GameInfo = 4,
-	Message = 5,
+	JsonString = 5,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
-[JsonDerivedType(typeof(Arma3PayloadMessage), (int)Arma3PayLoadType.Message)]
+[JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
 [JsonDerivedType(typeof(Arma3PayloadRPT), (int)Arma3PayLoadType.Rpt)]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
 public abstract record Arma3Payload
@@ -31,13 +31,13 @@ public record Arma3PayloadText(
 	public override Arma3PayLoadType Type => Arma3PayLoadType.Text;
 };
 
-public record Arma3PayloadMessage
+public record Arma3PayloadJson
 (
-	string Message
+	string JsonString
 ) : Arma3Payload
 {
 	[JsonIgnore]
-	public override Arma3PayLoadType Type => Arma3PayLoadType.Message;
+	public override Arma3PayLoadType Type => Arma3PayLoadType.JsonString;
 };
 
 public record Arma3PayloadRPT
