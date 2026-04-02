@@ -51,12 +51,12 @@ namespace Arma3WebService
 						await Send(receivedMessage);
 						break;
 					}
-					case Arma3PayLoadType.Message :
+					case Arma3PayLoadType.JsonString :
 					{
-						var messagePayload = deserialized as Arma3PayloadMessage;
-						Console.WriteLine($"Received message '{messagePayload.Message}'");
+						var messagePayload = deserialized as Arma3PayloadJson;
+						Console.WriteLine($"Received message '{messagePayload.JsonString}'");
 
-						var dto = JsonSerializer.Deserialize(messagePayload.Message, MsgPayload_JsonContext.Default.DiscordMessageDto);
+						var dto = JsonSerializer.Deserialize(messagePayload.JsonString, MsgPayload_JsonContext.Default.DiscordMessageDto);
 
 						if (dto != null) await _service!.InvokeDiscordBotMessage(dto);
 

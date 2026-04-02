@@ -27,9 +27,9 @@ namespace Arma3WebService.Controllers
 		}
 
 		[HttpPost(Name = "ArmaController")]
-		public IActionResult PostLog(Arma3PayloadMessage payload)
+		public IActionResult PostLog(Arma3PayloadJson payload)
 		{
-			_logger.LogInformation($"Restful Received Log: {payload.Message}");
+			_logger.LogInformation($"Restful Received Log: {payload.JsonString}");
 			return Ok(new { hello = "" });
 		}
 		

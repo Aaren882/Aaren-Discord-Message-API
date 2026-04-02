@@ -38,7 +38,7 @@ public class ServiceInteractions
 				}
 				case Arma3PayLoadType.Rpt: //- Remote command to Send RPT
 					break;
-				case Arma3PayLoadType.Message:
+				case Arma3PayLoadType.JsonString:
 					break;
 				// default : throw new Exception("No callBack action is found.");
 			}
