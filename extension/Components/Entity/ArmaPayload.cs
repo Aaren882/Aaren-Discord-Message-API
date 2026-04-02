@@ -25,7 +25,7 @@ public record Arma3Payload(Arma3PayLoadType MessageType)
 public record Arma3PayloadText
 (
 	string Message
-) : Arma3Payload(Arma3PayLoadType.Message);
+) : Arma3Payload(Arma3PayLoadType.Text);
 
 public record Arma3PayloadMessage
 (
