@@ -1,9 +1,11 @@
+using System.ComponentModel;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 using Arma3WebService.Entity;
 using Arma3WebService.Models;
 using Components.Entity;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Arma3WebService
 {
@@ -49,6 +51,30 @@ namespace Arma3WebService
 						Console.WriteLine($"Received Text '{messagePayload.Message}'");
 						
 						await Send(receivedMessage);
+						break;
+					}
+					case Arma3PayLoadType.ArrayString :
+					{
+						var messagePayload = deserialized as Arma3PayloadArrayString;
+
+						try
+						{
+							var collection = messagePayload?.ArrayString
+								.Select(x =>
+									JsonSerializer.Deserialize<List<string>>(x)
+								)
+								.ToDictionary(
+									value => value![0],
+									value => value![1]
+								);
+						
+							Console.WriteLine(collection);
+						}
+						catch (ArgumentException e)
+						{
+							Console.WriteLine(e);
+						}
+						
 						break;
 					}
 					case Arma3PayLoadType.JsonString :

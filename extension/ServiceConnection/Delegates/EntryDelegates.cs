@@ -7,7 +7,6 @@ using ServiceConnection.Discord;
 using ServiceConnection.Entity;
 using ServiceConnection.Tools;
 using static ServiceConnection.ServiceStartup;
-using static ServiceConnection.LocalServices;
 
 namespace ServiceConnection.Delegates;
 public static class EntryDelegates
@@ -224,14 +223,21 @@ public static class EntryDelegates
             _ = serviceInteractions.SendWebSocketMessage(messageObj);
             return 1;
         }
-        /*internal static int SendWebSocketMessage(IOutputBuilder output, string[] args, int argCount)
+        internal static int SendWebSocketArray(IOutputBuilder output, string[] args, int argCount)
         {
-            var message = args[0];
-            var messageObj = new Arma3PayloadMessage(message);
+            var messageObj = new Arma3PayloadArrayString(args);
             
             _ = serviceInteractions.SendWebSocketMessage(messageObj);
             return 1;
-        }*/
+        }
+        internal static int SendWebSocketJson(IOutputBuilder output, string[] args, int argCount)
+        {
+            var JsonString = args[0];
+            var messageObj = new Arma3PayloadJson(JsonString);
+            
+            _ = serviceInteractions.SendWebSocketMessage(messageObj);
+            return 1;
+        }
         internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
 	        _ = serviceInteractions.SendWebSocketBinary(Util.GetLastestFile(serviceInteractions.RPTDirectory));
