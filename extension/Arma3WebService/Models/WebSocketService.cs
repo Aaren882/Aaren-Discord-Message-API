@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
@@ -8,8 +9,8 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
-		public Task InvokeDiscordBotMessage(DiscordMessageDto message);
 		public Task InvokeArmaCallBack(Arma3RemoteCommand command);
+		public Task InvokeDiscordBotMessage(DiscordMessageDto message);
 		public Task CreateConnection(WebsocketContextEntity context);
 	}
 
@@ -23,7 +24,7 @@ namespace Arma3WebService.Models
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
 		private static readonly ConcurrentDictionary<string, IConnection> Connections = new();
-
+		
 		public async Task InvokeArmaCallBack(Arma3RemoteCommand command)
 		{
 			if (!Connections.TryGetValue(command.gameId, out var session))
@@ -86,9 +87,7 @@ namespace Arma3WebService.Models
 			IConnection connection;
 			try
 			{
-				var websocketEntity = new WebsocketEntity(contextEntity);
-				connection = connectionFactory.CreateConnection(websocketEntity);
-
+				connection = connectionFactory.CreateConnection(contextEntity);
 				Connections.TryAdd(contextEntity.Identity, connection);
 
 				_logger.LogInformation(
@@ -157,6 +156,7 @@ namespace Arma3WebService.Models
 				);
 			}
 		}
+
 
 		public void Dispose()
 		{
