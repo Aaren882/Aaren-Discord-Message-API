@@ -7,14 +7,14 @@ namespace Arma3WebService.Factory
 	{
 		public interface IConnectionFactory
 		{
-			IConnection CreateConnection(WebsocketEntity webSocket);
+			IConnection CreateConnection(WebsocketContextEntity contextEntity);
 		}
 
 		public class ConnectionFactory : IConnectionFactory
 		{
-			public IConnection CreateConnection(WebsocketEntity webSocket)
+			public IConnection CreateConnection(WebsocketContextEntity contextEntity)
 			{
-				return new WebSocketConnection(webSocket);
+				return new WebSocketConnection(contextEntity);
 			}
 		}
 	}
