@@ -24,8 +24,26 @@ public class ServiceInteractions
 
 	public ServiceInteractions()
 	{
-		_wsClient.Connected += () => Logger(null, "Event: Connected to server");
-		_wsClient.Disconnected += () => Logger(null, "Event: Disconnected from server");
+		_wsClient.Connected += () =>
+		{
+			Logger(null, "Event: Connected to server");
+			
+			var callBack = new Arma3PayloadCallBack(
+				Data : "[true]",
+				Function : "ConnectionChanged"
+			);
+			Util.CallExtensionCallback(Callback, callBack);
+		};
+		_wsClient.Disconnected += () =>
+		{
+			Logger(null, "Event: Disconnected from server");
+			
+			var callBack = new Arma3PayloadCallBack(
+				Data : "[false]",
+				Function : "ConnectionChanged"
+			);
+			Util.CallExtensionCallback(Callback, callBack);
+		};
 		_wsClient.MessageReceived += (message) =>
 		{
 			// if (message is null) return;
@@ -36,10 +54,6 @@ public class ServiceInteractions
 					Util.CallExtensionCallback(Callback, message as Arma3PayloadCallBack);
 					break;
 				}
-				case Arma3PayLoadType.Rpt: //- Remote command to Send RPT
-					break;
-				case Arma3PayLoadType.JsonString:
-					break;
 				// default : throw new Exception("No callBack action is found.");
 			}
 		};

@@ -1,22 +1,30 @@
 #include "script_component.hpp"
 
-INFO(MSG_INIT);
-
-[QGVARMAIN(postInit_Server), { //- Extension callBack tunnel
+//- Extension callBack tunnel
+[QGVARMAIN(postInit_Server), {
 
   INFO("DISCORD_API [CallBack Init]");
   addMissionEventHandler ["ExtensionCallback", 
   {
-    params ["_name", "_function", "_data"];
+    params ["_name", "_eventName", "_data"];
     if (_name isNotEqualTo "DISCORD_API") exitWith {}; //- Check source
 
-    INFO_2("DISCORD_API [CallBack] | Function : %1 :: Data : %2 ",_function,_data);
+    private _event = QUOTE(ADDON)+ "_" + _eventName;
+    INFO_2("DISCORD_API [CallBack] || Event : %1 , Data : %2 ",_event,_data);
+  
+    [_event, parseSimpleArray _data] call CBA_fnc_localEvent;
+  }];
 
-    private _fnc = uiNamespace getVariable [_function, {
-      systemChat "No callBack function is found.";
-      ERROR("No callBack function is found.");
-    }];
-
-    _data call _fnc;
+  INFO("DISCORD_API [Server Info Init]");
+  call FUNC(ServerInfo_Loop);
+  
+  //- Check Server Entry & Exit
+  addMissionEventHandler ["PlayerConnected", {
+    [true] call FUNC(UpdateWebhook_ServerInfo);
+  }];
+  addMissionEventHandler ["HandleDisconnect", {
+    [true] call FUNC(UpdateWebhook_ServerInfo);
   }];
 }] call CBA_fnc_addEventHandler;
+
+[QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
