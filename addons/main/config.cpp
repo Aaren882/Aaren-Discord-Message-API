@@ -46,9 +46,6 @@ class CfgFunctions
 			class sendMessage;
 			class sendJson;
 			class sendJsonFormat;
-			class ServerInfo_Loop;
-
-			class Update_ServerInfo;
 			class Deserialize_ExtensionOutput;
 		};
 	};
