@@ -10,26 +10,20 @@ public enum Arma3PayLoadType
 	Command = 3,
 	GameInfo = 4,
 	JsonString = 5,
+	ArrayString = 6,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
-[JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
 [JsonDerivedType(typeof(Arma3PayloadRPT), (int)Arma3PayLoadType.Rpt)]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
+[JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
+[JsonDerivedType(typeof(Arma3PayloadArrayString), (int)Arma3PayLoadType.ArrayString)]
 public abstract record Arma3Payload
 {
 	public abstract Arma3PayLoadType Type { get; }
 	public static DateTime Timestamp => DateTime.Now;
 }
-
-public record Arma3PayloadText(
-	string Message
-) : Arma3Payload
-{
-	[JsonIgnore]
-	public override Arma3PayLoadType Type => Arma3PayLoadType.Text;
-};
 
 public record Arma3PayloadJson
 (
@@ -61,6 +55,23 @@ public record Arma3PayloadCallBack(
 	public override Arma3PayLoadType Type => Arma3PayLoadType.Command;
 };
 
+public record Arma3PayloadText(
+	string Message
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Text;
+};
+
+public record Arma3PayloadArrayString
+(
+	IEnumerable<string> ArrayString
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.ArrayString;
+};
+
 //- Service
 public record struct ServiceAuthenticationHeader(
 	string Username,
@@ -81,6 +92,8 @@ public record Arma3ServiceSecret(
 );
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
-[JsonSerializable(typeof(Arma3Payload))]
-[JsonSerializable(typeof(Arma3ServiceSecret))]
+[
+	JsonSerializable(typeof(Arma3Payload)),
+	JsonSerializable(typeof(Arma3ServiceSecret))
+]
 public sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;
