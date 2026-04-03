@@ -21,8 +21,4 @@ TRACE_1("fnc_SetServiceAvailability",_this);
 
 private _diff = _available isNotEqualTo GVAR(Service_Available);
 
-GVAR(Service_Available) = _available; //- (True/False)
-
-if (_diff) then {
-  [QGVAR(Service_Status_Changed), _available] call CBA_fnc_LocalEvent;
-};
+GVAR(Available) = _available; //- (True/False)

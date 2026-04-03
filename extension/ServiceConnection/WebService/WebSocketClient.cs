@@ -1,8 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
-using Arma3PayloadRPT = Components.Entity.Arma3PayloadRPT;
+using Components.Entity;
 
 namespace ServiceConnection.WebService;
 
@@ -11,7 +10,7 @@ public class WebSocketClient(string serverUri)
 	private ClientWebSocket? _webSocket;
 	private CancellationTokenSource? _cancellationTokenSource;
 
-	public event Action<Components.Entity.Arma3Payload>? MessageReceived;
+	public event Action<Arma3Payload>? MessageReceived;
 	public event Action? Connected;
 	public event Action? Disconnected;
 
