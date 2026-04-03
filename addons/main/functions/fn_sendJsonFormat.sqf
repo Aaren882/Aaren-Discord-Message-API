@@ -44,7 +44,9 @@ params [
   ["_payload", nil]
 ];
 
-if (isNil "_Sel" || _file == "" || isNil "_payload") exitWith {};
+if (isNil "_Sel" || _file == "" || isNil "_payload") exitWith {
+  WARNING_3("""fn_sendJsonFormat"" Exception : ""_Sel"" = %1, ""_file"" = %2, ""_payload"" = %3",_Sel,_file,_payload);
+};
 
 /* 
 [
@@ -75,7 +77,7 @@ private _url = DiscordEmbedBuilder_Info # 0 # _Sel;
 private _msg = toString ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOutput);
 
 {
-  _msg = [_msg,_x # 0,_x # 1] call CBA_fnc_replace;
+  _msg = [_msg, format ["{%1}", _x # 0], _x # 1] call CBA_fnc_replace;
 } forEach _formats;
 
 //- Struct hashMap
