@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
+using Arma3WebService.Factory;
+using Arma3WebService.Managers;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 
@@ -9,17 +11,20 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
-		public Task InvokeArmaCallBack(Arma3RemoteCommand command);
-		public Task InvokeDiscordBotMessage(DiscordMessageDto message);
-		public Task CreateConnection(WebsocketContextEntity context);
+		Task InvokeArmaCallBack(Arma3RemoteCommand command);
+		Task InvokeDiscordBotMessage(DiscordMessageDto message);
+		Task CreateConnection(HttpContext context);
 	}
 
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
 		IServiceProvider serviceProvider,
+		ServiceAction serviceAction,
+		WebsocketContextEntityFactory contextEntityFactory,
+		IArma3ActionManager actionManager,
 		IConnectionFactory connectionFactory,
 		IConnectionManager connectionManager
-	) : IHostedService, IWebSocketService, IDisposable
+	) : IWebSocketService, IHostedService, IDisposable
 	{
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
@@ -30,13 +35,12 @@ namespace Arma3WebService.Models
 			if (!Connections.TryGetValue(command.gameId, out var session))
 				throw new NullReferenceException($"No \"{command.gameId}\" is not found.");
 			
-			await session.SendArmaCallback(command.payload);
+			await serviceAction.InvokeArmaCallBack(session, command.payload);
 		}
 		
 		public async Task InvokeDiscordBotMessage(DiscordMessageDto message)
 		{
-			var botService = serviceProvider.GetService<IDiscordBotService>();
-			await botService?.SendMessageAsync(message)!;
+			await serviceAction.InvokeDiscordBotMessage(message);
 		}
 		
 		public Task StartAsync(CancellationToken cancellationToken)
@@ -70,8 +74,9 @@ namespace Arma3WebService.Models
 			_logger.LogInformation("WebSocket Has Stopped Listening...");
 		}
 		
-		public async Task CreateConnection(WebsocketContextEntity contextEntity)
+		public async Task CreateConnection(HttpContext context)
 		{
+			var contextEntity = contextEntityFactory.CreateJsonStringContext(context, this, actionManager);
 			var connectionIdentity = contextEntity.Identity;
 
 			if (Connections.ContainsKey(connectionIdentity))

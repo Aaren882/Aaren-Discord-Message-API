@@ -1,4 +1,5 @@
 using Arma3WebService.Entity;
+using Arma3WebService.Factory;
 using Arma3WebService.Models;
 using Components.Entity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,8 +26,8 @@ namespace Arma3WebService.Controllers
 			
 			if (context.User.Identity == null)
 				return Unauthorized("No Identity is specified.");
-
-			await service.CreateConnection(new WebsocketContextEntity(context, service, Arma3PayLoadType.JsonString));
+			
+			await service.CreateConnection(context);
 			return new EmptyResult();
 		}
 		
