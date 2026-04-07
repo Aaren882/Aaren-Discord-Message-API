@@ -4,12 +4,15 @@ using Arma3WebService.Entity;
 using Arma3WebService.Models;
 using Components.Entity;
 using System.Text.Json;
+using Arma3WebService.Managers;
 
 namespace Arma3WebService;
 
 public interface IConnection 
 {
 	Task<WebSocketCloseStatus?> KeepReceiving();
+	Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream);
+	Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream);
 	Task SendArmaCallback(Arma3PayloadCallBack callBack);
 	Task Send(string message);
 	Task StartAsync();
@@ -43,73 +46,15 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
 			
-			switch (deserialized.Type) 
-			{
-				case Arma3PayLoadType.Text :
-				{
-					var messagePayload = deserialized as Arma3PayloadText;
-					Console.WriteLine($"Received Text '{messagePayload.Message}'");
-					
-					await Send(receivedMessage);
-					break;
-				}
-				case Arma3PayLoadType.ArrayString :
-				{
-					var messagePayload = deserialized as Arma3PayloadArrayString;
+			//- Execute
+			await websocketContext.ActionManager.GetAction(this, deserialized);
 
-					try
-					{
-						var collection = messagePayload?.ArrayString
-							.Select(x =>
-								JsonSerializer.Deserialize<List<string>>(x)
-							)
-							.ToDictionary(
-								value => value![0],
-								value => value![1]
-							);
-					
-						Console.WriteLine(collection);
-					}
-					catch (ArgumentException e)
-					{
-						Console.WriteLine(e);
-					}
-					
-					break;
-				}
-				case Arma3PayLoadType.JsonString :
-				{
-					var messagePayload = deserialized as Arma3PayloadJson;
-					Console.WriteLine($"Received message '{messagePayload.JsonString}'");
-
-					var dto = JsonSerializer.Deserialize(messagePayload.JsonString, MsgPayload_JsonContext.Default.DiscordMessageDto);
-
-					if (dto != null) await _service!.InvokeDiscordBotMessage(dto);
-
-					break;
-				}
-				case Arma3PayLoadType.Rpt : //- Must use metaData first
-				{
-					var metadata = deserialized as Arma3PayloadRPT;
-					Console.WriteLine($"Receiving metaData for binary file '{metadata}'");
-					
-					await using var fileStream = new FileStream(
-						metadata.FileName, FileMode.Create, FileAccess.Write);
-					
-					await ReceiveBinary(fileStream);
-					
-					Console.WriteLine($"Stored binary file '{metadata.FileName}'");
-					break;
-				}
-				default:
-					throw new ArgumentOutOfRangeException("No Connection is found.");
-			}
 		} while (message.MessageType != WebSocketMessageType.Close);
 
 		return message.CloseStatus;
 	}
 
-	private async Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream)
+	public async Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream)
 	{
 		var readBuffer = new ArraySegment<byte>(new byte[2 * 1024]);
 		
@@ -123,7 +68,7 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 
 		return result;
 	}
-	private async Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream)
+	public async Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream)
 	{
 		var readBuffer = new ArraySegment<byte>(new byte[64 * 1024]);
 

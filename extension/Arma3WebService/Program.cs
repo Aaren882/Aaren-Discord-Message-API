@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Arma3WebService.Entity;
 using Arma3WebService.Factory;
 using Arma3WebService.Handler;
 using Arma3WebService.Identities;
@@ -33,6 +34,9 @@ namespace Arma3WebService
 			
 			builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
 			builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
+			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
+			builder.Services.AddSingleton<WebsocketContextEntityFactory>();
+			builder.Services.AddSingleton<ServiceAction>();
 			builder.Services.AddScoped<JwtHelpers>();
 			
 			builder.Services.AddControllers();

@@ -38,8 +38,8 @@ namespace Arma3WebService.Controllers
 		{
 			try
 			{
-				// var service = _serviceProvider.GetRequiredService<WebSocketService>();
 				await _webSocketService.InvokeArmaCallBack(command);
+				
 				return Ok();
 			}
 			catch (Exception e)
