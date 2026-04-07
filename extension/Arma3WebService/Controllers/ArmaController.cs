@@ -1,9 +1,13 @@
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Arma3WebService.Entity;
 using Arma3WebService.Models;
 using Components.Entity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
+using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace Arma3WebService.Controllers
 {
@@ -13,23 +17,16 @@ namespace Arma3WebService.Controllers
 	]*/
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ArmaController : ControllerBase
+	public class ArmaController(
+		ILogger<ArmaController> logger,
+		IWebSocketService webSocketService,
+		ServiceAction serviceAction
+	) : ControllerBase
 	{
-		private readonly ILogger<ArmaController> _logger;
-		private readonly IServiceProvider _serviceProvider;
-		private readonly IWebSocketService _webSocketService;
-
-		public ArmaController(ILogger<ArmaController> logger, IWebSocketService webSocketService, IServiceProvider serviceProvider)
-		{
-			_logger = logger;
-			_serviceProvider = serviceProvider;
-			_webSocketService = webSocketService;
-		}
-
 		[HttpPost(Name = "ArmaController")]
 		public IActionResult PostLog(Arma3PayloadJson payload)
 		{
-			_logger.LogInformation($"Restful Received Log: {payload.JsonString}");
+			logger.LogInformation($"Restful Received Log: {payload.JsonString}");
 			return Ok(new { hello = "" });
 		}
 		
@@ -38,7 +35,7 @@ namespace Arma3WebService.Controllers
 		{
 			try
 			{
-				await _webSocketService.InvokeArmaCallBack(command);
+				await webSocketService.InvokeArmaCallBack(command);
 				
 				return Ok();
 			}
@@ -49,18 +46,11 @@ namespace Arma3WebService.Controllers
 		}
 
 		[HttpGet("GetLogs")]
-		public async IAsyncEnumerable<WeatherForecast> Get()
+		public async Task Get()
 		{
-			for (int index = 1; index <= 5; index++)
-			{
-				await Task.Delay(500);
-				yield return new WeatherForecast
-				{
-					Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-					TemperatureC = Random.Shared.Next(-20, 55),
-					Summary = "None"
-				};
-			}
+			var ctx = ControllerContext.HttpContext;
+			ctx.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
+			await serviceAction.SSE_Logging(ctx);
 		}
 
 		// Returns data one item at a time asynchronously

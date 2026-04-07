@@ -5,10 +5,11 @@ using Components.Entity;
 namespace Arma3WebService.Entity;
 
 public sealed class ServiceAction(
-	ILogger<ServiceAction>  logger,
+	ILogger<ServiceAction> logger,
 	IDiscordBotService discordBotService
 )
 {
+	
 	public async Task InvokeArmaCallBack(IConnection session, Arma3PayloadCallBack command)
 	{
 		await session.SendArmaCallback(command);
@@ -45,8 +46,13 @@ public sealed class ServiceAction(
 		var dto = JsonSerializer.Deserialize(payload.JsonString, MsgPayload_JsonContext.Default.DiscordMessageDto);
 		if (dto != null) await InvokeDiscordBotMessage(dto);
 	}
+	
+	private Queue<Dictionary<string,string>> logQueue = new ();
+	private bool _avalibleSseLogging = false;
 	public async Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
 	{
+		if (!_avalibleSseLogging) return;
+		
 		try
 		{
 			var collection = payload?.ArrayString
@@ -57,10 +63,11 @@ public sealed class ServiceAction(
 					value => value![0],
 					value => value![1]
 				);
-					
 			logger.LogInformation("{collection}", collection);
+			
+			logQueue.Enqueue(collection);
 		}
-		catch (ArgumentNullException e)
+		catch (ArgumentNullException)
 		{
 			logger.LogError("Source or keySelector or elementSelector is null. -or- keySelector produces a key that is null.");
 		}
@@ -72,5 +79,41 @@ public sealed class ServiceAction(
 		{
 			logger.LogError(e, "An exception occurred");
 		}
+	}
+
+	public async Task SSE_Logging(HttpContext ctx)
+	{
+		_avalibleSseLogging = true;
+
+		do
+		{
+			if (logQueue.TryDequeue(out var logItems))
+			{
+				// var items = logItems
+				// 	.Select<KeyValuePair<string, string>, string[]>(x => [x.Key, x.Value])
+				// 	.ToArray();
+				
+				foreach (var item in logItems)
+				{
+					await ctx.Response.WriteAsync($"data: ");
+					await JsonSerializer.SerializeAsync(ctx.Response.Body, new {
+						item.Key,
+						item.Value
+					});
+					await ctx.Response.WriteAsync($"\n\n");
+					await ctx.Response.Body.FlushAsync();
+				}
+			}
+			else
+			{
+				await ctx.Response.WriteAsync("");
+				await ctx.Response.Body.FlushAsync();
+			}
+			
+			// some artificial delay to not overwhelm the client
+			await Task.Delay(1000);
+		} while (!ctx.RequestAborted.IsCancellationRequested);
+		
+		_avalibleSseLogging = false; 
 	}
 }
