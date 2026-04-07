@@ -21,7 +21,6 @@ namespace Arma3WebService.Models
 		IServiceProvider serviceProvider,
 		ServiceAction serviceAction,
 		WebsocketContextEntityFactory contextEntityFactory,
-		IArma3ActionManager actionManager,
 		IConnectionFactory connectionFactory,
 		IConnectionManager connectionManager
 	) : IWebSocketService, IHostedService, IDisposable
@@ -76,7 +75,7 @@ namespace Arma3WebService.Models
 		
 		public async Task CreateConnection(HttpContext context)
 		{
-			var contextEntity = contextEntityFactory.CreateJsonStringContext(context, this, actionManager);
+			var contextEntity = contextEntityFactory.CreateJsonStringContext(context, this);
 			var connectionIdentity = contextEntity.Identity;
 
 			if (Connections.ContainsKey(connectionIdentity))

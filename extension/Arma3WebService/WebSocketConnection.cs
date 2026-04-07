@@ -4,7 +4,6 @@ using Arma3WebService.Entity;
 using Arma3WebService.Models;
 using Components.Entity;
 using System.Text.Json;
-using Arma3WebService.Managers;
 
 namespace Arma3WebService;
 
@@ -41,14 +40,16 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 			var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
 			if (string.IsNullOrEmpty(receivedMessage)) continue;
 			
-			var deserialized = JsonSerializer.Deserialize(
+			var payload = JsonSerializer.Deserialize(
 				receivedMessage,
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
 			
 			//- Execute
-			await websocketContext.ActionManager.GetAction(this, deserialized);
-
+			await websocketContext
+				.CreateAction(this, payload)
+				.DoAction;
+			
 		} while (message.MessageType != WebSocketMessageType.Close);
 
 		return message.CloseStatus;
