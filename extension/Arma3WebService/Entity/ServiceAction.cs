@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Arma3WebService.Models;
 using Components.Entity;
+using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService.Entity;
 
@@ -48,10 +49,10 @@ public sealed class ServiceAction(
 	}
 	
 	private Queue<Dictionary<string,string>> logQueue = new ();
-	private bool _avalibleSseLogging = false;
+	private List<string> ctxQueue = new ();
 	public async Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
 	{
-		if (!_avalibleSseLogging) return;
+		if (ctxQueue.Count == 0) return;
 		
 		try
 		{
@@ -83,37 +84,21 @@ public sealed class ServiceAction(
 
 	public async Task SSE_Logging(HttpContext ctx)
 	{
-		_avalibleSseLogging = true;
-
+		var ctxID = ctx.TraceIdentifier;
+		ctxQueue.Add(ctxID);
+		
+		ctx.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
 		do
 		{
-			if (logQueue.TryDequeue(out var logItems))
-			{
-				// var items = logItems
-				// 	.Select<KeyValuePair<string, string>, string[]>(x => [x.Key, x.Value])
-				// 	.ToArray();
-				
-				foreach (var item in logItems)
-				{
-					await ctx.Response.WriteAsync($"data: ");
-					await JsonSerializer.SerializeAsync(ctx.Response.Body, new {
-						item.Key,
-						item.Value
-					});
-					await ctx.Response.WriteAsync($"\n\n");
-					await ctx.Response.Body.FlushAsync();
-				}
-			}
-			else
-			{
-				await ctx.Response.WriteAsync("");
-				await ctx.Response.Body.FlushAsync();
-			}
+			if (!logQueue.TryDequeue(out var logItem)) continue;
 			
-			// some artificial delay to not overwhelm the client
-			await Task.Delay(1000);
+			await ctx.Response.WriteAsync("data: ");
+			await JsonSerializer.SerializeAsync(ctx.Response.Body, logItem);
+			await ctx.Response.WriteAsync("\n\n");
+			await ctx.Response.Body.FlushAsync();
+			
 		} while (!ctx.RequestAborted.IsCancellationRequested);
 		
-		_avalibleSseLogging = false; 
+		ctxQueue.Remove(ctxID);
 	}
 }
