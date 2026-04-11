@@ -1,12 +1,10 @@
-using System.Data;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using ServiceConnection.Tools;
-using Arma3PayloadJsonSerializerContext = Components.Entity.Arma3PayloadJsonSerializerContext;
+using System.Text.Json;
 using static ServiceConnection.ServiceStartup;
 
 namespace ServiceConnection.WebService;
@@ -79,14 +77,34 @@ public class ServiceInteractions
 		await DisconnectWebSocket("Client Reconnecting");
 		await EstablishWebSocketConnection(AccessName);
 	}
-	public Task SendWebSocketMessage(Arma3Payload messageObj)
+	public Task SendWebSocketMessage(string messageJson)
 	{
-		var messageJson = JsonSerializer.Serialize(messageObj, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 		return _wsClient.SendMessageAsync(messageJson);
 	}
-	public async Task SendWebSocketBinary(string filePath)
+	public async Task SendWebSocketBinary(string filePath, int chunkSize = 64 * 1024)
     {
-		await _wsClient.SendBinaryAsync(filePath);
+	    var fileInfo = new FileInfo(filePath);
+	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+
+	    // Send Metadata (as text message)
+	    var metadata = new Arma3PayloadRPT
+	    (
+		    fileInfo.Name,
+		    fileInfo.Length,
+		    fileInfo.CreationTime,
+		    totalChunks
+	    );
+		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+
+		try
+		{
+			await SendWebSocketMessage(metaJson);
+			await _wsClient.SendBinaryAsync(filePath, metadata, chunkSize);
+		}
+		catch (Exception e)
+		{
+			Logger(e, "");
+		}
     }
 	
 	/// <summary>

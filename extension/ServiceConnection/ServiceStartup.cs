@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceConnection.Entity;
 using ServiceConnection.WebService;
@@ -37,6 +38,10 @@ public class ServiceStartup
 			localServices = serviceProvider.GetRequiredService<ILocalServices>();
 			Tracer(nameof(localServices), "Local Services Initialized");
 		}
+		catch (Exception e) when (e is SocketException or HttpRequestException)
+		{
+			Logger(e, "No Backend Connection.");
+		}
 		catch (Exception e)
 		{
 			Logger(e, "Initialization Failed");
@@ -50,10 +55,22 @@ public class ServiceStartup
 			throw new InvalidOperationException("ServiceInteractions not initialized. Call InitConfiguration first.");
 		}
 
-		await serviceInteractions.EstablishWebSocketConnection(accessName);
 		ExtensionInit = true;
-		Logger(null, "Initializing WebSocket Connection");
-		// InitTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+		
+		//- Create
+		try
+		{
+			Logger(null, "Initializing WebSocket Connection");
+			await serviceInteractions.EstablishWebSocketConnection(accessName);
+		}
+		catch (Exception e) when (e is SocketException or HttpRequestException)
+		{
+			Logger(e, "No Backend Connection.");
+		}
+		catch (Exception e)
+		{
+			Logger(e, null);
+		}
 	}
 
 	public static async Task ShutdownAsync()
