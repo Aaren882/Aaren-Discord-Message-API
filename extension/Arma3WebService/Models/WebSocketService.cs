@@ -12,13 +12,11 @@ namespace Arma3WebService.Models
 	public interface IWebSocketService
 	{
 		Task InvokeArmaCallBack(Arma3RemoteCommand command);
-		Task InvokeDiscordBotMessage(DiscordMessageDto message);
 		Task CreateConnection(HttpContext context);
 	}
 
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
-		IServiceProvider serviceProvider,
 		ServiceAction serviceAction,
 		WebsocketContextEntityFactory contextEntityFactory,
 		IConnectionFactory connectionFactory,
@@ -34,18 +32,11 @@ namespace Arma3WebService.Models
 			if (!Connections.TryGetValue(command.gameId, out var session))
 				throw new NullReferenceException($"No \"{command.gameId}\" is not found.");
 			
-			await serviceAction.InvokeArmaCallBack(session, command.payload);
-		}
-		
-		public async Task InvokeDiscordBotMessage(DiscordMessageDto message)
-		{
-			await serviceAction.InvokeDiscordBotMessage(message);
+			await serviceAction.CallBackAction(session, command.payload);
 		}
 		
 		public Task StartAsync(CancellationToken cancellationToken)
 		{
-			var service = serviceProvider.GetRequiredService<WebSocketService>();
-
 			_logger.LogInformation("WebSocket is Listening now");
 
 			return Task.CompletedTask;

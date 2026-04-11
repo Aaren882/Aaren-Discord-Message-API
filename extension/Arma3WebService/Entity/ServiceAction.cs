@@ -10,17 +10,10 @@ public sealed class ServiceAction(
 	IDiscordBotService discordBotService
 )
 {
-	
-	public async Task InvokeArmaCallBack(IConnection session, Arma3PayloadCallBack command)
+	public async Task CallBackAction(IConnection session, Arma3PayloadCallBack command)
 	{
 		await session.SendArmaCallback(command);
 	}
-		
-	public async Task InvokeDiscordBotMessage(DiscordMessageDto message)
-	{
-		await discordBotService?.SendMessageAsync(message)!;
-	}
-	
 	public async Task TextAction(IConnection connection, Arma3PayloadText payload)
 	{
 		var json = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3PayloadText);
@@ -36,16 +29,12 @@ public sealed class ServiceAction(
 		await connection.ReceiveBinary(fileStream);
 		logger.LogInformation("Stored binary file '{PayloadFileName}'", payload.FileName);
 	}
-	public Task CallBackAction(IConnection connection, Arma3PayloadCallBack payload)
-	{
-		throw new NotImplementedException();
-	}
 	public async Task JsonStringAction(IConnection connection, Arma3PayloadJson payload)
 	{
 		logger.LogInformation("Received message '{PayloadJsonString}'", payload.JsonString);
 		
 		var dto = JsonSerializer.Deserialize(payload.JsonString, MsgPayload_JsonContext.Default.DiscordMessageDto);
-		if (dto != null) await InvokeDiscordBotMessage(dto);
+		if (dto != null) await discordBotService?.SendMessageAsync(dto)!;
 	}
 	
 	private Queue<Dictionary<string,string>> logQueue = new ();
@@ -53,7 +42,7 @@ public sealed class ServiceAction(
 	public async Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
 	{
 		if (ctxQueue.Count == 0) return;
-		
+
 		try
 		{
 			var collection = payload?.ArrayString
@@ -65,7 +54,7 @@ public sealed class ServiceAction(
 					value => value![1]
 				);
 			logger.LogInformation("{collection}", collection);
-			
+
 			logQueue.Enqueue(collection);
 		}
 		catch (ArgumentNullException)
@@ -86,19 +75,19 @@ public sealed class ServiceAction(
 	{
 		var ctxID = ctx.TraceIdentifier;
 		ctxQueue.Add(ctxID);
-		
+
 		ctx.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
 		do
 		{
 			if (!logQueue.TryDequeue(out var logItem)) continue;
-			
+
 			await ctx.Response.WriteAsync("data: ");
 			await JsonSerializer.SerializeAsync(ctx.Response.Body, logItem);
 			await ctx.Response.WriteAsync("\n\n");
 			await ctx.Response.Body.FlushAsync();
-			
+
 		} while (!ctx.RequestAborted.IsCancellationRequested);
-		
+
 		ctxQueue.Remove(ctxID);
 	}
 }
