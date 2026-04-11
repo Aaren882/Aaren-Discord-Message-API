@@ -215,15 +215,13 @@ public static class EntryDelegates
         /// <param name="args"></param>
         /// <param name="argCount"></param>
         /// <returns></returns>
-        internal static int SendWebSocketText(IOutputBuilder output, string[] args, int argCount)
+        internal static int SendWebSocketMessage(IOutputBuilder output, string[] args, int argCount)
         {
             var message = args[0];
-            var messageObj = new Arma3PayloadText(message);
-            
-            _ = serviceInteractions.SendWebSocketMessage(messageObj);
+            _ = serviceInteractions.SendWebSocketMessage(message);
             return 1;
         }
-        internal static int SendWebSocketArray(IOutputBuilder output, string[] args, int argCount)
+        /*internal static int SendWebSocketArray(IOutputBuilder output, string[] args, int argCount)
         {
             var messageObj = new Arma3PayloadArrayString(args);
             
@@ -237,11 +235,22 @@ public static class EntryDelegates
             
             _ = serviceInteractions.SendWebSocketMessage(messageObj);
             return 1;
-        }
+        }*/
         internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
 	        _ = serviceInteractions.SendWebSocketBinary(Util.GetLastestFile(serviceInteractions.RPTDirectory));
             return 1;
         }
+        /*internal static int GetRPTInfo(IOutputBuilder output, string[] args, int argCount)
+        {
+	        var filePath = Util.GetLastestFile(serviceInteractions.RPTDirectory);
+	        var chunkSize = argCount < 1 ? 64 * 1024 : Convert.ToInt32(args[1]);
+	        
+	        var fileInfo = new FileInfo(filePath);
+	        var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+	        
+	        output.Append($"[{fileInfo.Name},{fileInfo.Length},{fileInfo.CreationTime},{totalChunks}]");
+            return 1;
+        }*/
     }
 }
