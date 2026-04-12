@@ -24,7 +24,7 @@ public class ServiceInteractions
 	{
 		_wsClient.Connected += () =>
 		{
-			Logger(null, "Event: Connected to server");
+			Logger(null, "INFO: Connected to server");
 			
 			var callBack = new Arma3PayloadCallBack(
 				Data : "[true]",
@@ -34,7 +34,7 @@ public class ServiceInteractions
 		};
 		_wsClient.Disconnected += () =>
 		{
-			Logger(null, "Event: Disconnected from server");
+			Logger(null, "INFO: Disconnected from server");
 			
 			var callBack = new Arma3PayloadCallBack(
 				Data : "[false]",
@@ -44,16 +44,8 @@ public class ServiceInteractions
 		};
 		_wsClient.MessageReceived += (message) =>
 		{
-			// if (message is null) return;
 			Tracer("MessageReceived (message)", message.ToString());
-			switch (message.Type)
-			{
-				case Arma3PayLoadType.Command: { //- Remote command from websocket
-					Util.CallExtensionCallback(Callback, message as Arma3PayloadCallBack);
-					break;
-				}
-				// default : throw new Exception("No callBack action is found.");
-			}
+			Util.CallExtensionCallback(Callback, message);
 		};
 	}
 	

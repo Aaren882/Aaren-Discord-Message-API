@@ -238,7 +238,10 @@ public static class EntryDelegates
         }*/
         internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
-	        _ = serviceInteractions.SendWebSocketBinary(Util.GetLastestFile(serviceInteractions.RPTDirectory));
+	        var lastestRpt= Util.GetLastestFile(serviceInteractions.RPTDirectory);
+	        output.Append(lastestRpt); //- Return lastest Rpt directory
+	        _ = serviceInteractions.SendWebSocketBinary(lastestRpt);
+	        
             return 1;
         }
         /*internal static int GetRPTInfo(IOutputBuilder output, string[] args, int argCount)

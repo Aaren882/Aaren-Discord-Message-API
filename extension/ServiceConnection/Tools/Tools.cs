@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Components.Entity;
 using ServiceConnection.Entity;
 using static ServiceConnection.ServiceStartup;
@@ -119,9 +120,9 @@ public class Util
 		return list[0].Key;
 	}
 
-	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3PayloadCallBack? callBack)
+	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)
 	{
-		return extensionCallback("DISCORD_API", callBack.Function, callBack.Data);
+		var data = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		return extensionCallback("DISCORD_API", ((int)payload.Type).ToString(), data);
 	}
-
 }
