@@ -1,7 +1,6 @@
 using System.Net.WebSockets;
 using System.Text;
 using Arma3WebService.Entity;
-using Arma3WebService.Models;
 using Components.Entity;
 using System.Text.Json;
 
@@ -23,7 +22,6 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 {
 	private WebSocket _webSocket;
 	private readonly CancellationToken _cts = websocketContext.CancellationToken;
-	private readonly IWebSocketService _service = websocketContext.WebSocketService;
 	
 	public async Task<WebSocketCloseStatus?> KeepReceiving()
 	{

@@ -6,28 +6,28 @@ namespace Arma3WebService.Factory;
 
 public sealed class WebsocketContextEntityFactory(IArma3ActionFactory actionFactory)
 {
-	public WebsocketContextEntity CreateTextContext(HttpContext httpContext, IWebSocketService webSocketService)
+	public WebsocketContextEntity CreateTextContext(HttpContext httpContext)
 	{
-		return new WebsocketContextEntity(httpContext, webSocketService, actionFactory);
+		return new WebsocketContextEntity(httpContext, actionFactory);
 	}
-	public WebsocketContextEntity CreateRptContext(HttpContext httpContext, IWebSocketService webSocketService)
+	public WebsocketContextEntity CreateRptContext(HttpContext httpContext)
 	{
-		return new WebsocketContextEntity(httpContext, webSocketService, actionFactory);
+		return new WebsocketContextEntity(httpContext, actionFactory);
 	}
-	public WebsocketContextEntity CreateCommandContext(HttpContext httpContext, IWebSocketService webSocketService)
+	public WebsocketContextEntity CreateCommandContext(HttpContext httpContext)
 	{
-		return new WebsocketContextEntity(httpContext, webSocketService, actionFactory);
+		return new WebsocketContextEntity(httpContext, actionFactory);
 	}
-	public WebsocketContextEntity CreateGameInfoContext(HttpContext httpContext, IWebSocketService webSocketService)
+	public WebsocketContextEntity CreateGameInfoContext(HttpContext httpContext)
 	{
-		return new WebsocketContextEntity(httpContext, webSocketService, actionFactory);
+		return new WebsocketContextEntity(httpContext, actionFactory);
 	}
-	public WebsocketContextEntity CreateJsonStringContext(HttpContext httpContext, IWebSocketService webSocketService)
+	public WebsocketContextEntity CreateJsonStringContext(HttpContext httpContext)
 	{
-		return new WebsocketContextEntity(httpContext, webSocketService, actionFactory);
+		return new WebsocketContextEntity(httpContext, actionFactory);
 	}
-	public WebsocketContextEntity CreateArrayStringContext(HttpContext httpContext, IWebSocketService webSocketService)
+	public WebsocketContextEntity CreateArrayStringContext(HttpContext httpContext)
 	{
-		return new WebsocketContextEntity(httpContext, webSocketService, actionFactory);
+		return new WebsocketContextEntity(httpContext, actionFactory);
 	}
 }

@@ -66,7 +66,7 @@ namespace Arma3WebService.Models
 		
 		public async Task CreateConnection(HttpContext context)
 		{
-			var contextEntity = contextEntityFactory.CreateJsonStringContext(context, this);
+			var contextEntity = contextEntityFactory.CreateJsonStringContext(context);
 			var connectionIdentity = contextEntity.Identity;
 
 			if (Connections.ContainsKey(connectionIdentity))
