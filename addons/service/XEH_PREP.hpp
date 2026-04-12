@@ -1,5 +1,7 @@
 PREP(GetServerInfo);
+PREP(SendWebSocketLatestRPT);
+PREP(SendWebSocketMessage);
 PREP(ServerInfo_Loop);
 PREP(SetServiceAvailability);
-PREP(UpdateWebhook_ServerInfo);
 PREP(UpdateService_ServerInfo);
+PREP(UpdateWebhook_ServerInfo);
