@@ -1,11 +1,10 @@
 using System.Net;
 using Arma3WebService.Factory;
-using Arma3WebService.Models;
 using Components.Entity;
 
 namespace Arma3WebService.Entity;
 
-public sealed record WebsocketContextEntity(HttpContext Context, IWebSocketService WebSocketService, IArma3ActionFactory ActionFactory)
+public sealed record WebsocketContextEntity(HttpContext Context, IArma3ActionFactory ActionFactory)
 {
 	public readonly string Identity = Context.User.Identity?.Name ?? "Not Specified";
 	public readonly string Id = Context.Connection.Id;
