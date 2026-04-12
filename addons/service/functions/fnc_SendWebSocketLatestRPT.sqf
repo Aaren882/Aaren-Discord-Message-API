@@ -3,17 +3,18 @@
 /* ----------------------------------------------------------------------------
 Function: DiscordAPI_service_fnc_SendWebSocketRPT
 Description:
-    Description.
+    Sends the latest RPT file to the backend service via WebSocket.
+    The extension identifies the most recent RPT file in the server's log directory and initiates the transfer.
 
 Parameters:
-    _param  - Parameter description <OBJECT>
+    None
 
 Returns:
-    Return description <NONE>
+    _rptDir - The directory path of the RPT file being sent <STRING>
 
-Examples
+Examples:
     (begin example)
-        [params] call DiscordAPI_service_fnc_SendWebSocketRPT
+        call DiscordAPI_service_fnc_SendWebSocketLatestRPT
     (end)
 
 Author:
@@ -22,3 +23,5 @@ Author:
 
 private _rptDir = ("DiscordMessageAPI" callExtension ["SendWebSocketRPT", []]) # 0;
 INFO_1("SendWebSocket RPT Directory : ""%1""",_rptDir);
+
+_rptDir
