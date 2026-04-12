@@ -16,7 +16,7 @@ public sealed class ServiceAction(
 	}
 	public async Task TextAction(IConnection connection, Arma3PayloadText payload)
 	{
-		var json = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3PayloadText);
+		var json = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 		await connection.Send(json);
 	}
 	public async Task RptAction(IConnection connection, Arma3PayloadRPT payload)
