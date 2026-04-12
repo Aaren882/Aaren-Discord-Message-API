@@ -77,16 +77,17 @@ public sealed class ServiceAction(
 		ctxQueue.Add(ctxID);
 
 		ctx.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
-		do
+		while (!ctx.RequestAborted.IsCancellationRequested)
 		{
 			if (!logQueue.TryDequeue(out var logItem)) continue;
-
+			
 			await ctx.Response.WriteAsync("data: ");
 			await JsonSerializer.SerializeAsync(ctx.Response.Body, logItem);
 			await ctx.Response.WriteAsync("\n\n");
 			await ctx.Response.Body.FlushAsync();
 
-		} while (!ctx.RequestAborted.IsCancellationRequested);
+			await Task.Delay(1000);
+		}
 
 		ctxQueue.Remove(ctxID);
 	}
