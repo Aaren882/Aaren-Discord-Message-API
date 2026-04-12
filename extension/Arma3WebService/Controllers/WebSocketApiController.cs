@@ -22,7 +22,7 @@ namespace Arma3WebService.Controllers
 			var context = ControllerContext.HttpContext;
 
 			if (!context.WebSockets.IsWebSocketRequest)
-				return Problem(statusCode: 501, detail: "Incorrect Request Context");
+				return Problem(statusCode: (int)HttpStatusCode.MisdirectedRequest , detail: "Incorrect Request Context");
 			
 			if (context.User.Identity == null)
 				return Unauthorized("No Identity is specified.");
