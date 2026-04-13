@@ -76,10 +76,10 @@ public static class Worker
 			ServiceStartup.Tracer("HandleRequest [filePath] : ", filePath);
 			filePath = Path.GetFullPath(filePath);
 				
-			await using var fileStream = new FileStream(filePath, FileMode.Open);
+			await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 			var fileBytes = new byte[fileStream.Length];
 				
-			await fileStream.ReadAsync(fileBytes, 0, fileBytes.Length);
+			await fileStream.ReadExactlyAsync(fileBytes, 0, fileBytes.Length);
 			package.Add(new ByteArrayContent(fileBytes), "file", filePath);
 		}
 		if (username.Length > 0) package.Add(new StringContent(username), "username");
