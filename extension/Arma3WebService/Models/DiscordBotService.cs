@@ -20,33 +20,7 @@ namespace Arma3WebService.Models
 
 		private static readonly string TestChannel = Environment.GetEnvironmentVariable("TestChannel")!;
 
-		protected override Task ExecuteAsync(CancellationToken stoppingToken)
-		{
-			return StartupBot();
-		}
-
-		/*public async Task StartAsync(CancellationToken cancellationToken)
-		{
-			using var scope = _serviceProvider.CreateScope();
-			
-			// Resolve the service containing the business logic
-			var myBusinessLogicService = scope
-				.ServiceProvider
-				.GetRequiredService<DiscordBotService>();
-			
-			await myBusinessLogicService.StartupBot();
-		}
-		public Task StopAsync(CancellationToken cancellationToken)
-		{
-			// Return Task.CompletedTask if the work is synchronous
-			return Task.CompletedTask;
-		}*/
-
-		public DiscordSocketClient GetClient()
-		{
-			return _client!;
-		}
-		private async Task StartupBot()
+		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			_client!.Log += Log;
 			_client!.ButtonExecuted += MyButtonHandler;
@@ -55,6 +29,11 @@ namespace Arma3WebService.Models
 				Environment.GetEnvironmentVariable("BotToken")
 			);
 			await _client.StartAsync();
+		}
+
+		public DiscordSocketClient GetClient()
+		{
+			return _client!;
 		}
 		
 		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
