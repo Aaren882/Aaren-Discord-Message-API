@@ -67,9 +67,17 @@ public sealed class ServiceAction(
 	
 	private Queue<Dictionary<string,string>> logQueue = new ();
 	private List<string> ctxQueue = [];
-	public async Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
+	public Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
 	{
-		UpdateSSE(payload.ArrayString);
+		try
+		{
+			UpdateSSE(payload.ArrayString);
+			return Task.CompletedTask;
+		}
+		catch (Exception exception)
+		{
+			return Task.FromException(exception);
+		}
 	}
 
 	private void UpdateSSE(IEnumerable<string> infoString)

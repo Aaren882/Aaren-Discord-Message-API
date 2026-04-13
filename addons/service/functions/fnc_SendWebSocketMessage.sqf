@@ -10,7 +10,7 @@ Description:
     "_discriminator" => #LINK - addons/service/MessageTypes.inc
 
 Parameters:
-    _content       - The data content to be sent (String or Array of Strings) <STRING/ARRAY/HASHMAP>
+    _content       - The data content to be sent (String or Array of Strings) <STRING/ARRAY>
     _discriminator - The type identifier for the message (e.g., __Text__, __JsonString__, __ArrayString__) <NUMBER>
 
 Returns:
@@ -38,13 +38,13 @@ private _map = createHashMap;
 switch (_discriminator) do {
   //- Use #LINK - addons/service/functions/fnc_SendWebSocketJSON.sqf
   case __JsonString__: {
-    _map set ["JsonString",  _content];
+    _map set ["JsonString", _content];
   };
 
   case __Text__: {
     _map set ["Message", _content];
   };
-  case __ArrayString__: { //- "[["",""],["",""]]"
+  case __ArrayString__: { //- "[["""",""""],["""",""""]]"
     _map set ["ArrayString", _content];
   };
   default {
