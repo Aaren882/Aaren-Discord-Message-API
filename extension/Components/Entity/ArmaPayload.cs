@@ -27,6 +27,7 @@ public abstract record Arma3Payload
 
 public record Arma3PayloadJson
 (
+	int ProcessType,
 	string JsonString
 ) : Arma3Payload
 {

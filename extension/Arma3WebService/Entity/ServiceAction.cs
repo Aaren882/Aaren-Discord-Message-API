@@ -33,12 +33,18 @@ public sealed class ServiceAction(
 	{
 		logger.LogInformation("Received message '{PayloadJsonString}'", payload.JsonString);
 		
-		var dto = JsonSerializer.Deserialize(payload.JsonString, MsgPayload_JsonContext.Default.DiscordMessageDto);
-		if (dto != null) await discordBotService?.SendMessageAsync(dto)!;
+		if (payload?.ProcessType == (int)Arma3PayLoadTypeExtension.DiscrodJson)
+		{
+			var dto = JsonSerializer.Deserialize(
+				payload.JsonString, 
+				MsgPayload_JsonContext.Default.DiscordMessageDto
+			);
+			await discordBotService.SendMessageAsync(dto);
+		}
 	}
 	
 	private Queue<Dictionary<string,string>> logQueue = new ();
-	private List<string> ctxQueue = new ();
+	private List<string> ctxQueue = [];
 	public async Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
 	{
 		if (ctxQueue.Count == 0) return;
