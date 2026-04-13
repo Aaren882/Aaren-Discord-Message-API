@@ -1,7 +1,7 @@
 #include "script_component.hpp"
 
 /* ----------------------------------------------------------------------------
-Function: DiscordAPI_fnc_sendMessage
+Function: DiscordAPI_webhook_fnc_sendMessage
 Description:
     Send a custom message to Discord using a webhook.
 
@@ -29,7 +29,7 @@ Examples
           "",
           [["Title", "Description"]],
           [[["Field1", "Value1", true]]]
-        ] call DiscordAPI_fnc_sendMessage
+        ] call DiscordAPI_webhook_fnc_sendMessage
     (end)
 
 Author:
@@ -47,7 +47,7 @@ params [
   ["_embeds",[]],
   ["_fields",[]]
 ];
-TRACE_1("fn_sendMessage",_this);
+TRACE_1("fnc_sendMessage",_this);
 
 private _payload = createHashMapFromArray [
   ["Url", DiscordEmbedBuilder_Info # 0 # _webhook_Sel],

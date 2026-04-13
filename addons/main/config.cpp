@@ -43,9 +43,7 @@ class CfgFunctions
 		class functions
 		{
 			file=QPATHTOF(functions);
-			class sendMessage;
-			class sendJson;
-			class sendJsonFormat;
+			class FormatJson;
 			class Deserialize_ExtensionOutput;
 		};
 	};
