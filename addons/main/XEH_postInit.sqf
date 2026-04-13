@@ -41,11 +41,10 @@ if (isServer) then {
         ];
         
         [
-          _file,
-          _format,
+          [_file, _format] call DiscordAPI_fnc_FormatJson,
           _webhook_Sel,
           _payload
-        ] call DiscordAPI_fnc_sendJsonFormat;
+        ] call EFUNC(webhook,sendJsonFormat);
 
         (this # 0) displayRemoveEventHandler [_thisEvent, _thisEventHandler];
       }];
