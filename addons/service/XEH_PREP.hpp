@@ -1,4 +1,5 @@
 PREP(GetServerInfo);
+PREP(SendWebSocketJSON);
 PREP(SendWebSocketLatestRPT);
 PREP(SendWebSocketMessage);
 PREP(ServerInfo_Loop);
