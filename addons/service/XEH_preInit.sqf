@@ -6,4 +6,4 @@ INFO(MSG_INIT);
 #include "XEH_PREP.hpp"
 
 //- Variables
-GVAR(Service_Available) = false;
+GVAR(Available) = false;

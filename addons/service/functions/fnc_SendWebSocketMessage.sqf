@@ -25,31 +25,30 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
+if (!GVAR(Available)) exitWith {
+  ERROR("""fnc_SendWebSocketMessage"" Exception : WebSocket connection to the service is offline.");
+};
+
 params ["_content", "_discriminator"];
 TRACE_1("fnc_SendWebSocketMessage",_this);
 
 private _invalid = false;
+private _map = createHashMap;
 
-private _map = switch (_discriminator) do {
+switch (_discriminator) do {
   //- Use #LINK - addons/service/functions/fnc_SendWebSocketJSON.sqf
   case __JsonString__: {
-    _content // #NOTE - _content needs to be Hashmap
+    _map set ["JsonString",  _content];
   };
-  case __Text__: {
-    private _m = createHashMap;
-    _m set ["Message", _content];
 
-    _m
+  case __Text__: {
+    _map set ["Message", _content];
   };
   case __ArrayString__: { //- "[["",""],["",""]]"
-    private _m = createHashMap;
-    _m set ["ArrayString", _content];
-
-    _m
+    _map set ["ArrayString", _content];
   };
   default {
     _invalid = true;
-    createHashMap
   };
 };
 

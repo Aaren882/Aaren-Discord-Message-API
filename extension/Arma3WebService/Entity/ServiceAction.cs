@@ -27,19 +27,41 @@ public sealed class ServiceAction(
 			payload.FileName, FileMode.Create, FileAccess.Write);
 					
 		await connection.ReceiveBinary(fileStream);
-		logger.LogInformation("Stored binary file '{PayloadFileName}'", payload.FileName);
+		logger.LogDebug("Stored binary file '{PayloadFileName}'", payload.FileName);
 	}
 	public async Task JsonStringAction(IConnection connection, Arma3PayloadJson payload)
 	{
-		logger.LogInformation("Received message '{PayloadJsonString}'", payload.JsonString);
+		logger.LogDebug("Received message '{PayloadJsonString}'", payload.JsonString);
 		
-		if (payload?.ProcessType == (int)Arma3PayLoadTypeExtension.DiscrodJson)
+		try
 		{
-			var dto = JsonSerializer.Deserialize(
-				payload.JsonString, 
-				MsgPayload_JsonContext.Default.DiscordMessageDto
+			var deserialize = JsonSerializer.Deserialize(
+				payload.JsonString,
+				Arma3PayloadExtensionJsonSerializerContext.Default.Arma3PayloadExtension
 			);
-			await discordBotService.SendMessageAsync(dto);
+			
+			switch (deserialize?.Type)
+			{
+				case Arma3PayLoadTypeExtension.DiscrodSend:
+					await discordBotService.SendMessageAsync(((DiscordJsonExtension)deserialize).DiscordMessage ??
+					                                         throw new InvalidOperationException());
+					break;
+				case Arma3PayLoadTypeExtension.ServerInfo:
+					UpdateSSE(((ServerInfoExtension)deserialize).Infos ??
+					                            throw new InvalidOperationException());
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+		}
+		catch (Exception e) when (e is ArgumentOutOfRangeException or ArgumentNullException or InvalidOperationException or NotSupportedException)
+		{
+			logger.LogWarning(e, "An exception occurred");
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "An exception occurred");
+			throw;
 		}
 	}
 	
@@ -47,11 +69,16 @@ public sealed class ServiceAction(
 	private List<string> ctxQueue = [];
 	public async Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
 	{
+		UpdateSSE(payload.ArrayString);
+	}
+
+	private void UpdateSSE(IEnumerable<string> infoString)
+	{
 		if (ctxQueue.Count == 0) return;
 
 		try
 		{
-			var collection = payload?.ArrayString
+			var collection = infoString
 				.Select(x =>
 					JsonSerializer.Deserialize<List<string>>(x)
 				)
@@ -76,7 +103,6 @@ public sealed class ServiceAction(
 			logger.LogError(e, "An exception occurred");
 		}
 	}
-
 	public async Task SSE_Logging(HttpContext ctx)
 	{
 		var ctxID = ctx.TraceIdentifier;
