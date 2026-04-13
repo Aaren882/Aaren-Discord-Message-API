@@ -49,20 +49,23 @@ if (_infoList isEqualTo []) exitWith {
   private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];
   
   [
-    _file,
-    _format,
+    [_file, _format] call DiscordAPI_fnc_FormatJson,
     _webhook_Sel,
     _payload
-  ] call DiscordAPI_fnc_sendJsonFormat;
+  ] call EFUNC(webhook,sendJsonFormat);
 };
 
-[
+private _JSON_String = [
   serverNamespace getVariable ["DiscordMessageAPI_ServerJSON", ""],
-  _infoList,
+  _infoList
+] call DiscordAPI_fnc_FormatJson;
+
+[
+  _JSON_String,
   DiscordMessageAPI_ServerWebhookSel,
   _payload
   /* *** Payload Format ***
     - [0] Send by default
     - [1, "Message ID"] Refresh
   */
-] call DiscordAPI_fnc_sendJsonFormat;
+] call EFUNC(webhook,sendJsonFormat);
