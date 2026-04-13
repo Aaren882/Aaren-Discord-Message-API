@@ -108,8 +108,8 @@ public static class EntryDelegates
         /// <returns>Always returns 1 to indicate successful processing of the first argument.</returns>
         internal static int ParseJson(IOutputBuilder output, string[] args, int argCount)
         {
-            var utf = Util.StringToCode32(Util.ParseJson(args[0]));
-            output.Append($"[{string.Join(",", utf)}]");
+            var json = Util.ParseJson(args[0]);
+            output.Append(json);
             return 1;
         }
         
