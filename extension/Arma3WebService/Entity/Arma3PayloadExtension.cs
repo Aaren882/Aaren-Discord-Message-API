@@ -5,12 +5,12 @@ namespace Arma3WebService.Entity;
 
 public enum Arma3PayLoadTypeExtension
 {
-	DiscrodSend = 1,
+	DiscordSend = 1,
 	ServerInfo = 2,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "ProcessType")]
-[JsonDerivedType(typeof(DiscordJsonExtension), (int)Arma3PayLoadTypeExtension.DiscrodSend)]
+[JsonDerivedType(typeof(DiscordJsonExtension), (int)Arma3PayLoadTypeExtension.DiscordSend)]
 [JsonDerivedType(typeof(ServerInfoExtension), (int)Arma3PayLoadTypeExtension.ServerInfo)]
 public abstract record Arma3PayloadExtension
 {
@@ -24,7 +24,7 @@ public record DiscordJsonExtension
 ) : Arma3PayloadExtension
 {
 	[JsonIgnore]
-	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.DiscrodSend;
+	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.DiscordSend;
 };
 public record ServerInfoExtension
 (
