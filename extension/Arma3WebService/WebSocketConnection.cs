@@ -6,8 +6,9 @@ using System.Text.Json;
 
 namespace Arma3WebService;
 
-public interface IConnection 
+public interface IConnection
 {
+	public WebsocketContextEntity websocketContext { get; init; }
 	Task<WebSocketCloseStatus?> KeepReceiving();
 	Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream);
 	Task<WebSocketReceiveResult> ReceiveBinary(FileStream fileStream);
@@ -22,7 +23,8 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 {
 	private WebSocket _webSocket;
 	private readonly CancellationToken _cts = websocketContext.CancellationToken;
-	
+	public WebsocketContextEntity websocketContext { get; init; } = websocketContext;
+
 	public async Task<WebSocketCloseStatus?> KeepReceiving()
 	{
 		WebSocketReceiveResult message;

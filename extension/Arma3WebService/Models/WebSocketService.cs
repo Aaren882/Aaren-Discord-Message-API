@@ -4,6 +4,7 @@ using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Arma3WebService.Factory;
 using Arma3WebService.Managers;
+using Microsoft.EntityFrameworkCore;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 
@@ -18,6 +19,7 @@ namespace Arma3WebService.Models
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
 		ServiceAction serviceAction,
+		IServiceScopeFactory serviceScopeFactory,
 		WebsocketContextEntityFactory contextEntityFactory,
 		IConnectionFactory connectionFactory,
 		IConnectionManager connectionManager
@@ -31,7 +33,7 @@ namespace Arma3WebService.Models
 		{
 			if (!Connections.TryGetValue(command.gameId, out var session))
 				throw new NullReferenceException($"No \"{command.gameId}\" is not found.");
-			
+
 			await serviceAction.CallBackAction(session, command.payload);
 		}
 		
@@ -67,7 +69,7 @@ namespace Arma3WebService.Models
 		public async Task CreateConnection(HttpContext context)
 		{
 			var contextEntity = contextEntityFactory.CreateJsonStringContext(context);
-			var connectionIdentity = contextEntity.Identity;
+			var connectionIdentity = contextEntity.GetIndentity();
 
 			if (Connections.ContainsKey(connectionIdentity))
 			{
@@ -83,7 +85,11 @@ namespace Arma3WebService.Models
 			try
 			{
 				connection = connectionFactory.CreateConnection(contextEntity);
-				Connections.TryAdd(contextEntity.Identity, connection);
+				Connections.TryAdd(contextEntity.GetIndentity(), connection);
+				
+				using var scope= serviceScopeFactory.CreateScope();
+				await using var db = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+				db.UpsertServerIdentity(contextEntity);
 
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
@@ -145,7 +151,7 @@ namespace Arma3WebService.Models
 				_logger.LogInformation(
 					"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}", 
 					connection.CloseStatusDescription(),
-					contextEntity.Identity,
+					contextEntity.GetIndentity(),
 					contextEntity.ClientIpAddress,
 					Connections.Count
 				);
