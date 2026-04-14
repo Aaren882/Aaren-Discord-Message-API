@@ -1,14 +1,17 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
+using Arma3WebService.DBContext;
 using Arma3WebService.Models;
 using Components.Entity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService.Entity;
 
 public sealed class ServiceAction(
 	ILogger<ServiceAction> logger,
-	IDiscordBotService discordBotService
-)
+	IDiscordBotService discordBotService,
+	IServiceScopeFactory serviceScopeFactory)
 {
 	public async Task CallBackAction(IConnection session, Arma3PayloadCallBack command)
 	{
@@ -24,7 +27,7 @@ public sealed class ServiceAction(
 		logger.LogInformation("Receiving metaData for binary file '{Arma3PayloadRpt}'", payload);
 		
 		await using var fileStream = new FileStream(
-			payload.FileName, FileMode.Create, FileAccess.Write);
+			$".Rpt/{payload.FileName}", FileMode.Create, FileAccess.Write);
 					
 		await connection.ReceiveBinary(fileStream);
 		logger.LogDebug("Stored binary file '{PayloadFileName}'", payload.FileName);
@@ -43,35 +46,36 @@ public sealed class ServiceAction(
 			switch (deserialize?.Type)
 			{
 				case Arma3PayLoadTypeExtension.DiscordSend:
-					await discordBotService.SendMessageAsync(((DiscordJsonExtension)deserialize).DiscordMessage ??
-					                                         throw new InvalidOperationException());
+				{
+					await ((DiscordJsonExtension)deserialize).SendMessage(discordBotService);
 					break;
-				case Arma3PayLoadTypeExtension.ServerInfo:
-					UpdateSSE(((ServerInfoExtension)deserialize).Infos ??
-					                            throw new InvalidOperationException());
+				}
+				case Arma3PayLoadTypeExtension.UpdateServerInfo:
+				{
+					var info = ((UpdateServerInfoExtension)deserialize);
+					await info.CreateTemplate();
+
+					/*using var scope= serviceScopeFactory.CreateScope();
+					await using var context = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+					await context.UpdateUpdateServerInfoAsync(connection.websocketContext.GetIndentity(), info);*/
 					break;
+				}
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
 		}
-		catch (Exception e) when (e is ArgumentOutOfRangeException or ArgumentNullException or InvalidOperationException or NotSupportedException)
-		{
-			logger.LogWarning(e, "An exception occurred");
-		}
 		catch (Exception e)
 		{
-			logger.LogError(e, "An exception occurred");
-			throw;
+			logger.LogError(e, "JsonStringAction threw an exception...");
 		}
 	}
 	
-	private Queue<Dictionary<string,string>> logQueue = new ();
-	private List<string> ctxQueue = [];
+	
 	public Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
 	{
 		try
 		{
-			UpdateSSE(payload.ArrayString);
+			UpdateGameInfo(connection, payload.ArrayString);
 			return Task.CompletedTask;
 		}
 		catch (Exception exception)
@@ -79,10 +83,13 @@ public sealed class ServiceAction(
 			return Task.FromException(exception);
 		}
 	}
-
-	private void UpdateSSE(IEnumerable<string> infoString)
+	
+	private readonly List<string> ctxList = [];
+	private readonly ConcurrentDictionary<string, Dictionary<string, string>?> _gameInfoConcurrentDictionary = [];
+	
+	private void UpdateGameInfo(IConnection connection, IEnumerable<string> infoString)
 	{
-		if (ctxQueue.Count == 0) return;
+		if (ctxList.Count == 0) return;
 
 		try
 		{
@@ -94,9 +101,11 @@ public sealed class ServiceAction(
 					value => value![0],
 					value => value![1]
 				);
-			logger.LogInformation("{collection}", collection);
+			
+			var identity = connection.websocketContext.GetIndentity();
+			logger.LogInformation("\"{identity}\" received game info", identity);
 
-			logQueue.Enqueue(collection);
+			_gameInfoConcurrentDictionary[identity] = collection;
 		}
 		catch (ArgumentNullException)
 		{
@@ -111,24 +120,24 @@ public sealed class ServiceAction(
 			logger.LogError(e, "An exception occurred");
 		}
 	}
-	public async Task SSE_Logging(HttpContext ctx)
+	public async Task SSE_Logging(HttpContext ctx, string sessionIdentity)
 	{
 		var ctxID = ctx.TraceIdentifier;
-		ctxQueue.Add(ctxID);
+		ctxList.Add(ctxID);
 
 		ctx.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
 		while (!ctx.RequestAborted.IsCancellationRequested)
 		{
-			if (!logQueue.TryDequeue(out var logItem)) continue;
+			await Task.Delay(1000);
+			if (!_gameInfoConcurrentDictionary.TryGetValue(sessionIdentity, out var logItem)) continue;
+			if (logItem is null) continue;
 			
-			await ctx.Response.WriteAsync("data: ");
 			await JsonSerializer.SerializeAsync(ctx.Response.Body, logItem);
 			await ctx.Response.WriteAsync("\n\n");
 			await ctx.Response.Body.FlushAsync();
-
-			await Task.Delay(1000);
+			_gameInfoConcurrentDictionary[sessionIdentity] = null;
 		}
 
-		ctxQueue.Remove(ctxID);
+		ctxList.Remove(ctxID);
 	}
 }

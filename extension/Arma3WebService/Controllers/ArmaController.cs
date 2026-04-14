@@ -1,7 +1,7 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using Arma3WebService.Entity;
 using Arma3WebService.Models;
-using Components.Entity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,11 +35,11 @@ namespace Arma3WebService.Controllers
 			}
 		}
 
-		[HttpGet("GetLogs")]
-		public async Task Get()
+		[HttpGet("GetLogs/{sessionIdentity}")]
+		public async Task Get(string sessionIdentity)
 		{
 			var ctx = ControllerContext.HttpContext;
-			await serviceAction.SSE_Logging(ctx);
+			await serviceAction.SSE_Logging(ctx, sessionIdentity);
 		}
 
 		// Returns data one item at a time asynchronously

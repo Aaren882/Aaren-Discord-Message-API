@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Arma3WebService.Factory;
 using Arma3WebService.Handler;
@@ -19,6 +20,8 @@ namespace Arma3WebService
 		{
 			Env.Load();
 			var builder = WebApplication.CreateBuilder(args);
+			
+			builder.Services.AddDbContext<ServiceDbContext>();
 			
 			// Add services to the container.
 			builder.Services.AddHostedService<DiscordBotService>();
@@ -80,7 +83,7 @@ namespace Arma3WebService
 							new JwtHelpers(builder.Configuration).GetValidationParameters();
 					})
 				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
-
+			
 
 			var app = builder.Build();
 
