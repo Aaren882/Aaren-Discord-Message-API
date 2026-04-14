@@ -42,7 +42,7 @@ public sealed class ServiceAction(
 			
 			switch (deserialize?.Type)
 			{
-				case Arma3PayLoadTypeExtension.DiscrodSend:
+				case Arma3PayLoadTypeExtension.DiscordSend:
 					await discordBotService.SendMessageAsync(((DiscordJsonExtension)deserialize).DiscordMessage ??
 					                                         throw new InvalidOperationException());
 					break;
