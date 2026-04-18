@@ -9,25 +9,28 @@ public sealed class ServiceDbContext: DbContext
 	private ILogger<ServiceDbContext> logger;
 
 	public ServiceDbContext(
-		ILogger<ServiceDbContext> logger
+		ILogger<ServiceDbContext> logger, IWebHostEnvironment env
 	)
 	{
 		this.logger = logger;
+		
+		//- Remove Database for local sqlite testing only
+		// if (env.IsDevelopment()) Database.EnsureDeleted();
 		Database.EnsureCreated();
 	}
 	
 	public DbSet<ServerIdentity> Identifier { get; set; }
-	// public DbSet<ServerInfo> UpdateServerInfo { get; set; }
+	public DbSet<ServerInfo> UpdateServerInfo { get; set; }
 
 	public void UpsertServerIdentity(WebsocketContextEntity websocketContextEntity)
 	{
 		var name = websocketContextEntity.GetIndentity();
-		var exist = Identifier.FirstOrDefault(o => o.name == name);
+		var exist = Identifier.FirstOrDefault(o => o.profileName == name);
 				
 		if (exist == null) {
-			Identifier.Add(new ServerIdentity { name = name , createTime = DateTime.Now });
+			Identifier.Add(new ServerIdentity { profileName = name , createTime = DateTime.Now });
 		} else {
-			exist.name = name;
+			exist.profileName = name;
 		}
 		
 		SaveChanges();

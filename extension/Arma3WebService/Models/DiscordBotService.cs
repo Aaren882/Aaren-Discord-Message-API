@@ -17,7 +17,6 @@ namespace Arma3WebService.Models
 		: BackgroundService, IDiscordBotService
 	{
 		private static readonly DiscordSocketClient? _client = new();
-
 		private static readonly string TestChannel = Environment.GetEnvironmentVariable("TestChannel")!;
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -44,7 +43,7 @@ namespace Arma3WebService.Models
 			var modifyResult = await channel!.ModifyMessageAsync(messageID, msg =>
 			{
 				msg.Content = message.Content;
-				msg.Embeds = ConvertEmbeds(message.Embeds).ToArray();
+				msg.Embeds = ConvertEmbeds(message.Embeds)?.ToArray();
 				msg.Components = new Optional<MessageComponent>();
 			});
 			
@@ -54,12 +53,6 @@ namespace Arma3WebService.Models
 		{
 			var channel = await _client!
 				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
-
-			// var builder = ComponentBuilder.FromComponents(ConvertComponents(message.Components));
-			// var text = new Types.TextDisplayComponent("Test Display");
-			// var media = new UnfurledMediaItemProperties("https://websitewithopensourceimages/gamepreview.webp");
-			// var thumbnailComponent = new Types.ThumbnailComponent(media, "");
-			// var builder = new Types.SectionComponent([text], thumbnailComponent).Convert();
 
 			MessageComponent? component = null;
 			if (message.Components is not null)

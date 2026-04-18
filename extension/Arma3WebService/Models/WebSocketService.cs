@@ -3,8 +3,6 @@ using System.Net.WebSockets;
 using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Arma3WebService.Factory;
-using Arma3WebService.Managers;
-using Microsoft.EntityFrameworkCore;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 
@@ -86,10 +84,12 @@ namespace Arma3WebService.Models
 			{
 				connection = connectionFactory.CreateConnection(contextEntity);
 				Connections.TryAdd(contextEntity.GetIndentity(), connection);
-				
-				using var scope= serviceScopeFactory.CreateScope();
-				await using var db = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
-				db.UpsertServerIdentity(contextEntity);
+
+				/*using (var scope = serviceScopeFactory.CreateScope())
+				{
+					await using var db = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+					db.UpsertServerIdentity(contextEntity);
+				}*/
 
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",

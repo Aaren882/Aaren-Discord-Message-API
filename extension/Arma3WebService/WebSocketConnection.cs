@@ -3,6 +3,8 @@ using System.Text;
 using Arma3WebService.Entity;
 using Components.Entity;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
+using Arma3WebService.Extensions;
 
 namespace Arma3WebService;
 
@@ -12,7 +14,7 @@ public interface IConnection
 	Task<WebSocketCloseStatus?> KeepReceiving();
 	Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream);
 	Task<WebSocketReceiveResult> ReceiveBinary(FileStream fileStream);
-	Task SendArmaCallback(Arma3PayloadCallBack callBack);
+	Task SendArmaCallBackMessage(Arma3Payload callBack);
 	Task Send(string message);
 	Task StartAsync();
 	Task Close();
@@ -83,14 +85,9 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 		return result;
 	}
 	
-	public async Task SendArmaCallback(Arma3PayloadCallBack callBack)
+	public async Task SendArmaCallBackMessage(Arma3Payload callBack)
 	{
-		var package = JsonSerializer.Serialize(
-			callBack,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		);
-		
-		await Send(package);
+		await Send(callBack.ToJsonString());
 	}
 	public async Task Send(string message)
 	{
