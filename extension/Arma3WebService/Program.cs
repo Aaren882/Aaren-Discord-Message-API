@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
+using Arma3WebService.Extensions;
 using Arma3WebService.Factory;
 using Arma3WebService.Handler;
 using Arma3WebService.Identities;
@@ -108,8 +109,18 @@ namespace Arma3WebService
 			app.UseAuthentication();
 			app.UseAuthorization();
 
-
 			app.MapControllers();
+
+			using (
+				var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder
+					.AddConsole())
+			)
+			{
+				var factory = app.Services.GetRequiredService<IServiceScopeFactory>();
+				var logger = loggerFactory.CreateLogger<Arma3PayloadExtended>();
+					
+				Arma3PayLoadExtension.Options(logger, factory); //- Setup Extension Methods
+			}
 
 			app.Run();
 		}

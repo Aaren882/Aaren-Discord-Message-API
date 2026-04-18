@@ -1,26 +1,23 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using Arma3WebService.DBContext;
+using Arma3WebService.Extensions;
 using Arma3WebService.Models;
 using Components.Entity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService.Entity;
 
 public sealed class ServiceAction(
 	ILogger<ServiceAction> logger,
-	IDiscordBotService discordBotService,
-	IServiceScopeFactory serviceScopeFactory)
+	IDiscordBotService discordBotService)
 {
 	public async Task CallBackAction(IConnection session, Arma3PayloadCallBack command)
 	{
-		await session.SendArmaCallback(command);
+		await session.SendArmaCallBackMessage(command);
 	}
 	public async Task TextAction(IConnection connection, Arma3PayloadText payload)
 	{
-		var json = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-		await connection.Send(json);
+		await connection.Send(payload.ToJsonString());
 	}
 	public async Task RptAction(IConnection connection, Arma3PayloadRPT payload)
 	{
@@ -40,29 +37,11 @@ public sealed class ServiceAction(
 		{
 			var deserialize = JsonSerializer.Deserialize(
 				payload.JsonString,
-				Arma3PayloadExtensionJsonSerializerContext.Default.Arma3PayloadExtension
+				Arma3PayloadExtendedJsonSerializerContext.Default.Arma3PayloadExtended
 			);
 			
-			switch (deserialize?.Type)
-			{
-				case Arma3PayLoadTypeExtension.DiscordSend:
-				{
-					await ((DiscordJsonExtension)deserialize).SendMessage(discordBotService);
-					break;
-				}
-				case Arma3PayLoadTypeExtension.UpdateServerInfo:
-				{
-					var info = ((UpdateServerInfoExtension)deserialize);
-					await info.CreateTemplate();
-
-					/*using var scope= serviceScopeFactory.CreateScope();
-					await using var context = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
-					await context.UpdateUpdateServerInfoAsync(connection.websocketContext.GetIndentity(), info);*/
-					break;
-				}
-				default:
-					throw new ArgumentOutOfRangeException();
-			}
+			if (deserialize == null) throw new NullReferenceException("JsonStringAction is Null.");
+			await deserialize.Invoke(connection, discordBotService);
 		}
 		catch (Exception e)
 		{
