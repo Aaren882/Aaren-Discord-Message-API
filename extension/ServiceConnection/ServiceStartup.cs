@@ -15,7 +15,7 @@ public class ServiceStartup
 	public static WebhooksStorage? ALLWebhooks;
 	
 	public static CallContext ContextInfo;
-	public static ExtensionCallback? Callback;
+	public static ExtensionCallback? Callback = (name, function, data) => 0;
 
 	public static ServiceInteractions? serviceInteractions;
 	
