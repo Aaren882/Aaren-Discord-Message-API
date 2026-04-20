@@ -20,6 +20,8 @@ Examples
 Author:
     Aaren
 ---------------------------------------------------------------------------- */
+if (!GVAR(Available)) exitWith {};
+
 params [["_bypass", false]];
 
 TRACE_1("fnc_UpdateService_ServerInfo",_this);

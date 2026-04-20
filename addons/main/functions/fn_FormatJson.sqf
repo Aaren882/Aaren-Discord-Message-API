@@ -63,7 +63,7 @@ private _Info = "DiscordMessageAPI" callExtension [
 
 private _msg = _Info # 0;
 {
-  _msg = [_msg, format ["{%1}", _x # 0], _x # 1] call CBA_fnc_replace;
+  _msg = [_msg, _x # 0, _x # 1] call CBA_fnc_replace;
 } forEach _formats;
 
 //- Return structured string
