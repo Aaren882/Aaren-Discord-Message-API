@@ -75,31 +75,31 @@ for "_i" from 0 to 2 do {
 
 //- Result
 [
-  ["MAP_NAME", worldName],
-  ["SERVER_NAME", serverName],
-  ["MISSION_NAME", briefingName],
+  ["{MAP_NAME}", worldName],
+  ["{SERVER_NAME}", serverName],
+  ["{MISSION_NAME}", briefingName],
   
-  ["PLAYER_COUNT", str (count allPlayers)],
-  ["BLUFOR_COUNT", str (playersNumber blufor)],
-  ["OPFOR_COUNT", str (playersNumber opfor)],
-  ["INDEP_COUNT", str (playersNumber independent)],
-  ["CIV_COUNT", str (playersNumber civilian)],
+  ["{PLAYER_COUNT}", str (count allPlayers)],
+  ["{BLUFOR_COUNT}", str (playersNumber blufor)],
+  ["{OPFOR_COUNT}", str (playersNumber opfor)],
+  ["{INDEP_COUNT}", str (playersNumber independent)],
+  ["{CIV_COUNT}", str (playersNumber civilian)],
 
-  ["AVALIABLE_PLAYERS", str _slots],
-  ["AVALIABLE_BLUFOR", str (_eachSlot # 0)],
-  ["AVALIABLE_OPFOR", str (_eachSlot # 1)],
-  ["AVALIABLE_INDEP", str (_eachSlot # 2)],
-  ["AVALIABLE_CIV", str (_eachSlot # 3)],
+  ["{AVALIABLE_PLAYERS}", str _slots],
+  ["{AVALIABLE_BLUFOR}", str (_eachSlot # 0)],
+  ["{AVALIABLE_OPFOR}", str (_eachSlot # 1)],
+  ["{AVALIABLE_INDEP}", str (_eachSlot # 2)],
+  ["{AVALIABLE_CIV}", str (_eachSlot # 3)],
 
-  ["GAME_VERSION", format ["%1.%2", (productVersion # 2) * 0.01 toFixed 2, productVersion # 3]],
-  ["SYSTEM_DATE", _SysDate joinString "-"],
-  ["SYSTEM_TIME", _SysTime joinString ":"],
-  ["SERVER_FPS", diag_fps toFixed 2],
-  ["FPS_MIN", diag_fpsMin toFixed 2],
-  ["ACTIVE_SCRIPTS", str diag_activeScripts],
+  ["{GAME_VERSION}", format ["%1.%2", (productVersion # 2) * 0.01 toFixed 2, productVersion # 3]],
+  ["{SYSTEM_DATE}", _SysDate joinString "-"],
+  ["{SYSTEM_TIME}", _SysTime joinString ":"],
+  ["{SERVER_FPS}", diag_fps toFixed 2],
+  ["{FPS_MIN}", diag_fpsMin toFixed 2],
+  ["{ACTIVE_SCRIPTS}", str diag_activeScripts],
 
-  ["HEADLESS", str _headless],
-  ["PLAYER_LIST", (_list apply {_x # 0}) joinString ""],
-  ["PLAYER_STATE", (_list apply {_x # 1}) joinString ""],
-  ["PLAYER_NETWORK", (_list apply {_x # 2}) joinString ""]
+  ["{HEADLESS}", str _headless],
+  ["{PLAYER_LIST}", (_list apply {_x # 0}) joinString ""],
+  ["{PLAYER_STATE}", (_list apply {_x # 1}) joinString ""],
+  ["{PLAYER_NETWORK}", (_list apply {_x # 2}) joinString ""]
 ]
