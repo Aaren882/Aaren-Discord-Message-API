@@ -26,7 +26,7 @@ public sealed class WebsocketContextEntityFactory(IArma3ActionFactory actionFact
 	{
 		return new WebsocketContextEntity(httpContext, actionFactory);
 	}
-	public WebsocketContextEntity CreateArrayStringContext(HttpContext httpContext)
+	public WebsocketContextEntity CreateFlatJsonStringContext(HttpContext httpContext)
 	{
 		return new WebsocketContextEntity(httpContext, actionFactory);
 	}

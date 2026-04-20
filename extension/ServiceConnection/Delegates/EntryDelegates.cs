@@ -223,7 +223,7 @@ public static class EntryDelegates
         }
         /*internal static int SendWebSocketArray(IOutputBuilder output, string[] args, int argCount)
         {
-            var messageObj = new Arma3PayloadArrayString(args);
+            var messageObj = new Arma3PayloadFlatJsonString(args);
             
             _ = serviceInteractions.SendWebSocketMessage(messageObj);
             return 1;

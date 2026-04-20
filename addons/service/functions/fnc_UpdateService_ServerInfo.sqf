@@ -33,4 +33,4 @@ localNamespace setVariable ["DiscordAPI_ServerRefresh_Time", time + DiscordMsg_A
 
 private _infoList = call FUNC(GetServerInfo);
 
-[_infoList apply {str _x}, __ArrayString__] call FUNC(SendWebSocketMessage);
+[createHashMapFromArray _infoList, __FlatJsonString__] call FUNC(SendWebSocketMessage);

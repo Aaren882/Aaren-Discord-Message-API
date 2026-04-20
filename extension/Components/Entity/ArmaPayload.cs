@@ -10,7 +10,7 @@ public enum Arma3PayLoadType
 	Command = 3,
 	GameInfo = 4,
 	JsonString = 5,
-	ArrayString = 6,
+	FlatJsonString = 6,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
@@ -18,7 +18,7 @@ public enum Arma3PayLoadType
 [JsonDerivedType(typeof(Arma3PayloadRPT), (int)Arma3PayLoadType.Rpt)]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
 [JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
-[JsonDerivedType(typeof(Arma3PayloadArrayString), (int)Arma3PayLoadType.ArrayString)]
+[JsonDerivedType(typeof(Arma3PayloadFlatJsonString), (int)Arma3PayLoadType.FlatJsonString)]
 public abstract record Arma3Payload
 {
 	public abstract Arma3PayLoadType Type { get; }
@@ -63,13 +63,13 @@ public record Arma3PayloadText(
 	public override Arma3PayLoadType Type => Arma3PayLoadType.Text;
 };
 
-public record Arma3PayloadArrayString
+public record Arma3PayloadFlatJsonString
 (
-	IEnumerable<string> ArrayString
+	Dictionary<string, string> FlatJsonString
 ) : Arma3Payload
 {
 	[JsonIgnore]
-	public override Arma3PayLoadType Type => Arma3PayLoadType.ArrayString;
+	public override Arma3PayLoadType Type => Arma3PayLoadType.FlatJsonString;
 };
 
 //- Service

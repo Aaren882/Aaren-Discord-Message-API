@@ -24,8 +24,8 @@ public sealed class Arma3ActionManager(ServiceAction serviceAction) : IArma3Acti
 				serviceAction.CallBackAction(connection, (Arma3PayloadCallBack) payload),
 			Arma3PayLoadType.JsonString =>
 				serviceAction.JsonStringAction(connection, (Arma3PayloadJson) payload),
-			Arma3PayLoadType.ArrayString => 
-				serviceAction.ArrayStringAction(connection, (Arma3PayloadArrayString) payload),
+			Arma3PayLoadType.FlatJsonString => 
+				serviceAction.FlatJsonStringAction(connection, (Arma3PayloadFlatJsonString) payload),
 			
 			_ => throw new ArgumentOutOfRangeException(nameof(payload.Type), payload.Type, null)
 		};

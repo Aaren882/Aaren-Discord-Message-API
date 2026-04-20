@@ -13,63 +13,45 @@ public sealed class ServiceDbContext: DbContext
 	)
 	{
 		this.logger = logger;
-		
-		//- Remove Database for local sqlite testing only
-		// if (env.IsDevelopment()) Database.EnsureDeleted();
 		Database.EnsureCreated();
 	}
 	
 	public DbSet<ServerIdentity> Identifier { get; set; }
-	public DbSet<ServerInfo> UpdateServerInfo { get; set; }
+	public DbSet<ServerInfoTemplate> UpdateServerInfo { get; set; }
 
-	public void UpsertServerIdentity(WebsocketContextEntity websocketContextEntity)
+	public async Task CreateServerIdentityAsync(WebsocketContextEntity websocketContextEntity)
 	{
-		var name = websocketContextEntity.GetIndentity();
-		var exist = Identifier.FirstOrDefault(o => o.profileName == name);
+		var profileName = websocketContextEntity.GetIndentity();
+		var exist = Identifier.FirstOrDefault(o => o.profileName == profileName);
 				
-		if (exist == null) {
-			Identifier.Add(new ServerIdentity { profileName = name , createTime = DateTime.Now });
-		} else {
-			exist.profileName = name;
-		}
+		if (exist != null) return;
 		
-		SaveChanges();
-		logger.LogInformation("Update \"{name}\" ServerIdentity .", name);
+		Identifier.Add(new ServerIdentity
+		{
+			profileName = profileName
+		});
+		await SaveChangesAsync();
+		logger.LogInformation("Create \"{profileName}\" ServerIdentity.", profileName);
+	}
+
+	public async Task UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId)
+	{
+		var exist = Identifier.FirstOrDefault(
+			o => o.profileName == profileName
+		);
+
+		if (exist == null)
+		{
+			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
+			return;
+		}
+
+		exist.messageId = ulong.Parse(serverInfoMessageId);
+		await SaveChangesAsync();
 	}
 
 	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 	{
 		optionsBuilder.UseSqlite("Data Source=Test.db");
 	}
-
-	/*public async Task UpdateUpdateServerInfoAsync(string name, UpdateServerInfoExtension infoExtension)
-	{
-		var rows = await UpdateServerInfo.ExecuteUpdateAsync(setters =>
-			setters.SetProperty(extension =>
-				extension, new ServerInfo(name, infoExtension))
-		);
-		logger.LogInformation("UpdateServerInfo update {rows} rows.",rows);
-	}*/
-
-	/*public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-	{
-		// 1. Detect changes in the ChangeTracker
-		ChangeTracker.DetectChanges();
-		var auditEntries = new List<AuditEntry>(); // Assuming AuditEntry maps to AuditLog
-        
-		// 2. Iterate through changes and capture data (simplified)
-		foreach (var entry in ChangeTracker.Entries())
-		{
-			if (entry.Entity is AuditLog || entry.State == EntityState.Unchanged) continue;
-            
-			// ... (Logic to capture OldValues/NewValues as JSON)
-		}
-
-		// 3. Save main changes
-		var result = await base.SaveChangesAsync(cancellationToken);
-        
-		// 4. Save audit logs
-		await SaveAuditLogs(auditEntries); 
-		return result;
-	}*/
 }

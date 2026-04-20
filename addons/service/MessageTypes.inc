@@ -2,4 +2,4 @@
 #define __Rpt__ 2
 #define __Command__ 3
 #define __JsonString__ 5
-#define __ArrayString__ 6
+#define __FlatJsonString__ 6

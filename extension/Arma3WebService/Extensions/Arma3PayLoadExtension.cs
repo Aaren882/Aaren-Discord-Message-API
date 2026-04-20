@@ -20,11 +20,13 @@ public static class Arma3PayLoadExtension
         if (Logger is null || ServiceScopeFactory is null) return;
         
         using var scope = ServiceScopeFactory.CreateScope();
-        await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
-		
-        Logger.LogInformation("Invoking : {Type}", action.Type);
-        await action.Run(service, dbContext);
-		
+        await using (var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>())
+        {
+	        Logger.LogInformation("Invoking : {Type}", action.Type);
+	        await action.Run(service, dbContext);
+	        Logger.LogInformation("Invoked : {Type}", action.Type);
+        }
+        
         //- Send back message to the client
         var msg = new Arma3PayloadText($"Invoked \"{action.Type}\"");
         await connection.SendArmaCallBackMessage(msg);
