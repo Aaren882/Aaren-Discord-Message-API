@@ -49,9 +49,9 @@
         private _jsonString = _props getOrDefault ["JsonString","{}"];
         INFO_1("DISCORD_API [CallBack JsonString] || JsonString : %1",_jsonString);
       };
-      case __ArrayString__: {
-        private _arrayString = _props getOrDefault ["ArrayString",[]];
-        INFO_1("DISCORD_API [CallBack ArrayString] || ArrayString : %1",_arrayString);
+      case __FlatJsonString__: {
+        private _flatJsonString = _props getOrDefault ["FlatJsonString",[]];
+        INFO_1("DISCORD_API [CallBack FlatJsonString] || FlatJsonString : %1",_flatJsonString);
       };
       default {
         ERROR_1("Invalid callback type ""%1""",_callBackType);

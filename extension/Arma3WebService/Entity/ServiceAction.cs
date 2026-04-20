@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Arma3WebService.DBContext;
 using Arma3WebService.Extensions;
 using Arma3WebService.Models;
 using Components.Entity;
@@ -9,7 +10,9 @@ namespace Arma3WebService.Entity;
 
 public sealed class ServiceAction(
 	ILogger<ServiceAction> logger,
-	IDiscordBotService discordBotService)
+	IDiscordBotService discordBotService,
+	IServiceScopeFactory ServiceScopeFactory
+)
 {
 	public async Task CallBackAction(IConnection session, Arma3PayloadCallBack command)
 	{
@@ -31,7 +34,7 @@ public sealed class ServiceAction(
 	}
 	public async Task JsonStringAction(IConnection connection, Arma3PayloadJson payload)
 	{
-		logger.LogDebug("Received message '{PayloadJsonString}'", payload.JsonString);
+		logger.LogDebug("Received message \"{PayloadJsonString}\"", payload.JsonString);
 		
 		try
 		{
@@ -50,54 +53,48 @@ public sealed class ServiceAction(
 	}
 	
 	
-	public Task ArrayStringAction(IConnection connection, Arma3PayloadArrayString payload)
+	public async Task FlatJsonStringAction(IConnection connection, Arma3PayloadFlatJsonString payload)
 	{
-		try
-		{
-			UpdateGameInfo(connection, payload.ArrayString);
-			return Task.CompletedTask;
-		}
-		catch (Exception exception)
-		{
-			return Task.FromException(exception);
-		}
+		var collection = payload.FlatJsonString;
+		var identity = connection.websocketContext.GetIndentity();
+		
+		logger.LogDebug("\"{identity}\" received game info", identity);
+		
+		UpdateGameInfo(identity, collection);
+		await UpdateDiscordServerInfoMessageAsync(identity, collection);
 	}
 	
 	private readonly List<string> ctxList = [];
-	private readonly ConcurrentDictionary<string, Dictionary<string, string>?> _gameInfoConcurrentDictionary = [];
+	private readonly ConcurrentDictionary<string, Dictionary<string, string>?> _gameInfoSSEConcurrentDictionary = [];
 	
-	private void UpdateGameInfo(IConnection connection, IEnumerable<string> infoString)
+	private void UpdateGameInfo(string identity, Dictionary<string, string> collection)
 	{
 		if (ctxList.Count == 0) return;
+		_gameInfoSSEConcurrentDictionary[identity] = collection;
+	}
+	private async Task UpdateDiscordServerInfoMessageAsync(string sessionIdentity, Dictionary<string, string> logItem)
+	{
+		using var scope = ServiceScopeFactory.CreateScope();
+		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		
+		var serverIdentity = dbContext.Identifier.First(o => o.profileName == sessionIdentity);
+		if (serverIdentity.messageId is 0) return;
+		
+		var serverInfo = dbContext.UpdateServerInfo.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
+		if (serverInfo is null) return;
+		
+		var infoMessage = await File.ReadAllTextAsync(serverInfo.filePath);
+		infoMessage = logItem.Aggregate(
+			infoMessage,
+			(current, item) => current.Replace(item.Key, item.Value)
+		);
 
-		try
-		{
-			var collection = infoString
-				.Select(x =>
-					JsonSerializer.Deserialize<List<string>>(x)
-				)
-				.ToDictionary(
-					value => value![0],
-					value => value![1]
-				);
+		var payload = JsonSerializer.Deserialize(
+			infoMessage,
+			MsgPayload_JsonContext.Default.DiscordMessageDto
+		);
 			
-			var identity = connection.websocketContext.GetIndentity();
-			logger.LogInformation("\"{identity}\" received game info", identity);
-
-			_gameInfoConcurrentDictionary[identity] = collection;
-		}
-		catch (ArgumentNullException)
-		{
-			logger.LogError("Source or keySelector or elementSelector is null. -or- keySelector produces a key that is null.");
-		}
-		catch (ArgumentException)
-		{
-			logger.LogError("The payload has duplicated keys");
-		}
-		catch (Exception e)
-		{
-			logger.LogError(e, "An exception occurred");
-		}
+		await discordBotService.ModifyMessageAsync(serverIdentity.messageId, payload!);
 	}
 	public async Task SSE_Logging(HttpContext ctx, string sessionIdentity)
 	{
@@ -108,13 +105,13 @@ public sealed class ServiceAction(
 		while (!ctx.RequestAborted.IsCancellationRequested)
 		{
 			await Task.Delay(1000);
-			if (!_gameInfoConcurrentDictionary.TryGetValue(sessionIdentity, out var logItem)) continue;
+			if (!_gameInfoSSEConcurrentDictionary.TryGetValue(sessionIdentity, out var logItem)) continue;
 			if (logItem is null) continue;
 			
 			await JsonSerializer.SerializeAsync(ctx.Response.Body, logItem);
 			await ctx.Response.WriteAsync("\n\n");
 			await ctx.Response.Body.FlushAsync();
-			_gameInfoConcurrentDictionary[sessionIdentity] = null;
+			_gameInfoSSEConcurrentDictionary[sessionIdentity] = null;
 		}
 
 		ctxList.Remove(ctxID);

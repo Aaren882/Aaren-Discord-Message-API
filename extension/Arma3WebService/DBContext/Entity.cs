@@ -1,4 +1,3 @@
-using Arma3WebService.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.DBContext;
@@ -7,14 +6,14 @@ namespace Arma3WebService.DBContext;
 public class ServerIdentity
 {
 	public string profileName { get; set; }
-	public ServerInfo? serverInfo { get; set; }
-	public DateTime createTime { get; set; } = DateTime.Now;
+	public ulong messageId { get; set; }
+	public DateTime lastUpdate { get; set; } = DateTime.Now;
 }
 [PrimaryKey(nameof(messageId))]
-public class ServerInfo
+public class ServerInfoTemplate
 {
-	public string messageId { get; set; }
+	public ulong messageId { get; set; }
 	public string filePath  { get; set; }
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
-	public DateTime createTime  { get; set; }
+	public DateTime fileCreateTime  { get; set; }
 }

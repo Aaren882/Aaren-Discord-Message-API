@@ -4,14 +4,14 @@
 Function: DiscordAPI_service_fnc_SendWebSocketMessage
 Description:
     Sends a structured message to the backend service via WebSocket.
-    The message is categorized by a discriminator (e.g., Text, JsonString, ArrayString) 
+    The message is categorized by a discriminator (e.g., Text, JsonString, FlatJsonString) 
     to ensure the backend processes the data correctly.
 
     "_discriminator" => #LINK - addons/service/MessageTypes.inc
 
 Parameters:
     _content       - The data content to be sent (String or Array of Strings) <STRING/ARRAY>
-    _discriminator - The type identifier for the message (e.g., __Text__, __JsonString__, __ArrayString__) <NUMBER>
+    _discriminator - The type identifier for the message (e.g., __Text__, __JsonString__, __FlatJsonString__) <NUMBER>
 
 Returns:
     <NONE>
@@ -40,12 +40,12 @@ switch (_discriminator) do {
   case __JsonString__: {
     _map set ["JsonString", _content];
   };
+  case __FlatJsonString__: { //- Flat JSON <HashMap> [["key1","Value2"], ["key2","Value2"]]
+    _map set ["FlatJsonString", _content];
+  };
 
   case __Text__: {
     _map set ["Message", _content];
-  };
-  case __ArrayString__: { //- "[["""",""""],["""",""""]]"
-    _map set ["ArrayString", _content];
   };
   default {
     _invalid = true;

@@ -9,12 +9,14 @@ namespace Arma3WebService.Entity;
 public enum Arma3PayLoadTypeExtension
 {
 	DiscordSend = 1,
-	UpdateServerInfo = 2,
+	UpdateServerIdentity = 2,
+	UpdateServerInfo = 3,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "ProcessType")]
 [JsonDerivedType(typeof(DiscordJsonExtension), (int)Arma3PayLoadTypeExtension.DiscordSend)]
-[JsonDerivedType(typeof(UpdateServerInfoExtension), (int)Arma3PayLoadTypeExtension.UpdateServerInfo)]
+[JsonDerivedType(typeof(UpdateServerIdentityExtension), (int)Arma3PayLoadTypeExtension.UpdateServerIdentity)]
+[JsonDerivedType(typeof(UpdateServerInfoTemplateExtension), (int)Arma3PayLoadTypeExtension.UpdateServerInfo)]
 public abstract record Arma3PayloadExtended
 {
 	public abstract Arma3PayLoadTypeExtension Type { get; }
@@ -29,19 +31,31 @@ public record DiscordJsonExtension
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.DiscordSend;
-	private Task<IUserMessage> SendMessage(IDiscordBotService service)
-		=> service.SendMessageAsync(DiscordMessage);
 	
 	public override async Task Run(IDiscordBotService service, ServiceDbContext dbContext)
 	{
 		await SendMessage(service);
 	}
+	
+	private Task<IUserMessage> SendMessage(IDiscordBotService service)
+		=> service.SendMessageAsync(DiscordMessage);
 }
 
-public record UpdateServerInfoExtension
+public record UpdateServerIdentityExtension
+(
+	string profileName,
+	string serverInfoMessageId
+) : Arma3PayloadExtended
+{
+	[JsonIgnore]
+	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerIdentity;
+	public override Task Run(IDiscordBotService service, ServiceDbContext dbContext)
+	=> dbContext.UpdateServerIdentityMessageIdAsync(profileName, serverInfoMessageId);
+}
+
+public record UpdateServerInfoTemplateExtension
 (
 	string MessageId,
-	string TemplateJsonFileName,
 	string JsonContent
 ) : Arma3PayloadExtended
 {
@@ -50,22 +64,22 @@ public record UpdateServerInfoExtension
 
 	public override async Task Run(IDiscordBotService service, ServiceDbContext dbContext)
 	{
-		var fileInfo = (await CreateTemplate());
-
 		var dbSet = dbContext.UpdateServerInfo;
-		var exist = dbSet.FirstOrDefault(o => o.messageId == MessageId);
+		var parsedId = ulong.Parse(MessageId); 
+		var exist = dbSet.FirstOrDefault(o => o.messageId == parsedId);
+		
+		var fileInfo = await CreateTemplate();
 		
 		if (exist == null) {
-			await dbSet.AddAsync(new ServerInfo
+			await dbSet.AddAsync(new ServerInfoTemplate
 			{
-				messageId = MessageId,
+				messageId = parsedId,
 				filePath = fileInfo.FullName,
-				createTime = fileInfo.CreationTime,
-				
+				fileCreateTime = fileInfo.CreationTime
 			});
 		} else {
 			exist.filePath = fileInfo.FullName;
-			exist.lastUpdate = DateTime.Now;;
+			exist.lastUpdate = DateTime.Now;
 		}
 		
 		await dbContext.SaveChangesAsync();
@@ -73,7 +87,7 @@ public record UpdateServerInfoExtension
 
 	private async Task<FileInfo> CreateTemplate()
 	{
-		var file = $".profile/InfoTemplate/{TemplateJsonFileName}"; 
+		var file = $".profile/ServerInfoTemplate/{MessageId}.json"; 
 		var directory = Path.GetDirectoryName(file);
 
 		if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
@@ -85,7 +99,7 @@ public record UpdateServerInfoExtension
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true, AllowOutOfOrderMetadataProperties = true)] // Optional: Add desired options
 [
-	JsonSerializable(typeof(Queue<Arma3PayloadExtended>)),
+	JsonSerializable(typeof(List<Arma3PayloadExtended>)),
 	JsonSerializable(typeof(Arma3PayloadExtended))
 ]
 public sealed partial class Arma3PayloadExtendedJsonSerializerContext : JsonSerializerContext;

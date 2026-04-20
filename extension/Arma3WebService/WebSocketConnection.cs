@@ -3,7 +3,6 @@ using System.Text;
 using Arma3WebService.Entity;
 using Components.Entity;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using Arma3WebService.Extensions;
 
 namespace Arma3WebService;

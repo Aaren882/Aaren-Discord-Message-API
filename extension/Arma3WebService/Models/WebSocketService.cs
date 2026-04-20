@@ -85,11 +85,11 @@ namespace Arma3WebService.Models
 				connection = connectionFactory.CreateConnection(contextEntity);
 				Connections.TryAdd(contextEntity.GetIndentity(), connection);
 
-				/*using (var scope = serviceScopeFactory.CreateScope())
+				using (var scope = serviceScopeFactory.CreateScope())
 				{
 					await using var db = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
-					db.UpsertServerIdentity(contextEntity);
-				}*/
+					await db.CreateServerIdentityAsync(contextEntity);
+				}
 
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",

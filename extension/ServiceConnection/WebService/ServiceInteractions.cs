@@ -70,9 +70,8 @@ public class ServiceInteractions
 		await EstablishWebSocketConnection(AccessName);
 	}
 	public Task SendWebSocketMessage(string messageJson)
-	{
-		return _wsClient.SendMessageAsync(messageJson);
-	}
+		=> _wsClient.SendMessageAsync(messageJson);
+	
 	public async Task SendWebSocketBinary(string filePath, int chunkSize = 64 * 1024)
     {
 	    var fileInfo = new FileInfo(filePath);
