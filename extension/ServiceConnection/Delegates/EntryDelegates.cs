@@ -176,10 +176,11 @@ public static class EntryDelegates
         internal static int ConnectWebSocket(IOutputBuilder output, string[] args, int argCount)
         {
 	        var accessName = args[0];
+	        var profilePayload = args[1];
 	        if (string.IsNullOrEmpty(accessName)) 
 		        throw new Exception("No access name provided.");
 	        
-	        _ = InitializeAsync(accessName);
+	        _ = InitializeAsync(accessName, profilePayload);
 	        
 	        return 1;
         }
@@ -204,7 +205,9 @@ public static class EntryDelegates
         /// <returns></returns>
         internal static int ReconnectWebSocket(IOutputBuilder output, string[] args, int argCount)
         {
-	        _ = serviceInteractions.ReconnectWebSocket();
+	        var profilePayload = args[0];
+	        
+	        _ = serviceInteractions.ReconnectWebSocket(profilePayload);
 	        return 1;
         }
         

@@ -17,7 +17,13 @@ public class ServiceInteractions
 	private string? AccessName;
 	public readonly string RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
 
-	public event Action<IdentityRolesReturnPayload>? AccessTokenReceived;
+	public event Action<IdentityRolesReturnPayload>? ServiceAccessResult = (authTokenPayload) => {
+		var callBack = new Arma3PayloadCallBack(
+			Data : $"[{authTokenPayload is not { AuthToken: null }},{authTokenPayload.AdditionalPayload ?? "[]"}]",
+			Function : "ServiceAccessResult"
+		);
+		Util.CallExtensionCallback(Callback, callBack);
+	};
 	private readonly WebSocketClient _wsClient = new (ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
 
 	public ServiceInteractions()
@@ -49,7 +55,7 @@ public class ServiceInteractions
 		};
 	}
 	
-	public async Task EstablishWebSocketConnection(string? accessName)
+	public async Task EstablishWebSocketConnection(string accessName, string profilePayload)
 	{
 		if (_wsClient.Status() == WebSocketState.Open)
 		{
@@ -57,17 +63,17 @@ public class ServiceInteractions
 			return;
 		}
 		
-		var tokenPayload = await GetAccessToken(accessName);
+		var tokenPayload = await GetAccessToken(accessName, profilePayload);
 		await _wsClient.ConnectAsync(tokenPayload.AuthToken);
 	}
 	public async Task DisconnectWebSocket(string description = "Client disconnect")
 	{
 		await _wsClient.DisconnectAsync(description);
 	}
-	public async Task ReconnectWebSocket()
+	public async Task ReconnectWebSocket(string profilePayload)
 	{
 		await DisconnectWebSocket("Client Reconnecting");
-		await EstablishWebSocketConnection(AccessName);
+		await EstablishWebSocketConnection(AccessName, profilePayload);
 	}
 	public Task SendWebSocketMessage(string messageJson)
 		=> _wsClient.SendMessageAsync(messageJson);
@@ -101,12 +107,17 @@ public class ServiceInteractions
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
 	/// </summary>
-	private async Task<IdentityRolesReturnPayload> GetAccessToken(string accessName)
+	private async Task<IdentityRolesReturnPayload> GetAccessToken(string accessName, string profilePayload)
 	{
 		try
 		{
-			if (string.IsNullOrEmpty(AccessName))
+			if (string.IsNullOrEmpty(AccessName) || accessName != AccessName)
 				AccessName = accessName;
+
+			if (profilePayload is null)
+			{
+				throw new Exception("INFO: No profile found.");
+			}
 			
 			//- Send Request for access token
 			var payload = new IdentityRolesPayload
@@ -116,7 +127,8 @@ public class ServiceInteractions
 					AccessName =  AccessName,
 					Role = Role.GameServer
 				},
-				ExpireMinute = 15
+				ExpireMinute = 15,
+				AdditionalPayload = profilePayload
 			};
 			var jsonPayload = JsonSerializer.Serialize(
 				payload,
@@ -143,13 +155,11 @@ public class ServiceInteractions
 			)!;
 			Tracer("Token Manager (result)", authTokenPayload.ToString());
 
-			if (authTokenPayload is { AuthToken: null })
-				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");
-			
-			Tracer("Token Manager", authTokenPayload.ToString());
+			/*if (authTokenPayload is { AuthToken: null })
+				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");*/
 			
 			//- Establish Socket Connection
-			AccessTokenReceived?.Invoke(authTokenPayload);
+			ServiceAccessResult?.Invoke(authTokenPayload);
 			
 			return authTokenPayload;
 		}
