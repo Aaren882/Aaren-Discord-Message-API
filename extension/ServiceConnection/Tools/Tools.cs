@@ -15,7 +15,7 @@ public class Util
 	public static string ParseJson(string file)
 	{
 		// if no disk "dir" defined
-		var dir = file.IndexOf(":") < 0 ? Path.Combine(AssemblyPath, file) : file;
+		var dir = file.IndexOf(':') < 0 ? Path.Combine(AssemblyPath, file) : file;
 		return File.ReadAllText(dir);
 	}
 
@@ -101,6 +101,15 @@ public class Util
 		var key = new byte[32];
 		Array.Copy(hash, key, key.Length);
 		return key;
+	}
+
+	public static List<string> GetDirectoryFileNames(string path)
+	{
+		var combined= Path.Combine(AssemblyPath, path);
+		
+		return Directory.GetFiles(combined)
+			.Select(x => new FileInfo(x).Name)
+			.ToList();
 	}
 
 	public static string GetLastestFile(string path)

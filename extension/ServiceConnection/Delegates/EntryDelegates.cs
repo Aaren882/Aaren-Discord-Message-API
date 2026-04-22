@@ -59,7 +59,7 @@ public static class EntryDelegates
         {
 	        // var webhooksCount = 0;
 	        // if (ExtensionInit) return webhooksCount;
-	        _ = ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
+	        // _ = ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
 	        var webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
 
 	        return webhooksCount;
@@ -81,7 +81,7 @@ public static class EntryDelegates
             );
 
             var webhooksCount = ALLWebhooks?.Webhooks.Length ?? 0;
-            var webhookSel = Math.Min(Int32.Parse(args[0]), webhooksCount - 1);
+            var webhookSel = Math.Min(int.Parse(args[0]), webhooksCount - 1);
             ExtensionInit = true;
 
             //- Exit if there's no Webhook
@@ -164,6 +164,15 @@ public static class EntryDelegates
             _ = Worker.HandleRequest(args);
             return 1;
         }
+
+        internal static int GetDirectoryFileNames(IOutputBuilder output, string[] args, int argCount)
+        {
+	        var path = args[0];
+	        var fileNames = Util.GetDirectoryFileNames(path);
+	        output.Append($"[\"{string.Join("\",\"", fileNames)}\"]");
+
+	        return fileNames.Count;
+        }
         
         /// <summary>
         /// Setup Websocket Connection to backend service
@@ -224,21 +233,6 @@ public static class EntryDelegates
             _ = serviceInteractions.SendWebSocketMessage(message);
             return 1;
         }
-        /*internal static int SendWebSocketArray(IOutputBuilder output, string[] args, int argCount)
-        {
-            var messageObj = new Arma3PayloadFlatJsonString(args);
-            
-            _ = serviceInteractions.SendWebSocketMessage(messageObj);
-            return 1;
-        }
-        internal static int SendWebSocketJson(IOutputBuilder output, string[] args, int argCount)
-        {
-            var JsonString = args[0];
-            var messageObj = new Arma3PayloadJson(JsonString);
-            
-            _ = serviceInteractions.SendWebSocketMessage(messageObj);
-            return 1;
-        }*/
         internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
 	        var lastestRpt= Util.GetLastestFile(serviceInteractions.RPTDirectory);
@@ -247,16 +241,5 @@ public static class EntryDelegates
 	        
             return 1;
         }
-        /*internal static int GetRPTInfo(IOutputBuilder output, string[] args, int argCount)
-        {
-	        var filePath = Util.GetLastestFile(serviceInteractions.RPTDirectory);
-	        var chunkSize = argCount < 1 ? 64 * 1024 : Convert.ToInt32(args[1]);
-	        
-	        var fileInfo = new FileInfo(filePath);
-	        var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
-	        
-	        output.Append($"[{fileInfo.Name},{fileInfo.Length},{fileInfo.CreationTime},{totalChunks}]");
-            return 1;
-        }*/
     }
 }
