@@ -9,7 +9,7 @@ public sealed class ServiceDbContext: DbContext
 	private ILogger<ServiceDbContext> logger;
 
 	public ServiceDbContext(
-		ILogger<ServiceDbContext> logger, IWebHostEnvironment env
+		ILogger<ServiceDbContext> logger,IWebHostEnvironment env
 	)
 	{
 		this.logger = logger;
@@ -19,19 +19,20 @@ public sealed class ServiceDbContext: DbContext
 	public DbSet<ServerIdentity> Identifier { get; set; }
 	public DbSet<ServerInfoTemplate> UpdateServerInfo { get; set; }
 
-	public async Task CreateServerIdentityAsync(WebsocketContextEntity websocketContextEntity)
+	public async Task<bool> CreateServerIdentityAsync(string profileName, string messageId)
 	{
-		var profileName = websocketContextEntity.GetIndentity();
 		var exist = Identifier.FirstOrDefault(o => o.profileName == profileName);
 				
-		if (exist != null) return;
+		if (exist != null) return false;
 		
 		Identifier.Add(new ServerIdentity
 		{
-			profileName = profileName
+			profileName = profileName,
+			messageId = ulong.Parse(messageId),
 		});
 		await SaveChangesAsync();
 		logger.LogInformation("Create \"{profileName}\" ServerIdentity.", profileName);
+		return true;
 	}
 
 	public async Task UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId)
@@ -48,6 +49,18 @@ public sealed class ServiceDbContext: DbContext
 
 		exist.messageId = ulong.Parse(serverInfoMessageId);
 		await SaveChangesAsync();
+	}
+	
+	public async Task<ServerIdentity?> GetServerIdentityMessageIdAsync(string profileName)
+	{
+		var exist = await Identifier.FirstOrDefaultAsync(
+			o => o.profileName == profileName
+		);
+
+		if (exist != null) return exist;
+		
+		logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
+		return null;
 	}
 
 	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
