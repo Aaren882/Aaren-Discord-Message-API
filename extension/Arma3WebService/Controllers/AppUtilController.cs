@@ -17,18 +17,13 @@ namespace Arma3WebService.Controllers
 		[HttpPost]
 		public IActionResult GenToken(IdentityRolesPayload payload)
 		{
-			if (payload == null)
-			{
-				return BadRequest();
-			}
-
 			return Ok(jwtHelpers.GenerateToken(payload));
 		}
 
 		[HttpGet]
 		public async Task<IActionResult> ValidateToken(IdentityRolesPayload payload)
 		{
-			var vaildation = await jwtHelpers.VaildateToken(payload);
+			var vaildation = await jwtHelpers.ValidateToken(payload);
 			
 			return Ok(new {
 				Vaild = vaildation.IsValid

@@ -6,7 +6,7 @@ namespace Arma3WebService.Entity;
 
 public sealed record WebsocketContextEntity(HttpContext Context, IArma3ActionFactory ActionFactory)
 {
-	private readonly string Identity = Context.User.Identity?.Name ?? "Not Specified";
+	private readonly string _identity = Context.User.Identity?.Name ?? "Not Specified";
 	public readonly string Id = Context.Connection.Id;
 	public readonly IPAddress? ClientIpAddress = Context.Connection.RemoteIpAddress;
 	public readonly CancellationToken CancellationToken = Context.RequestAborted;
@@ -15,8 +15,5 @@ public sealed record WebsocketContextEntity(HttpContext Context, IArma3ActionFac
 	{
 		return ActionFactory.Create(connection, payload);
 	}
-	public string GetIndentity()
-	{
-		return Identity;
-	}
+	public string GetIdentity() => _identity;
 };
