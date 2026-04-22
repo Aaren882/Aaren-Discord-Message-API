@@ -14,7 +14,7 @@ public static class Arma3PayLoadExtension
     public static async Task Invoke(
         this Arma3PayloadExtended action,
         IConnection connection,
-        IDiscordBotService service
+        IServiceProvider serviceProvider
     )
     {
         if (Logger is null || ServiceScopeFactory is null) return;
@@ -23,7 +23,7 @@ public static class Arma3PayLoadExtension
         await using (var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>())
         {
 	        Logger.LogInformation("Invoking : {Type}", action.Type);
-	        await action.Run(service, dbContext);
+	        await action.Run(connection, serviceProvider, dbContext);
 	        Logger.LogInformation("Invoked : {Type}", action.Type);
         }
         

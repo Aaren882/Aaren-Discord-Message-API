@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Arma3WebService.DBContext;
 using Arma3WebService.Models;
+using Components.Entity;
 using Discord;
 
 namespace Arma3WebService.Entity;
@@ -11,46 +12,54 @@ public enum Arma3PayLoadTypeExtension
 	DiscordSend = 1,
 	UpdateServerIdentity = 2,
 	UpdateServerInfo = 3,
+	RegisterServerIdentity = 4,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "ProcessType")]
 [JsonDerivedType(typeof(DiscordJsonExtension), (int)Arma3PayLoadTypeExtension.DiscordSend)]
 [JsonDerivedType(typeof(UpdateServerIdentityExtension), (int)Arma3PayLoadTypeExtension.UpdateServerIdentity)]
 [JsonDerivedType(typeof(UpdateServerInfoTemplateExtension), (int)Arma3PayLoadTypeExtension.UpdateServerInfo)]
+[JsonDerivedType(typeof(RegisterServerIdentity), (int)Arma3PayLoadTypeExtension.RegisterServerIdentity)]
 public abstract record Arma3PayloadExtended
 {
 	public abstract Arma3PayLoadTypeExtension Type { get; }
 	public static DateTime Timestamp => DateTime.Now;
-	public virtual Task Run(IDiscordBotService service, ServiceDbContext dbContext) => Task.CompletedTask;
+	public virtual Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext) => Task.CompletedTask;
 }
 
 public record DiscordJsonExtension
 (
-	DiscordMessageDto DiscordMessage
+	DiscordMessageDto DiscordMessage,
+	string MessageId = ""
 ) : Arma3PayloadExtended
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.DiscordSend;
 	
-	public override async Task Run(IDiscordBotService service, ServiceDbContext dbContext)
+	public override async Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
+		var service = serviceProvider.GetRequiredService<IDiscordBotService>();
 		await SendMessage(service);
 	}
-	
+
 	private Task<IUserMessage> SendMessage(IDiscordBotService service)
-		=> service.SendMessageAsync(DiscordMessage);
+	{
+		return ulong.TryParse(MessageId, out var id) ? 
+			service.ModifyMessageAsync(id, DiscordMessage) : 
+			service.SendMessageAsync(DiscordMessage);
+	}
 }
 
 public record UpdateServerIdentityExtension
 (
 	string profileName,
-	string serverInfoMessageId
+	string MessageId
 ) : Arma3PayloadExtended
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerIdentity;
-	public override Task Run(IDiscordBotService service, ServiceDbContext dbContext)
-	=> dbContext.UpdateServerIdentityMessageIdAsync(profileName, serverInfoMessageId);
+	public override Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	=> dbContext.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
 }
 
 public record UpdateServerInfoTemplateExtension
@@ -62,7 +71,7 @@ public record UpdateServerInfoTemplateExtension
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerInfo;
 
-	public override async Task Run(IDiscordBotService service, ServiceDbContext dbContext)
+	public override async Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		var dbSet = dbContext.UpdateServerInfo;
 		var parsedId = ulong.Parse(MessageId); 
@@ -96,6 +105,22 @@ public record UpdateServerInfoTemplateExtension
 		return new FileInfo(file);
 	}
 }
+
+public record RegisterServerIdentity
+(
+	UpdateServerIdentityExtension Identity, //- Setup Message ID for profile
+	UpdateServerInfoTemplateExtension InfoTemplate //- Acquire JSON message template
+) : Arma3PayloadExtended
+{
+	[JsonIgnore]
+	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.RegisterServerIdentity;
+
+	public override async Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	{
+		foreach (var task in (IEnumerable<Arma3PayloadExtended>)[InfoTemplate, Identity])
+			await task.Run(connection, serviceProvider, dbContext);
+	}
+};
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true, AllowOutOfOrderMetadataProperties = true)] // Optional: Add desired options
 [
