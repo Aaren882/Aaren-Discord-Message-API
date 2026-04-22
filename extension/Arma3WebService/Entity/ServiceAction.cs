@@ -4,12 +4,14 @@ using Arma3WebService.DBContext;
 using Arma3WebService.Extensions;
 using Arma3WebService.Models;
 using Components.Entity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService.Entity;
 
 public sealed class ServiceAction(
 	ILogger<ServiceAction> logger,
+	IServiceProvider serviceProvider,
 	IDiscordBotService discordBotService,
 	IServiceScopeFactory ServiceScopeFactory
 )
@@ -44,7 +46,7 @@ public sealed class ServiceAction(
 			);
 			
 			if (deserialize == null) throw new NullReferenceException("JsonStringAction is Null.");
-			await deserialize.Invoke(connection, discordBotService);
+			await deserialize.Invoke(connection, serviceProvider);
 		}
 		catch (Exception e)
 		{
@@ -56,18 +58,18 @@ public sealed class ServiceAction(
 	public async Task FlatJsonStringAction(IConnection connection, Arma3PayloadFlatJsonString payload)
 	{
 		var collection = payload.FlatJsonString;
-		var identity = connection.websocketContext.GetIndentity();
+		var identity = connection.websocketContext.GetIdentity();
 		
 		logger.LogDebug("\"{identity}\" received game info", identity);
 		
-		UpdateGameInfo(identity, collection);
+		UpdateSSEGameInfo(identity, collection);
 		await UpdateDiscordServerInfoMessageAsync(identity, collection);
 	}
 	
 	private readonly List<string> ctxList = [];
 	private readonly ConcurrentDictionary<string, Dictionary<string, string>?> _gameInfoSSEConcurrentDictionary = [];
 	
-	private void UpdateGameInfo(string identity, Dictionary<string, string> collection)
+	private void UpdateSSEGameInfo(string identity, Dictionary<string, string> collection)
 	{
 		if (ctxList.Count == 0) return;
 		_gameInfoSSEConcurrentDictionary[identity] = collection;
@@ -77,7 +79,14 @@ public sealed class ServiceAction(
 		using var scope = ServiceScopeFactory.CreateScope();
 		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
 		
-		var serverIdentity = dbContext.Identifier.First(o => o.profileName == sessionIdentity);
+		var serverIdentity = await dbContext.Identifier.FirstOrDefaultAsync(o => o.profileName == sessionIdentity);
+		
+		//- If messageId not set  
+		if (serverIdentity is null)
+		{
+			logger.LogError("\"{sessionIdentity}\" does not exist.",sessionIdentity);
+			return;
+		}
 		if (serverIdentity.messageId is 0) return;
 		
 		var serverInfo = dbContext.UpdateServerInfo.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
