@@ -67,7 +67,7 @@ namespace Arma3WebService.Models
 		public async Task CreateConnection(HttpContext context)
 		{
 			var contextEntity = contextEntityFactory.CreateJsonStringContext(context);
-			var connectionIdentity = contextEntity.GetIndentity();
+			var connectionIdentity = contextEntity.GetIdentity();
 
 			if (Connections.ContainsKey(connectionIdentity))
 			{
@@ -83,13 +83,7 @@ namespace Arma3WebService.Models
 			try
 			{
 				connection = connectionFactory.CreateConnection(contextEntity);
-				Connections.TryAdd(contextEntity.GetIndentity(), connection);
-
-				using (var scope = serviceScopeFactory.CreateScope())
-				{
-					await using var db = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
-					await db.CreateServerIdentityAsync(contextEntity);
-				}
+				Connections.TryAdd(contextEntity.GetIdentity(), connection);
 
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
@@ -151,7 +145,7 @@ namespace Arma3WebService.Models
 				_logger.LogInformation(
 					"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}", 
 					connection.CloseStatusDescription(),
-					contextEntity.GetIndentity(),
+					contextEntity.GetIdentity(),
 					contextEntity.ClientIpAddress,
 					Connections.Count
 				);

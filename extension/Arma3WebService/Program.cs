@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Arma3WebService.Configuration;
 using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Arma3WebService.Extensions;
@@ -76,15 +77,9 @@ namespace Arma3WebService
 
 			builder.Services
 				.AddAuthentication()
-				.AddJwtBearer(
-					JwtBearerDefaults.AuthenticationScheme, 
-					options => {
-						options.IncludeErrorDetails = true; // Show exception details
-						options.TokenValidationParameters =
-							new JwtHelpers(builder.Configuration).GetValidationParameters();
-					})
+				.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme)
 				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
-			
+			builder.Services.ConfigureOptions<JwtConfigureOptions>();
 
 			var app = builder.Build();
 
