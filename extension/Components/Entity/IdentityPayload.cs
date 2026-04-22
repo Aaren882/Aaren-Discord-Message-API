@@ -19,6 +19,7 @@ public record struct IdentityRolesReturnPayload
 	public IdentityInfo Identity { get; set; }
 	public string? RoleName { get; set; }
 	public string? AuthToken { get; set; }
+	public string? AdditionalPayload { get; set; }
 };
 
 public record struct IdentityRolesPayload
@@ -26,7 +27,9 @@ public record struct IdentityRolesPayload
 	public IdentityInfo Identity { get; set; }
 	public int? ExpireMinute { get; set; }
 	public string? AuthToken { get; set; }
+	public string? AdditionalPayload { get; set; }
 }
+
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
 [JsonSerializable(typeof(IdentityRolesPayload))]
 [JsonSerializable(typeof(IdentityRolesReturnPayload))]
