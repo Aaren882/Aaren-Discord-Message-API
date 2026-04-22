@@ -51,7 +51,7 @@ public class DiscordDto
 	    ulong? sukId,
 	    string? label,
 	    string? custom_id,
-	    IEmote? emoji,
+	    Emote? emoji,
 	    string? url,
 	    ButtonStyle style = ButtonStyle.Primary,
 	    bool disabled = false
