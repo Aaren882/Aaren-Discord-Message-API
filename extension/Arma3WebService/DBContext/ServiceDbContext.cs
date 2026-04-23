@@ -50,6 +50,26 @@ public sealed class ServiceDbContext: DbContext
 		exist.messageId = ulong.Parse(serverInfoMessageId);
 		await SaveChangesAsync();
 	}
+
+	public async Task UpsertServerInfoTemplateAsync(FileInfo fileInfo, string serverInfoMessageId)
+	{
+		var parsedId = ulong.Parse(serverInfoMessageId); 
+		var exist = ServerInfoList.FirstOrDefault(o => o.messageId == parsedId);
+		
+		if (exist == null) {
+			await ServerInfoList.AddAsync(new ServerInfoTemplate
+			{
+				messageId = parsedId,
+				filePath = fileInfo.FullName,
+				fileCreateTime = fileInfo.CreationTime
+			});
+		} else {
+			exist.filePath = fileInfo.FullName;
+			exist.lastUpdate = DateTime.Now;
+		}
+		
+		await SaveChangesAsync();
+	}
 	
 	public async Task<ServerIdentity?> GetServerIdentityMessageIdAsync(string profileName)
 	{
