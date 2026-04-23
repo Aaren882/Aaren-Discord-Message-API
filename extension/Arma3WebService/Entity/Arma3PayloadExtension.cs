@@ -24,7 +24,7 @@ public abstract record Arma3PayloadExtended
 {
 	public abstract Arma3PayLoadTypeExtension Type { get; }
 	public static DateTime Timestamp => DateTime.Now;
-	public virtual Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext) => Task.CompletedTask;
+	public virtual Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext) => Task.CompletedTask;
 }
 
 public record DiscordJsonExtension
@@ -36,7 +36,7 @@ public record DiscordJsonExtension
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.DiscordSend;
 	
-	public override async Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		var service = serviceProvider.GetRequiredService<IDiscordBotService>();
 		await SendMessage(service);
@@ -58,7 +58,7 @@ public record UpdateServerIdentityExtension
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerIdentity;
-	public override Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	=> dbContext.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
 }
 
@@ -71,7 +71,7 @@ public record UpdateServerInfoTemplateExtension
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerInfo;
 
-	public override async Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		var dbSet = dbContext.UpdateServerInfo;
 		var parsedId = ulong.Parse(MessageId); 
@@ -115,10 +115,10 @@ public record RegisterServerIdentity
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.RegisterServerIdentity;
 
-	public override async Task Run(IConnection connection, IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		foreach (var task in (IEnumerable<Arma3PayloadExtended>)[InfoTemplate, Identity])
-			await task.Run(connection, serviceProvider, dbContext);
+			await task.Run(serviceProvider, dbContext);
 	}
 };
 
