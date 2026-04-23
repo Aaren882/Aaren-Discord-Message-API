@@ -1,5 +1,4 @@
 #include "script_component.hpp"
-#include "../JSONExtended.inc"
 
 /* ----------------------------------------------------------------------------
 Function: DiscordAPI_service_fnc_SendWebSocketJSON
@@ -9,7 +8,7 @@ Description:
     and sent using the __JsonString__ discriminator.
 
 Parameters:
-    _content     - The JSON string to be sent <STRING>
+    _content     - The JSON string to be sent <HASHMAP>
     _processType - The internal processing type for the backend (default: 1) <NUMBER>
 
 Returns:
@@ -25,22 +24,27 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
-params ["_content", ["_processType", 1, [0]]];
+params [["_contentMap", nil, [createHashMap]], ["_processType", __DiscordSendExtension__, [0]]];
 TRACE_1("fnc_SendWebSocketJSON",_this);
 
-private _invalid = false;
-private _map = createHashMap;
-private _contentMap = fromJSON _content; //- Covert into hashMap object
-_map set ["ProcessType", _processType];
+_contentMap set ["ProcessType", _processType];
+// private _invalid = false;
+// private _map = createHashMap;
 
-switch (_processType) do {
+/* switch (_processType) do {
 
-  case __DiscrodSendExtension__: {
+  case __DiscordSendExtension__: {
     _map set ["DiscordMessage", _contentMap];
   };
 
-  case __ServerInfoExtension__: {
-    _map set ["Infos", _contentMap];
+  case __UpdateServerIdentityExtension__: {
+    _map set ["MessageId", _contentMap get "MessageId"];
+    _map set ["serverInfoMessageId", _contentMap get "serverInfoMessageId"];
+  };
+
+  case __UpdateServerInfoExtension__: {
+    _map set ["MessageId", _contentMap get "MessageId"];
+    _map set ["JsonContent", _contentMap get "JsonContent"];
   };
 
   default {
@@ -51,6 +55,6 @@ switch (_processType) do {
 //- Error
 if (_invalid) exitWith {
   ERROR_1("""fnc_SendWebSocketJSON"" Exception : Invalid websocket message process type ""%1""",_processType);
-};
+}; */
 
-[toJSON _map, __JsonString__] call FUNC(SendWebSocketMessage);
+[toJSON _contentMap, __JsonString__] call FUNC(SendWebSocketMessage);

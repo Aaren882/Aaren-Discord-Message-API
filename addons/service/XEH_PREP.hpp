@@ -1,8 +1,13 @@
+PREP(GetProfile);
+PREP(GetProfileName);
 PREP(GetServerInfo);
+PREP(RegisterServerIdentity);
+PREP(SendBotMessage);
 PREP(SendWebSocketJSON);
 PREP(SendWebSocketLatestRPT);
 PREP(SendWebSocketMessage);
 PREP(ServerInfo_Loop);
 PREP(SetServiceAvailability);
+PREP(StartConnection);
+PREP(UpdateProfileIdentity);
 PREP(UpdateService_ServerInfo);
-PREP(UpdateWebhook_ServerInfo);

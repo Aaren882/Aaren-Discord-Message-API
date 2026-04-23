@@ -44,6 +44,7 @@ class CfgFunctions
 		{
 			file=QPATHTOF(functions);
 			class FormatJson;
+			class GetPathFiles;
 			class Deserialize_ExtensionOutput;
 		};
 	};
