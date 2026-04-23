@@ -17,7 +17,6 @@ namespace Arma3WebService.Models
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
 		ServiceAction serviceAction,
-		IServiceScopeFactory serviceScopeFactory,
 		WebsocketContextEntityFactory contextEntityFactory,
 		IConnectionFactory connectionFactory,
 		IConnectionManager connectionManager
@@ -26,12 +25,16 @@ namespace Arma3WebService.Models
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
 		private static readonly ConcurrentDictionary<string, IConnection> Connections = new();
-		
+
+		public IConnection GetConnection(string connectionIdentity)
+		{
+			return !Connections.TryGetValue(connectionIdentity, out var session) ? 
+				throw new NullReferenceException($"No \"{connectionIdentity}\" is not found.") : 
+				session;
+		}
 		public async Task InvokeArmaCallBack(Arma3RemoteCommand command)
 		{
-			if (!Connections.TryGetValue(command.gameId, out var session))
-				throw new NullReferenceException($"No \"{command.gameId}\" is not found.");
-
+			var session = GetConnection(command.gameId);
 			await serviceAction.CallBackAction(session, command.payload);
 		}
 		
