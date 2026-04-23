@@ -4,15 +4,15 @@ using Components.Entity;
 
 namespace Arma3WebService.Entity;
 
-public enum ProfileIdentity
+/*public enum ProfileIdentity
 {
 	Admin = 1,
 	GameServer = 2,
-}
+}*/
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
-[JsonDerivedType(typeof(IdentityEntity), (int)ProfileIdentity.Admin)]
-[JsonDerivedType(typeof(ProfileIdentityEntity), (int)ProfileIdentity.GameServer)]
+[JsonDerivedType(typeof(IdentityEntity), (int)Role.Admin)]
+[JsonDerivedType(typeof(ProfileIdentityEntity), (int)Role.GameServer)]
 public record IdentityEntity()
 {
 	public virtual Task<string> Run(IdentityRolesPayload payload, IServiceProvider serviceProvider, ServiceDbContext dbContext)
@@ -24,17 +24,20 @@ public record ProfileIdentityEntity(
 	string MessageContent
 ) : IdentityEntity
 {
-	[JsonIgnore]
-	public ProfileIdentity Type => ProfileIdentity.GameServer;
-	
 	public override async Task<string> Run(IdentityRolesPayload payload, IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		var profileName = payload.Identity.AccessName;
+		
 		var isNewIdentity = await dbContext.CreateServerIdentityAsync(profileName, MessageId);
 		var serverIdentity = await dbContext.GetServerIdentityMessageIdAsync(profileName);
 
 		var messageId = serverIdentity?.messageId.ToString() ?? "";
 		
+		//- Make sure template is updated 
+		await new UpdateServerInfoTemplateExtension(MessageId, MessageContent)
+			.Run(serviceProvider, dbContext);
+		
+		//- this is use for extension callback
 		return $"[\"{profileName}\",{isNewIdentity},\"{messageId}\"]";
 	}
 }
