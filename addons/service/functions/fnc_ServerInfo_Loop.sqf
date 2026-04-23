@@ -3,7 +3,7 @@
 [
   {
     [] call FUNC(UpdateService_ServerInfo);
-    // [] call FUNC(UpdateWebhook_ServerInfo);
+    // [] call EFUNC(webhook,Update_ServerInfo);
     call FUNC(ServerInfo_Loop);
   }, 
   [],

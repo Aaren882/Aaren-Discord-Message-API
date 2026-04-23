@@ -1,9 +1,21 @@
 #include "script_component.hpp"
 
-//- Extension callBack tunnel
+private _ServerName = serverName;
+_ServerName = [
+  _ServerName,
+  format ["SP_Server %1", profileName]
+] select (_ServerName == "");
+
+localNamespace setVariable [QGVAR(serverName), _ServerName];
+
 [QGVARMAIN(postInit_Server), {
 
   INFO("DISCORD_API [CallBack Init]");
+  
+  //- Start Socket Connection
+    call FUNC(StartConnection);
+  
+  //- Setup callBack tunnel
   addMissionEventHandler ["ExtensionCallback", 
   {
     params ["_name", "_callBackType", "_data"];
@@ -64,11 +76,18 @@
   
   //- Check Server Entry & Exit
   addMissionEventHandler ["PlayerConnected", {
-    [true] call FUNC(UpdateWebhook_ServerInfo);
+    [true] call EFUNC(webhook,Update_ServerInfo);
   }];
   addMissionEventHandler ["HandleDisconnect", {
-    [true] call FUNC(UpdateWebhook_ServerInfo);
+    [true] call EFUNC(webhook,Update_ServerInfo);
   }];
 }] call CBA_fnc_addEventHandler;
 
 [QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
+
+[QGVAR(ServiceAccessResult), {
+  params ["_successful","_serviceReturnPayload"];
+  _serviceReturnPayload params ["_profileName","_isNewIdentity","_messageId"];
+
+  INFO_1("ServiceAccessResult : %1",_this);
+}] call CBA_fnc_addEventHandler;

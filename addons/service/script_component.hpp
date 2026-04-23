@@ -14,3 +14,4 @@
 
 #include "..\main\script_macros.hpp"
 #include "MessageTypes.inc"
+#include "JSONExtended.inc"

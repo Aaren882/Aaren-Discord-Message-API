@@ -13,4 +13,5 @@
     #define DEBUG_SETTINGS DEBUG_SETTINGS_MAIN
 #endif
 
+#define LOCAL_STR(STRING) localize ("STR_Discord_MSG_" + STRING)
 #include "script_macros.hpp"
