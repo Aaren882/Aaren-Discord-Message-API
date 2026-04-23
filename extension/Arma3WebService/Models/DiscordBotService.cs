@@ -13,7 +13,7 @@ namespace Arma3WebService.Models
 		public Task<IUserMessage> SendMessageAsync(DiscordMessageDto message);
 	}
 
-	public sealed class DiscordBotService(ILogger<DiscordBotService> logger, IServiceProvider serviceProvider)
+	public sealed class DiscordBotService(ILogger<DiscordBotService> logger)
 		: BackgroundService, IDiscordBotService
 	{
 		private static readonly DiscordSocketClient? _client = new();
@@ -69,7 +69,8 @@ namespace Arma3WebService.Models
 						text: message.Content,
 						isTTS: message.Tts ?? false,
 						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
-						components: component
+						components: component,
+						flags: message.Flags ?? MessageFlags.None
 					),
 				{ File: not null } => channel!
 					.SendFileAsync(
@@ -77,14 +78,16 @@ namespace Arma3WebService.Models
 						text: message.Content,
 						isTTS: message.Tts ?? false,
 						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
-						components: component
+						components: component,
+						flags: message.Flags ?? MessageFlags.None
 					),
 				_ => channel!
 					.SendMessageAsync(
 						text: message.Content,
 						isTTS: message.Tts ?? false,
 						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
-						components: component
+						components: component,
+						flags: message.Flags ?? MessageFlags.None
 					)
 			};
 
