@@ -73,25 +73,8 @@ public record UpdateServerInfoTemplateExtension
 
 	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
-		var dbSet = dbContext.UpdateServerInfo;
-		var parsedId = ulong.Parse(MessageId); 
-		var exist = dbSet.FirstOrDefault(o => o.messageId == parsedId);
-		
 		var fileInfo = await CreateTemplate();
-		
-		if (exist == null) {
-			await dbSet.AddAsync(new ServerInfoTemplate
-			{
-				messageId = parsedId,
-				filePath = fileInfo.FullName,
-				fileCreateTime = fileInfo.CreationTime
-			});
-		} else {
-			exist.filePath = fileInfo.FullName;
-			exist.lastUpdate = DateTime.Now;
-		}
-		
-		await dbContext.SaveChangesAsync();
+		await dbContext.UpsertServerInfoTemplateAsync(fileInfo, MessageId);
 	}
 
 	private async Task<FileInfo> CreateTemplate()
