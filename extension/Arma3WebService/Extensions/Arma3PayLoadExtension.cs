@@ -23,7 +23,7 @@ public static class Arma3PayLoadExtension
         await using (var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>())
         {
 	        Logger.LogInformation("Invoking : {Type}", action.Type);
-	        await action.Run(connection, serviceProvider, dbContext);
+	        await action.Run(serviceProvider, dbContext);
 	        Logger.LogInformation("Invoked : {Type}", action.Type);
         }
         
