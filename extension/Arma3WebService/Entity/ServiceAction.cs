@@ -79,7 +79,7 @@ public sealed class ServiceAction(
 		using var scope = ServiceScopeFactory.CreateScope();
 		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
 		
-		var serverIdentity = await dbContext.Identifier.FirstOrDefaultAsync(o => o.profileName == sessionIdentity);
+		var serverIdentity = await dbContext.ServerIdentities.FirstOrDefaultAsync(o => o.profileName == sessionIdentity);
 		
 		//- If messageId not set  
 		if (serverIdentity is null)
@@ -89,7 +89,7 @@ public sealed class ServiceAction(
 		}
 		if (serverIdentity.messageId is 0) return;
 		
-		var serverInfo = dbContext.UpdateServerInfo.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
+		var serverInfo = dbContext.ServerInfoList.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
 		if (serverInfo is null) return;
 		
 		var infoMessage = await File.ReadAllTextAsync(serverInfo.filePath);

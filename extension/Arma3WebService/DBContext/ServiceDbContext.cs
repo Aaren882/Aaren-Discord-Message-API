@@ -16,16 +16,16 @@ public sealed class ServiceDbContext: DbContext
 		Database.EnsureCreated();
 	}
 	
-	public DbSet<ServerIdentity> Identifier { get; set; }
-	public DbSet<ServerInfoTemplate> UpdateServerInfo { get; set; }
+	public DbSet<ServerIdentity> ServerIdentities { get; set; }
+	public DbSet<ServerInfoTemplate> ServerInfoList { get; set; }
 
 	public async Task<bool> CreateServerIdentityAsync(string profileName, string messageId)
 	{
-		var exist = Identifier.FirstOrDefault(o => o.profileName == profileName);
+		var exist = ServerIdentities.FirstOrDefault(o => o.profileName == profileName);
 				
 		if (exist != null) return false;
 		
-		Identifier.Add(new ServerIdentity
+		ServerIdentities.Add(new ServerIdentity
 		{
 			profileName = profileName,
 			messageId = ulong.Parse(messageId),
@@ -37,7 +37,7 @@ public sealed class ServiceDbContext: DbContext
 
 	public async Task UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId)
 	{
-		var exist = Identifier.FirstOrDefault(
+		var exist = ServerIdentities.FirstOrDefault(
 			o => o.profileName == profileName
 		);
 
@@ -73,7 +73,7 @@ public sealed class ServiceDbContext: DbContext
 	
 	public async Task<ServerIdentity?> GetServerIdentityMessageIdAsync(string profileName)
 	{
-		var exist = await Identifier.FirstOrDefaultAsync(
+		var exist = await ServerIdentities.FirstOrDefaultAsync(
 			o => o.profileName == profileName
 		);
 
