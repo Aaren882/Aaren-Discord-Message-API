@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Arma3WebService.Entity;
+using Arma3WebService.Entity.DiscordBotAction;
 using Discord;
 using Discord.WebSocket;
 using ServiceConnection.Discord;
@@ -7,8 +9,10 @@ namespace Arma3WebService.Models
 {
 	public interface IDiscordBotService
 	{
+		public Task<IMessageChannel> GetMessageChannelAsync(ulong channelID);
 		public DiscordSocketClient GetClient();
 		public Task<IUserMessage> PostBotOnline(string text);
+		public Task<byte[]> SendLocalFile(string text);
 		public Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message);
 		public Task<IUserMessage> SendMessageAsync(DiscordMessageDto message);
 	}
@@ -16,9 +20,10 @@ namespace Arma3WebService.Models
 	public sealed class DiscordBotService(ILogger<DiscordBotService> logger)
 		: BackgroundService, IDiscordBotService
 	{
-		private static readonly DiscordSocketClient? _client = new();
-		private static readonly string TestChannel = Environment.GetEnvironmentVariable("TestChannel")!;
+		private static readonly DiscordSocketClient Client = new();
+		private static readonly ulong TestChannel = ulong.Parse(Environment.GetEnvironmentVariable("TestChannel")!);
 
+		public DiscordSocketClient GetClient() => Client;
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			Client.Log += Log;
@@ -44,107 +49,7 @@ namespace Arma3WebService.Models
 				TokenType.Bot, 
 				Environment.GetEnvironmentVariable("BotToken")
 			);
-			await _client.StartAsync();
-		}
-
-		public DiscordSocketClient GetClient()
-		{
-			return _client!;
-		}
-		
-		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
-		{
-			var channel = await _client!
-				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
-
-			var modifyResult = await channel!.ModifyMessageAsync(messageID, msg =>
-			{
-				msg.Content = message.Content;
-				msg.Embeds = ConvertEmbeds(message.Embeds)?.ToArray();
-				msg.Components = new Optional<MessageComponent>();
-			});
-			
-			return modifyResult;
-		}
-		public async Task<IUserMessage> SendMessageAsync(DiscordMessageDto message)
-		{
-			var channel = await _client!
-				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
-
-			MessageComponent? component = null;
-			if (message.Components is not null)
-			{
-				component = new ComponentBuilderV2(ConvertComponents(message.Components))
-					.Build();
-			}
-
-			var sentMessage = (message) switch
-			{
-				{ Attachments: not null } => channel!
-					.SendFilesAsync(
-						message.Attachments,
-						text: message.Content,
-						isTTS: message.Tts ?? false,
-						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
-						components: component,
-						flags: message.Flags ?? MessageFlags.None
-					),
-				{ File: not null } => channel!
-					.SendFileAsync(
-						filePath: message.File,
-						text: message.Content,
-						isTTS: message.Tts ?? false,
-						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
-						components: component,
-						flags: message.Flags ?? MessageFlags.None
-					),
-				_ => channel!
-					.SendMessageAsync(
-						text: message.Content,
-						isTTS: message.Tts ?? false,
-						embeds: ConvertEmbeds(message.Embeds)?.ToArray() ?? [],
-						components: component,
-						flags: message.Flags ?? MessageFlags.None
-					)
-			};
-
-			return await sentMessage;
-		}
-
-		public async Task<IUserMessage> PostBotOnline(string text)
-		{
-			var channel = await _client!
-				.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
-
-			var buttton = ButtonBuilder
-				.CreatePrimaryButton("I'm button", "custom-id-1");
-			// var buttton = ButtonBuilder
-			// 	.CreateLinkButton("i'm Sec", requestURL);
-
-			var component = new ComponentBuilder()
-				.WithButton(buttton);
-				// .WithSelectMenu(menuBuilder);
-				
-			var message = await channel!.SendMessageAsync(text: text, components: component.Build());
-
-			return message;
-		}
-
-		public async Task<byte[]> SendLocalFile(string filename)
-		{
-			// var channel = await _client!
-			// 	.GetChannelAsync(Convert.ToUInt64(TestChannel)) as IMessageChannel;
-
-			// var stream = File.OpenRead(Path.GetFullPath(filename));
-			// await channel
-			// 	.SendFileAsync(
-			// 		stream: stream, 
-			// 		filename: filename, 
-			// 		"Here is the file!"
-			// 	);
-			
-			var bytes = await File.ReadAllBytesAsync(Path.GetFullPath(filename));
-			return bytes;
+			await Client.StartAsync();
 		}
 		private async Task MyButtonHandler(SocketMessageComponent component)
 		{
@@ -174,6 +79,89 @@ namespace Arma3WebService.Models
 					break;
 			}
 		}
+		
+		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
+		{
+			var channel = await GetMessageChannelAsync(TestChannel);
+
+			var modifyResult = await channel!.ModifyMessageAsync(messageID, msg =>
+			{
+				msg.Content = message.Content;
+				msg.Embeds = message.ConvertEmbeds();
+				msg.Components = message.ConvertComponents();
+				msg.Flags = message.Flags;
+			});
+			
+			return modifyResult;
+		}
+
+		public async Task<IMessageChannel> GetMessageChannelAsync(ulong channelID)
+		{
+			var channel = await Client.GetChannelAsync(channelID) as IMessageChannel;
+			return channel ?? throw new NullReferenceException($"Channel {channelID} not found");
+		}
+		
+		public async Task<IUserMessage> SendMessageAsync(DiscordMessageDto message)
+		{
+			var channel = await GetMessageChannelAsync(TestChannel);
+
+			var component = message.ConvertComponents();
+			
+			var sentMessage = (message) switch
+			{
+				{ Attachments: not null } => channel
+					.SendFilesAsync(
+						message.Attachments,
+						text: message.Content,
+						isTTS: message.Tts ?? false,
+						embeds: message.ConvertEmbeds(),
+						components: component,
+						flags: message.Flags ?? MessageFlags.None
+					),
+				{ File: not null } => channel
+					.SendFileAsync(
+						filePath: message.File,
+						text: message.Content,
+						isTTS: message.Tts ?? false,
+						embeds: message.ConvertEmbeds(),
+						components: component,
+						flags: message.Flags ?? MessageFlags.None
+					),
+				_ => channel
+					.SendMessageAsync(
+						text: message.Content,
+						isTTS: message.Tts ?? false,
+						embeds: message.ConvertEmbeds(),
+						components: component,
+						flags: message.Flags ?? MessageFlags.None
+					)
+			};
+
+			return await sentMessage;
+		}
+
+		public async Task<IUserMessage> PostBotOnline(string text)
+		{
+			var channel = await GetMessageChannelAsync(TestChannel);
+			
+			var buttton = ButtonBuilder
+				.CreatePrimaryButton("I'm button", "custom-id-1");
+			// var buttton = ButtonBuilder
+			// 	.CreateLinkButton("i'm Sec", requestURL);
+
+			var component = new ComponentBuilder()
+				.WithButton(buttton);
+				// .WithSelectMenu(menuBuilder);
+				
+			var message = await channel.SendMessageAsync(text: text, components: component.Build());
+
+			return message;
+		}
+
+		public Task<byte[]> SendLocalFile(string filename)
+			=> File.ReadAllBytesAsync(Path.GetFullPath(filename));
+
+		
 		private Task Log(LogMessage msg)
 		{
 			var template = $"[{msg.Source}] {msg.Message}";
