@@ -214,6 +214,7 @@ public class DiscordDto
 
 public record DiscordMessageDto : DiscordMessage
 {
+	public string? FileName { get; set; }
 	public MessageFlags? Flags { get; set; }
 	public IEnumerable<FileAttachment>? Attachments { get; set; }
 	public IEnumerable<EmbedData>? Embeds { get; set; }
