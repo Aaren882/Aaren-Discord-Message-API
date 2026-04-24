@@ -10,6 +10,7 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
+		IConnection GetConnection(string connectionIdentity);
 		Task InvokeArmaCallBack(Arma3RemoteCommand command);
 		Task CreateConnection(HttpContext context);
 	}
@@ -24,19 +25,19 @@ namespace Arma3WebService.Models
 	{
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
-		private static readonly ConcurrentDictionary<string, IConnection> Connections = new();
+		private readonly ConcurrentDictionary<string, IConnection> Connections = new();
 
 		public IConnection GetConnection(string connectionIdentity)
 		{
-			return !Connections.TryGetValue(connectionIdentity, out var session) ? 
-				throw new NullReferenceException($"No \"{connectionIdentity}\" is not found.") : 
-				session;
+			return Connections.TryGetValue(connectionIdentity, out var session)
+				? session
+				: throw new NullReferenceException($"No \"{connectionIdentity}\" is not found.");
 		}
-		public async Task InvokeArmaCallBack(Arma3RemoteCommand command)
-		{
-			var session = GetConnection(command.gameId);
-			await serviceAction.CallBackAction(session, command.payload);
-		}
+		public Task InvokeArmaCallBack(Arma3RemoteCommand command)
+			=> serviceAction.CallBackAction(
+				GetConnection(command.gameId),
+				command.payload
+			);
 		
 		public Task StartAsync(CancellationToken cancellationToken)
 		{
