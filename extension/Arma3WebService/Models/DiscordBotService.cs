@@ -21,9 +21,26 @@ namespace Arma3WebService.Models
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
-			_client!.Log += Log;
-			_client!.ButtonExecuted += MyButtonHandler;
-			await _client!.LoginAsync(
+			Client.Log += Log;
+			Client.ButtonExecuted += async (component) =>
+			{
+				try
+				{
+					var json = await File.ReadAllTextAsync("testBot.json", stoppingToken);
+					var deserialize = JsonSerializer.Deserialize(
+						json,
+						DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
+					);
+					await deserialize!.Execute(component);
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e);
+					throw;
+				}
+			};
+			
+			await Client.LoginAsync(
 				TokenType.Bot, 
 				Environment.GetEnvironmentVariable("BotToken")
 			);
