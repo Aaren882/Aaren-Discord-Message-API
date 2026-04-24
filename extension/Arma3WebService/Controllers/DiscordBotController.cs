@@ -7,26 +7,17 @@ namespace Arma3WebService.Controllers
 
 	[ApiController]
 	[Route("[controller]")]
-	public class DiscordBotController: ControllerBase
+	public class DiscordBotController(IDiscordBotService service) : ControllerBase
 	{
 		private static readonly string[] Summaries = new[]
 		{
 			"Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 		};
 
-		//private readonly ILogger<DiscordBotController> _logger;
-		private readonly DiscordBotService _service;
-
-		public DiscordBotController(DiscordBotService service)
-		{
-			_service = service;
-			//_logger = logger;
-		}
-
 		[HttpPost(Name = "PostBotOnline")]
 		public async Task<IActionResult> PostBotOnline(string text)
 		{
-			var result = await _service.PostBotOnline(text);
+			var result = await service.PostBotOnline(text);
 			return Ok(result);
 		}
 
@@ -34,7 +25,7 @@ namespace Arma3WebService.Controllers
 		[HttpGet($"File/{{id}}")]
 		public async Task<IActionResult> DownloadFile(string id)
 		{
-			var bytes = await _service.SendLocalFile(id);
+			var bytes = await service.SendLocalFile(id);
 			return File(bytes,"application/octet-stream", id);
 		}
 
