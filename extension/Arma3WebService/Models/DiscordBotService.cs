@@ -111,11 +111,6 @@ namespace Arma3WebService.Models
 			return await sentMessage;
 		}
 
-		private IEnumerable<IMessageComponentBuilder> ConvertComponents(IReadOnlyCollection<DiscordDto.ComponentBase>? components)
-		{
-			return components?.Select(x => x.Convert()) ?? throw new InvalidOperationException();
-		}
-
 		public async Task<IUserMessage> PostBotOnline(string text)
 		{
 			var channel = await _client!
@@ -206,37 +201,6 @@ namespace Arma3WebService.Models
 					break;
 			}
 			return Task.CompletedTask;
-		}
-
-		private IEnumerable<Embed>? ConvertEmbeds(IEnumerable<EmbedData>? embeds)
-		{
-			return embeds?.Select(x => 
-				new EmbedBuilder
-				{
-					Author = new EmbedAuthorBuilder
-					{
-						IconUrl	= x.author.icon_url,
-						Name = x.author.name,
-						Url = x.author.url
-					},
-					ThumbnailUrl = x.thumbnail.url,
-					ImageUrl = x.image.url,
-					Description = x.description,
-					Fields = x.fields
-						.Select(f => new EmbedFieldBuilder
-						{
-							IsInline = f.inline,
-							Name = f.name,
-							Value = f.value 
-						})
-						.ToList(),
-					Footer = new EmbedFooterBuilder
-					{
-						IconUrl	= x.footer.icon_url,
-						Text = x.footer.text
-					}
-				}.Build()
-			);
 		}
 	}
 }

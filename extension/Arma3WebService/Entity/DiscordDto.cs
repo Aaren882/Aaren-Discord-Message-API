@@ -218,6 +218,46 @@ public record DiscordMessageDto : DiscordMessage
 	public IEnumerable<FileAttachment>? Attachments { get; set; }
 	public IEnumerable<EmbedData>? Embeds { get; set; }
 	public IReadOnlyCollection<DiscordDto.ComponentBase>? Components { get; set; }
+	
+	public MessageComponent? ConvertComponents()
+	{
+		if (Components is null) return null;
+
+		return new ComponentBuilderV2(
+			Components
+				.Select(x => x.Convert())
+		).Build();
+	}
+	public Embed[]? ConvertEmbeds()
+	{
+		return Embeds?.Select(x => 
+			new EmbedBuilder
+			{
+				Author = new EmbedAuthorBuilder
+				{
+					IconUrl	= x.author.icon_url,
+					Name = x.author.name,
+					Url = x.author.url
+				},
+				ThumbnailUrl = x.thumbnail.url,
+				ImageUrl = x.image.url,
+				Description = x.description,
+				Fields = x.fields
+					.Select(f => new EmbedFieldBuilder
+					{
+						IsInline = f.inline,
+						Name = f.name,
+						Value = f.value 
+					})
+					.ToList(),
+				Footer = new EmbedFooterBuilder
+				{
+					IconUrl	= x.footer.icon_url,
+					Text = x.footer.text
+				}
+			}.Build()
+		).ToArray();
+	}
 }
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
