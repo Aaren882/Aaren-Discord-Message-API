@@ -10,7 +10,8 @@ public enum DiscordBotActionComponentType
 public enum DiscordBotActionType
 {
 	Respond,
-	SendFile
+	SendFile,
+	RespondModal,
 }
 
 
