@@ -26,6 +26,7 @@ public class DiscordDto
     [JsonDerivedType(typeof(FileComponent), (int)ComponentType.File)]
     [JsonDerivedType(typeof(SeparatorComponent), (int)ComponentType.Separator)]
     [JsonDerivedType(typeof(ContainerComponent), (int)ComponentType.Container)]
+    [JsonDerivedType(typeof(LabelComponent), (int)ComponentType.Label)]
     public abstract record ComponentBase
     {
 	    [JsonIgnore] 
@@ -43,9 +44,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new ActionRowBuilder(Components.Select(x => x.Convert()).ToArray(), Id);
-	    }
+		    => new ActionRowBuilder(Components.Select(x => x.Convert()).ToArray(), Id);
     }
     public record ButtonComponent(
 	    ulong? sukId,
@@ -62,9 +61,7 @@ public class DiscordDto
 		public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new ButtonBuilder(label, custom_id, style, url, emoji, disabled, sukId, Id);
-	    }
+		    => new ButtonBuilder(label, custom_id, style, url, emoji, disabled, sukId, Id);
     }
     
     public record SelectMenuComponent(
@@ -85,8 +82,8 @@ public class DiscordDto
 	    
 	    public override IMessageComponentBuilder Convert()
 	    {
-		    var selectMenuOptionBuilders = options.Select(x => new SelectMenuOptionBuilder(x.Label, x.Value, x.Description, x.emoji, x.Default)); 
-		    return new SelectMenuBuilder(custom_Id, selectMenuOptionBuilders.ToList(), placeholder, max_values, min_values, disabled, ComponentType.SelectMenu, channelTypes, defaultValues, Id, required);
+		    var selectMenuOptionBuilders = options?.Select(x => new SelectMenuOptionBuilder(x.Label, x.Value, x.Description, x.emoji, x.Default)); 
+		    return new SelectMenuBuilder(custom_Id, selectMenuOptionBuilders?.ToList(), placeholder, max_values, min_values, disabled, ComponentType.SelectMenu, channelTypes, defaultValues, Id, required);
 	    }
     }
 
@@ -105,9 +102,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    { 
-		    return new TextInputBuilder(custom_id, style, placeholder, min_Length, max_Length, required, value, Id);
-	    }
+		    => new TextInputBuilder(custom_id, style, placeholder, min_Length, max_Length, required, value, Id);
     }
     
     public record SectionComponent(
@@ -120,9 +115,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new SectionBuilder(accessory?.Convert(), components.Select(x => x.Convert()), Id);
-	    }
+		    => new SectionBuilder(accessory?.Convert(), components.Select(x => x.Convert()), Id);
     }
     public record TextDisplayComponent(
 	    string content
@@ -133,9 +126,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new TextDisplayBuilder(content, Id);
-	    }
+		    => new TextDisplayBuilder(content, Id);
     }
     public record ThumbnailComponent(
 	    UnfurledMediaItemProperties media, 
@@ -148,9 +139,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new ThumbnailBuilder(media, description, isSpoiler, Id);
-	    }
+		    => new ThumbnailBuilder(media, description, isSpoiler, Id);
     }
     
     public record MediaGalleryComponent(
@@ -162,9 +151,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new MediaGalleryBuilder(items, Id);
-	    }
+		    => new MediaGalleryBuilder(items, Id);
     }
     public record FileComponent(
 	    UnfurledMediaItemProperties file, 
@@ -176,9 +163,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new FileComponentBuilder(file, isSpoiler, Id);
-	    }
+		    => new FileComponentBuilder(file, isSpoiler, Id);
     }
     public record SeparatorComponent(
 		bool divider = true,
@@ -190,9 +175,7 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
-	    {
-		    return new SeparatorBuilder(divider, spacing, Id);
-	    }
+		    => new SeparatorBuilder(divider, spacing, Id);
     }
     
     public record ContainerComponent(
@@ -206,8 +189,72 @@ public class DiscordDto
 	    public override int? Id { get; set; }
 	    
 	    public override IMessageComponentBuilder Convert()
+		    => new ContainerBuilder(accentColor, isSpoiler, Id, components.Select(x => x.Convert()));
+    }
+    public record LabelComponent(
+	    string label,
+	    string? description,
+	    ComponentBase component
+    ) : ComponentBase
+    {
+	    [JsonIgnore] 
+		public override ComponentType type => ComponentType.Label;
+		
+	    public override int? Id { get; set; }
+	    
+	    public override IMessageComponentBuilder Convert()
+		    => new LabelBuilder(label, component.Convert(), description, Id);
+    }
+	
+    public record PollMediaPropertiesDto
+    {
+	    public string Text { get; set; }
+	    public Emote? Emoji { get; set; }
+    }
+    public record PollPropertiesDto
+    {
+	    public PollMediaPropertiesDto Question { get; set; }
+	    public List<PollMediaPropertiesDto> Answers { get; set; }
+	    public uint Duration { get; set; }
+	    public bool AllowMultiselect { get; set; }
+	    public PollLayout LayoutType { get; set; } = PollLayout.Default;
+
+	    public PollProperties Build()
 	    {
-		    return new ContainerBuilder(accentColor, isSpoiler, Id, components.Select(x => x.Convert()));
+		    return new PollProperties
+		    {
+			    // Set the question
+			    Question = new PollMediaProperties
+			    {
+				    Text = Question.Text,
+				    Emoji = Question.Emoji,
+			    },
+			    Duration = Duration,
+			    Answers = Answers.Select(x => 
+			    new PollMediaProperties
+			    {
+				    Text = x.Text,
+				    Emoji = x.Emoji,
+			    }).ToList(),
+			    AllowMultiselect = AllowMultiselect,
+			    LayoutType = LayoutType
+		    };
+	    }
+    }
+
+    public record ModalComponent
+    {
+	    public string Title { get; set; }
+	    public string customId { get; set; }
+	    public IEnumerable<ComponentBase> components { get; set; }
+
+	    public Modal Build()
+	    {
+		    return new ModalBuilder(
+			    Title,
+			    customId,
+			    components.Select(x => x.Convert().Build())
+			).Build();
 	    }
     }
 }
@@ -219,6 +266,7 @@ public record DiscordMessageDto : DiscordMessage
 	public IEnumerable<FileAttachment>? Attachments { get; set; }
 	public IEnumerable<EmbedData>? Embeds { get; set; }
 	public IReadOnlyCollection<DiscordDto.ComponentBase>? Components { get; set; }
+	public DiscordDto.PollPropertiesDto? poll { get; set; }
 	
 	public MessageComponent? ConvertComponents()
 	{
@@ -259,6 +307,7 @@ public record DiscordMessageDto : DiscordMessage
 			}.Build()
 		).ToArray();
 	}
+	public PollProperties? ConvertPolls() => poll?.Build();
 }
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true, AllowOutOfOrderMetadataProperties = true)] // Optional: Add desired options
