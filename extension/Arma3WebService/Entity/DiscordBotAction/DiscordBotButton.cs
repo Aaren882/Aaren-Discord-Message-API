@@ -9,7 +9,7 @@ namespace Arma3WebService.Entity.DiscordBotAction;
 [JsonDerivedType(typeof(DiscordBotSendFile), nameof(DiscordBotActionType.SendFile))]
 public abstract record DiscordBotButton : DiscordBotActionBase
 {
-	public new virtual Task Run(SocketMessageComponent component) => Task.CompletedTask;
+	public override Task Run(SocketMessageComponent component) => Task.CompletedTask;
 }
 
 public record DiscordBotRespond(
@@ -34,7 +34,7 @@ public record DiscordBotRespond(
 			embeds: embed,
 			options: options,
 			poll: poll,
-			flags: message.Flags ?? MessageFlags.None
+			flags: message.Flags
 		);
 	}
 }
@@ -63,7 +63,7 @@ public record DiscordBotSendFile(
 			embeds: embed,
 			options: options,
 			poll: poll,
-			flags: message.Flags ?? MessageFlags.None
+			flags: message.Flags
 		);
 	}
 };

@@ -37,20 +37,16 @@ public class DiscordBotInteraction
 [JsonDerivedType(typeof(DiscordBotButtonActions), nameof(DiscordBotActionComponentType.Button))]
 public abstract record DiscordBotActionsBase
 {
-	public IEnumerable<DiscordBotActionBase> Actions { get; set; }
-	public virtual async Task Execute(SocketMessageComponent component)
-	{
-		foreach (var discordBotAction in Actions)
-			await discordBotAction.Run(component);
-	}
+	public IEnumerable<DiscordBotActionBase> Steps { get; set; }
+	public abstract Task Execute(SocketMessageComponent component);
 }
 
 public record DiscordBotButtonActions : DiscordBotActionsBase
 {
-	public IEnumerable<DiscordBotButton> Actions { get; set; }
+	public IEnumerable<DiscordBotButton> Steps { get; set; }
 	public override async Task Execute(SocketMessageComponent component)
 	{
-		foreach (var discordBotAction in Actions)
+		foreach (var discordBotAction in Steps)
 			await discordBotAction.Run(component);
 	}
 }
