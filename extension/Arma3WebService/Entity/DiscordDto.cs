@@ -215,7 +215,7 @@ public class DiscordDto
 public record DiscordMessageDto : DiscordMessage
 {
 	public string? FileName { get; set; }
-	public MessageFlags? Flags { get; set; }
+	public MessageFlags Flags { get; set; } = MessageFlags.None;
 	public IEnumerable<FileAttachment>? Attachments { get; set; }
 	public IEnumerable<EmbedData>? Embeds { get; set; }
 	public IReadOnlyCollection<DiscordDto.ComponentBase>? Components { get; set; }
@@ -261,6 +261,6 @@ public record DiscordMessageDto : DiscordMessage
 	}
 }
 
-[JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true, AllowOutOfOrderMetadataProperties = true)] // Optional: Add desired options
 [JsonSerializable(typeof(DiscordMessageDto))]
 public partial class MsgPayload_JsonContext : JsonSerializerContext;

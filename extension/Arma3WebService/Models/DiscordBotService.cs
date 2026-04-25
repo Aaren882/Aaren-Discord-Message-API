@@ -116,7 +116,7 @@ namespace Arma3WebService.Models
 						isTTS: message.Tts ?? false,
 						embeds: message.ConvertEmbeds(),
 						components: component,
-						flags: message.Flags ?? MessageFlags.None
+						flags: message.Flags
 					),
 				{ File: not null } => channel
 					.SendFileAsync(
@@ -125,7 +125,7 @@ namespace Arma3WebService.Models
 						isTTS: message.Tts ?? false,
 						embeds: message.ConvertEmbeds(),
 						components: component,
-						flags: message.Flags ?? MessageFlags.None
+						flags: message.Flags
 					),
 				_ => channel
 					.SendMessageAsync(
@@ -133,7 +133,7 @@ namespace Arma3WebService.Models
 						isTTS: message.Tts ?? false,
 						embeds: message.ConvertEmbeds(),
 						components: component,
-						flags: message.Flags ?? MessageFlags.None
+						flags: message.Flags
 					)
 			};
 
