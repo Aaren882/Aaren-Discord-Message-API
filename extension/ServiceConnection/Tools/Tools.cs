@@ -102,19 +102,21 @@ public class Util
 		Array.Copy(hash, key, key.Length);
 		return key;
 	}
-
-	public static List<string> GetDirectoryFileNames(string path)
+	
+	public static IEnumerable<FileInfo> GetDirectoryFiles(string path)
 	{
 		var combined= Path.Combine(AssemblyPath, path);
-		
+
 		return Directory.GetFiles(combined)
-			.Select(x => new FileInfo(x).Name)
-			.ToList();
+			.Select(x => new FileInfo(x));
 	}
+
+	public static List<string> GetDirectoryFileNames(string path)
+		=> GetDirectoryFiles(path).Select(x => x.Name).ToList();
 
 	public static string GetLastestFile(string path)
 	{
-		var files = Directory.GetFiles(path);
+		/*var files = Directory.GetFiles(path);
 
 		//- Check how many logs
 		Dictionary<string, DateTime> dict = new();
@@ -122,7 +124,12 @@ public class Util
 		{
 			var time = Directory.GetCreationTime(file);
 			dict.Add(file, time);
-		}
+		}*/
+		var dict = GetDirectoryFiles(path)
+			.ToDictionary(
+				k => k.FullName,
+				v => v.CreationTime
+			);
 
 		var list = dict.OrderByDescending(x => x.Value).ToList();
 	
