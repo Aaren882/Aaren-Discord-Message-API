@@ -22,19 +22,24 @@ Author:
 
 TRACE_1("fnc_StartConnection",_this);
 
-private _profile = GVAR(Profiles) call FUNC(GetProfile);
+private _profile = call FUNC(GetProfileConfiguration);
 
 private _messageId = _profile getOrDefault ["MessageId", ""];
-private _messageFile = _profile getOrDefault ["MessageFile", ""];
-
-if (_messageFile isEqualTo "") exitWith {
-  ERROR_1("Cannot find ""MessageFile""=> ""%1"" from current profile !!",_messageFile);
-};
+private _configuration = _profile getOrDefault ["Configuration", createHashMap];
 
 private _map = createHashMap;
 _map set ["type", 2]; //- payload type "GameServer"
 _map set ["MessageId", _messageId];
-_map set ["MessageContent", [_messageFile, []] call DiscordAPI_fnc_FormatJson];
 
-private _serverName = call FUNC(GetProfileName);
-"DiscordMessageAPI" callExtension ["ConnectWebSocket",[_serverName, toJSON _map]];
+private _dateTimes = "DiscordMessageAPI" callExtension [
+  "GetDirectoryFilesDateTime",
+  values _configuration
+];
+
+//- Get DateOffset in UNIX format
+_map set [
+  "ProfileDateOffsets",
+  _dateTimes call DiscordAPI_fnc_Deserialize_ExtensionOutput
+];
+
+"DiscordMessageAPI" callExtension ["ConnectWebSocket", [call FUNC(GetProfileName), toJSON _map]];
