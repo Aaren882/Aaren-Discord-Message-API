@@ -24,12 +24,16 @@ public sealed class ServiceAction(
 	{
 		await connection.Send(payload.ToJsonString());
 	}
-	public async Task RptAction(IConnection connection, Arma3PayloadRPT payload)
+	public async Task BinaryAction(IConnection connection, Arma3PayloadBinary payload)
 	{
 		logger.LogInformation("Receiving metaData for binary file '{Arma3PayloadRpt}'", payload);
+
+		if (!Directory.Exists(payload.DirectoryPrefix)) Directory.CreateDirectory(payload.DirectoryPrefix);
 		
 		await using var fileStream = new FileStream(
-			$".Rpt/{payload.FileName}", FileMode.Create, FileAccess.Write);
+			Path.Combine(payload.DirectoryPrefix, payload.FileName),
+			FileMode.Create, FileAccess.Write
+		);
 					
 		await connection.ReceiveBinary(fileStream);
 		logger.LogDebug("Stored binary file '{PayloadFileName}'", payload.FileName);

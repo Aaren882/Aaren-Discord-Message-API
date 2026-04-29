@@ -18,8 +18,8 @@ public sealed class Arma3ActionManager(ServiceAction serviceAction) : IArma3Acti
 		{
 			Arma3PayLoadType.Text => 
 				serviceAction.TextAction(connection, (Arma3PayloadText) payload),
-			Arma3PayLoadType.Rpt =>
-				serviceAction.RptAction(connection, (Arma3PayloadRPT) payload),
+			Arma3PayLoadType.Binary =>
+				serviceAction.BinaryAction(connection, (Arma3PayloadBinary) payload),
 			Arma3PayLoadType.Command =>
 				serviceAction.CallBackAction(connection, (Arma3PayloadCallBack) payload),
 			Arma3PayLoadType.JsonString =>
