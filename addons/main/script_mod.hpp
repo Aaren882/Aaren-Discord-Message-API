@@ -1,5 +1,6 @@
 #define MAINPREFIX z
 #define PREFIX DiscordAPI
+#define DEBUG_ENABLED_MAIN
 
 #include "script_version.hpp"
 
