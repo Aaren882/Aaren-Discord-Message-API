@@ -25,7 +25,7 @@ public sealed class ServiceDbContext: DbContext
 				
 		if (exist != null) return false;
 		
-		ServerIdentities.Add(new ServerIdentity
+		await ServerIdentities.AddAsync(new ServerIdentity
 		{
 			profileName = profileName,
 			messageId = ulong.Parse(messageId),
@@ -77,10 +77,10 @@ public sealed class ServiceDbContext: DbContext
 			o => o.profileName == profileName
 		);
 
-		if (exist != null) return exist;
+		if (exist is null)
+			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
 		
-		logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
-		return null;
+		return exist;
 	}
 
 	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
