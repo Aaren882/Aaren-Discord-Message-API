@@ -4,8 +4,8 @@ using System.Text;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using ServiceConnection.Tools;
-using System.Text.Json;
 using static ServiceConnection.ServiceStartup;
+using System.Text.Json;
 
 namespace ServiceConnection.WebService;
 
@@ -77,19 +77,54 @@ public class ServiceInteractions
 	}
 	public Task SendWebSocketMessage(string messageJson)
 		=> _wsClient.SendMessageAsync(messageJson);
-	
-	public async Task SendWebSocketBinary(string filePath, int chunkSize = 64 * 1024)
+
+	public async Task SendWebSocketBinaries(Dictionary<string,string> binaryDict, int chunkSize = 64 * 1024)
+	{
+		foreach (var path in binaryDict)
+			await SendWebSocketBinary(path);
+	}
+
+	public async Task SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
     {
 	    var fileInfo = new FileInfo(filePath);
 	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
 
 	    // Send Metadata (as text message)
-	    var metadata = new Arma3PayloadRPT
+	    var metadata = new Arma3PayloadBinary
 	    (
 		    fileInfo.Name,
 		    fileInfo.Length,
 		    fileInfo.CreationTime,
-		    totalChunks
+		    totalChunks,
+		    directoryPrefix
+	    );
+		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+
+		try
+		{
+			await SendWebSocketMessage(metaJson);
+			await _wsClient.SendBinaryAsync(filePath, metadata, chunkSize);
+		}
+		catch (Exception e)
+		{
+			Logger(e, "");
+		}
+    }
+	public async Task SendWebSocketBinary(KeyValuePair<string,string> fileValuePair, int chunkSize = 64 * 1024)
+	{
+		var directoryPrefix = fileValuePair.Key;
+		var filePath = fileValuePair.Value;
+	    var fileInfo = new FileInfo(filePath);
+	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+
+	    // Send Metadata (as text message)
+	    var metadata = new Arma3PayloadBinary
+	    (
+		    fileInfo.Name,
+		    fileInfo.Length,
+		    fileInfo.CreationTime,
+		    totalChunks,
+		    directoryPrefix
 	    );
 		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 

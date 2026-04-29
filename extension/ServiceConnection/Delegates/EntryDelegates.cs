@@ -173,6 +173,17 @@ public static class EntryDelegates
 
 	        return fileNames.Count;
         }
+
+        internal static int GetDirectoryFilesDateTime(IOutputBuilder output, string[] args, int argCount)
+        {
+	        var fileInfos = Util.GetFilesFileInfos(args)
+		        .Select(x => 
+			        ((DateTimeOffset) x.LastWriteTime).ToUnixTimeSeconds()
+			    ).ToList();
+	        
+	        output.Append($"[\"{string.Join("\",\"", fileInfos)}\"]");
+	        return fileInfos.Count;
+        }
         
         /// <summary>
         /// Setup Websocket Connection to backend service
@@ -237,7 +248,26 @@ public static class EntryDelegates
         {
 	        var lastestRpt= Util.GetLastestFile(serviceInteractions.RPTDirectory);
 	        output.Append(lastestRpt); //- Return lastest Rpt directory
-	        _ = serviceInteractions.SendWebSocketBinary(lastestRpt);
+	        _ = serviceInteractions.SendWebSocketBinary(lastestRpt, args[0]);
+	        
+            return 1;
+        }
+        internal static int SendWebSocketBinaries(IOutputBuilder output, string[] args, int argCount)
+        {
+	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
+	        _ = serviceInteractions.SendWebSocketBinaries(binaryDict!);
+	        
+            return 1;
+        }
+        internal static int SendWebSocketAssemblyDirectoryBinaries(IOutputBuilder output, string[] args, int argCount)
+        {
+	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
+	        
+	        _ = serviceInteractions.SendWebSocketBinaries(
+		        binaryDict!.Select(x => 
+			        new KeyValuePair<string, string>(x.Key, Path.Combine(Util.AssemblyPath, x.Value))
+		        ).ToDictionary()
+		    );
 	        
             return 1;
         }

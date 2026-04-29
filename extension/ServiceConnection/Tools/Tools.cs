@@ -111,20 +111,18 @@ public class Util
 			.Select(x => new FileInfo(x));
 	}
 
+	public static IEnumerable<FileInfo> GetFilesFileInfos(IEnumerable<string> paths)
+	{
+		return paths.Select(path => 
+			new FileInfo(Path.Combine(AssemblyPath, path))
+		);
+	}
+
 	public static List<string> GetDirectoryFileNames(string path)
 		=> GetDirectoryFiles(path).Select(x => x.Name).ToList();
 
 	public static string GetLastestFile(string path)
 	{
-		/*var files = Directory.GetFiles(path);
-
-		//- Check how many logs
-		Dictionary<string, DateTime> dict = new();
-		foreach (var file in files)
-		{
-			var time = Directory.GetCreationTime(file);
-			dict.Add(file, time);
-		}*/
 		var dict = GetDirectoryFiles(path)
 			.ToDictionary(
 				k => k.FullName,
