@@ -47,7 +47,7 @@ public class WebSocketClient(string serverUri)
 			Logger(null ,$"Connection failed: {ex.Message}");
 		}
 	}
-	public async Task SendBinaryAsync(string filePath, Arma3PayloadRPT payloadRpt, int chunkSize = 64 * 1024)
+	public async Task SendBinaryAsync(string filePath, Arma3PayloadBinary payloadRpt, int chunkSize = 64 * 1024)
 	{
 		if (Status() == WebSocketState.Open)
 		{

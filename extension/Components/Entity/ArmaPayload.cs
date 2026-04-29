@@ -6,7 +6,7 @@ namespace Components.Entity;
 public enum Arma3PayLoadType
 {
 	Text = 1,
-	Rpt = 2, //- in game *.rpt logs
+	Binary = 2, //- in game *.rpt logs
 	Command = 3,
 	GameInfo = 4,
 	JsonString = 5,
@@ -15,7 +15,7 @@ public enum Arma3PayLoadType
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
-[JsonDerivedType(typeof(Arma3PayloadRPT), (int)Arma3PayLoadType.Rpt)]
+[JsonDerivedType(typeof(Arma3PayloadBinary), (int)Arma3PayLoadType.Binary)]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
 [JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
 [JsonDerivedType(typeof(Arma3PayloadFlatJsonString), (int)Arma3PayLoadType.FlatJsonString)]
@@ -34,16 +34,17 @@ public record Arma3PayloadJson
 	public override Arma3PayLoadType Type => Arma3PayLoadType.JsonString;
 };
 
-public record Arma3PayloadRPT
+public record Arma3PayloadBinary
 (
 	string FileName,
 	long FileSize,
 	DateTime CreatedTime,
-	int TotalChunks
+	int TotalChunks,
+	string? DirectoryPrefix
 ) : Arma3Payload
 {
 	[JsonIgnore]
-	public override Arma3PayLoadType Type => Arma3PayLoadType.Rpt;
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
 };
 
 public record Arma3PayloadCallBack(
