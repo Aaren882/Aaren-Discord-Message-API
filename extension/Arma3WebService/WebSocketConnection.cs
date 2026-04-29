@@ -35,7 +35,10 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 			using var memoryStream = new MemoryStream();
 			message = await ReceiveMessage(memoryStream);
 
-			if (memoryStream.Length <= 0) continue;
+			if (
+				memoryStream.Length <= 0 || 
+				message.MessageType == WebSocketMessageType.Binary
+			) continue;
 			
 			//- Deserialize Payload
 			var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
