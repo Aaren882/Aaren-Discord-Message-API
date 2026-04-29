@@ -18,7 +18,7 @@ Returns:
 
 Examples
     (begin example)
-        ["[""AA"",123] --"] call DiscordAPI_fnc_getExtensionOutput
+        ["[""AA"",123] --"] call DiscordAPI_fnc_Deserialize_ExtensionOutput
     (end)
 
 Author:
