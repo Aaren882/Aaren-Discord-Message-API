@@ -6,14 +6,9 @@ namespace Arma3WebService.Entity.DiscordBotAction;
 public enum DiscordBotActionComponentType
 {
 	Button,
+	SelectMenu,
+	Modal,
 }
-public enum DiscordBotActionType
-{
-	Respond,
-	SendFile,
-	RespondModal,
-}
-
 
 public class DiscordBotInteraction
 {
@@ -29,13 +24,14 @@ public class DiscordBotInteraction
 				x => x.Value
 			);
 		
-		foreach (var DiscordBotAction in queried)
-			await DiscordBotAction.Execute(component);
+		foreach (var discordBotAction in queried)
+			await discordBotAction.Execute(component);
 	}
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "componentType")]
 [JsonDerivedType(typeof(DiscordBotButtonActions), nameof(DiscordBotActionComponentType.Button))]
+[JsonDerivedType(typeof(DiscordBotSelectMenuActions), nameof(DiscordBotActionComponentType.SelectMenu))]
 public abstract record DiscordBotActionsBase
 {
 	public IEnumerable<DiscordBotActionBase> Steps { get; set; }
@@ -45,6 +41,15 @@ public abstract record DiscordBotActionsBase
 public record DiscordBotButtonActions : DiscordBotActionsBase
 {
 	public IEnumerable<DiscordBotButton> Steps { get; set; }
+	public override async Task Execute(SocketMessageComponent component)
+	{
+		foreach (var discordBotAction in Steps)
+			await discordBotAction.Run(component);
+	}
+}
+public record DiscordBotSelectMenuActions : DiscordBotActionsBase
+{
+	public IEnumerable<DiscordBotSelectMenu> Steps { get; set; }
 	public override async Task Execute(SocketMessageComponent component)
 	{
 		foreach (var discordBotAction in Steps)
@@ -61,5 +66,8 @@ public record DiscordBotActionBase
 	PropertyNameCaseInsensitive = true,
 	AllowOutOfOrderMetadataProperties = true
 )]
-[JsonSerializable(typeof(DiscordBotInteraction))]
+[
+	JsonSerializable(typeof(DiscordBotInteraction)),
+	JsonSerializable(typeof(DiscordBotModalInteraction))
+]
 public sealed partial class DiscordBotActionJsonSerializerContext : JsonSerializerContext;
