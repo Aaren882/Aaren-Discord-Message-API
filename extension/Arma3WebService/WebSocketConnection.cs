@@ -78,7 +78,8 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 		do
 		{
 			result = await _webSocket.ReceiveAsync(readBuffer, _cts);
-			await fileStream.WriteAsync(readBuffer.Array!, _cts);
+			await fileStream.WriteAsync(readBuffer.Array!, readBuffer.Offset, result.Count,
+				_cts);
 		} while (!result.EndOfMessage);
 
 		return result;
