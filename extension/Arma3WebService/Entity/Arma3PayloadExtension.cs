@@ -4,6 +4,7 @@ using Arma3WebService.DBContext;
 using Arma3WebService.Models;
 using Components.Entity;
 using Discord;
+using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Entity;
 
@@ -13,6 +14,24 @@ public enum Arma3PayLoadTypeExtension
 	UpdateServerIdentity = 2,
 	UpdateServerInfo = 3,
 	RegisterServerIdentity = 4,
+}
+
+public record struct Arma3ClientProfileConfiguration
+{
+	private string _messageTemplate;
+	private string _messageActions;
+
+	public string MessageTemplate
+	{
+		get => _messageTemplate;
+		set => _messageTemplate = Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}");
+	}
+
+	public string MessageActions
+	{
+		get => _messageActions;
+		set => _messageTemplate = Path.GetFullPath($".profile/MessageActions/{Path.GetFileName(value)}");
+	}
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "ProcessType")]
@@ -65,7 +84,7 @@ public record UpdateServerIdentityExtension
 public record UpdateServerInfoTemplateExtension
 (
 	string MessageId,
-	string JsonContent
+	Arma3ClientProfileConfiguration Configuration
 ) : Arma3PayloadExtended
 {
 	[JsonIgnore]
@@ -73,20 +92,43 @@ public record UpdateServerInfoTemplateExtension
 
 	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
+		var messageId = ulong.Parse(MessageId);
+		var exist = await dbContext.ServerInfoList.FirstOrDefaultAsync(x => x.messageId == messageId);
+
+		var fullPath = Configuration.MessageTemplate;
+		var fileInfo = new FileInfo(fullPath);
+		if (exist == null)
+		{
+			await dbContext.ServerInfoList.AddAsync(new ServerInfoTemplate
+			{
+				messageId = messageId,
+				filePath = fullPath,
+				fileCreateTime = fileInfo.CreationTime
+			});
+		}
+		else
+		{
+			exist.filePath = fullPath;
+			exist.fileCreateTime = fileInfo.CreationTime;
+		}
+		
+		await dbContext.SaveChangesAsync();
+	}
+	/*public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	{
 		var fileInfo = await CreateTemplate();
 		await dbContext.UpsertServerInfoTemplateAsync(fileInfo, MessageId);
 	}
-
 	private async Task<FileInfo> CreateTemplate()
 	{
-		var file = $".profile/ServerInfoTemplate/{MessageId}.json"; 
+		var file = $".profile/ServerInfoTemplate/{MessageId}.json";
 		var directory = Path.GetDirectoryName(file);
 
 		if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 		await File.WriteAllTextAsync(file, JsonContent, Encoding.UTF8);
 
 		return new FileInfo(file);
-	}
+	}*/
 }
 
 public record RegisterServerIdentity
