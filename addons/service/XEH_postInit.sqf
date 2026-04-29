@@ -86,8 +86,30 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
 [QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
 
 [QGVAR(ServiceAccessResult), {
-  params ["_successful","_serviceReturnPayload"];
-  _serviceReturnPayload params ["_profileName","_isNewIdentity","_messageId"];
-
   INFO_1("ServiceAccessResult : %1",_this);
+  
+  _this spawn {
+    params ["_successful","_serviceReturnPayload"];
+    _serviceReturnPayload params ["_profileName","_messageId","_isNewIdentity","_isDifferent"];
+    
+    if (_isNewIdentity || _isDifferent) then {
+      INFO("It seems [ServiceAccessResult] ""_isNewIdentity/_isDifferent"" is changed. Updating backend profile config/data");
+      sleep 1; //- Make sure stack can be released properly
+
+      private _profileConfiguration = call FUNC(GetProfileConfiguration);
+      // private _messageId = _profileConfiguration getOrDefault ["MessageId", ""];
+      private _configuration = _profileConfiguration getOrDefault ["Configuration", createHashMap];
+      [_messageId, _configuration] call FUNC(UpdateServerInfoTemplate);
+      
+      
+      sleep 1; //- Small delay to ensure profile data is updated
+
+      //- Setup directory for backend storage
+      private _toArray = _configuration toArray true;
+      private _prefixDirectories = (_toArray # 0) apply {".profile/" + _x};
+
+      private _payload = _prefixDirectories createHashMapFromArray (_toArray # 1);
+      "DiscordMessageAPI" callExtension ["SendWebSocketAssemblyDirectoryBinaries", [toJSON _payload]];
+    };
+  }
 }] call CBA_fnc_addEventHandler;

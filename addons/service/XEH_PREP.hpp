@@ -1,4 +1,5 @@
 PREP(GetProfile);
+PREP(GetProfileConfiguration);
 PREP(GetProfileName);
 PREP(GetServerInfo);
 PREP(RegisterServerIdentity);
@@ -10,4 +11,5 @@ PREP(ServerInfo_Loop);
 PREP(SetServiceAvailability);
 PREP(StartConnection);
 PREP(UpdateProfileIdentity);
+PREP(UpdateServerInfoTemplate);
 PREP(UpdateService_ServerInfo);
