@@ -27,11 +27,27 @@ namespace Arma3WebService.Models
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			Client.Log += Log;
+			Client.ModalSubmitted += async (component) =>
+			{
+				try
+				{
+					var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
+					var deserialize = JsonSerializer.Deserialize(
+						json,
+						DiscordBotActionJsonSerializerContext.Default.DiscordBotModalInteraction
+					);
+					await deserialize!.Execute(component);
+				}
+				catch (Exception e)
+				{
+					logger.LogError("ERROR ModalSubmitted : {Error}", e.Message);
+				}
+			};
 			Client.ButtonExecuted += async (component) =>
 			{
 				try
 				{
-					var json = await File.ReadAllTextAsync("testBot.json", stoppingToken);
+					var json = await File.ReadAllTextAsync("testBotCreateModal.json", stoppingToken);
 					var deserialize = JsonSerializer.Deserialize(
 						json,
 						DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
@@ -40,8 +56,7 @@ namespace Arma3WebService.Models
 				}
 				catch (Exception e)
 				{
-					Console.WriteLine(e);
-					throw;
+					logger.LogError("ERROR ButtonExecuted : {Error}", e.Message);
 				}
 			};
 			
@@ -50,34 +65,6 @@ namespace Arma3WebService.Models
 				Environment.GetEnvironmentVariable("BotToken")
 			);
 			await Client.StartAsync();
-		}
-		private async Task MyButtonHandler(SocketMessageComponent component)
-		{
-			// Check for the custom ID defined in step 1
-			var stream = File.OpenRead(Path.GetFullPath(".env"));
-			
-			switch (component.Data.CustomId)
-			{
-				case "custom-id-1":
-					// Respond to the interaction
-					await component.RespondWithFileAsync(
-						stream,
-						".env",
-						text: $"{component.User.Mention} has clicked the button!",
-						ephemeral: true
-					);
-					
-					// filePath: Path.GetFullPath(".env"),
-					// fileName: ".env",
-					// fileStream: SendLocalFile(filename: ".env"),
-					// text: $"{component.User.Mention} has clicked the button!",
-					// ephemeral: true
-					break;
-				// You can add more cases for different button custom IDs
-				case "another-id":
-					// ... other logic ...
-					break;
-			}
 		}
 		
 		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)

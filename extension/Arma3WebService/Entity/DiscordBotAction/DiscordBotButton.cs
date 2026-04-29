@@ -1,23 +1,28 @@
 using System.Text.Json.Serialization;
 using Discord;
 using Discord.WebSocket;
-using ModalBuilder = Discord.Interactions.Builders.ModalBuilder;
 
 namespace Arma3WebService.Entity.DiscordBotAction;
 
+public enum DiscordBotButtonActionType
+{
+	Respond,
+	SendFile,
+	RespondModal,
+}
+
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(DiscordBotRespond), nameof(DiscordBotActionType.Respond))]
-[JsonDerivedType(typeof(DiscordBotSendFile), nameof(DiscordBotActionType.SendFile))]
-[JsonDerivedType(typeof(DiscordBotModalRespond), nameof(DiscordBotActionType.RespondModal))]
+[JsonDerivedType(typeof(DiscordBotButtonRespond), nameof(DiscordBotButtonActionType.Respond))]
+[JsonDerivedType(typeof(DiscordBotButtonSendFile), nameof(DiscordBotButtonActionType.SendFile))]
+[JsonDerivedType(typeof(DiscordBotButtonModalRespond), nameof(DiscordBotButtonActionType.RespondModal))]
 public abstract record DiscordBotButton : DiscordBotActionBase
 {
 	public override Task Run(SocketMessageComponent component) => Task.CompletedTask;
 }
 
-public record DiscordBotRespond(
+public record DiscordBotButtonRespond(
 	DiscordMessageDto message,
 	bool? ephemeral,
-	bool? isV2,
 	AllowedMentions? allowedMentions,
 	RequestOptions? options
 ): DiscordBotButton
@@ -42,7 +47,7 @@ public record DiscordBotRespond(
 	}
 }
 
-public record DiscordBotSendFile(
+public record DiscordBotButtonSendFile(
 	DiscordMessageDto message,
 	bool? ephemeral,
 	AllowedMentions? allowedMentions,
@@ -70,7 +75,7 @@ public record DiscordBotSendFile(
 	}
 }
 
-public record DiscordBotModalRespond(
+public record DiscordBotButtonModalRespond(
 	DiscordDto.ModalComponent message,
 	RequestOptions? options
 ): DiscordBotButton
