@@ -49,3 +49,5 @@ class CfgFunctions
 		};
 	};
 };
+
+#include "CfgSettings.hpp"
