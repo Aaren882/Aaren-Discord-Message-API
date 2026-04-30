@@ -10,6 +10,7 @@ PREP(SendWebSocketMessage);
 PREP(ServerInfo_Loop);
 PREP(SetServiceAvailability);
 PREP(StartConnection);
+PREP(StopConnection);
 PREP(UpdateProfileIdentity);
 PREP(UpdateServerInfoTemplate);
 PREP(UpdateService_ServerInfo);
