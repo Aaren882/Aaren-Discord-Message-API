@@ -83,6 +83,7 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   }];
 }] call CBA_fnc_addEventHandler;
 
+[QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
 [QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
 
 [QGVAR(ServiceAccessResult), {
