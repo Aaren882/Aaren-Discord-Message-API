@@ -1,8 +1,10 @@
 name = "Aaren Discord Message API"
-author = "Aaren"
-prefix = "DiscordAPI"
-url = "https://github.com/Aaren882/Aaren-Discord-Message-API"
 mainprefix = "z"
+prefix = "DiscordAPI"
+
+[properties]
+author = "Aaren"
+url = "https://github.com/Aaren882/Aaren-Discord-Message-API"
 
 [files]
 include = [
