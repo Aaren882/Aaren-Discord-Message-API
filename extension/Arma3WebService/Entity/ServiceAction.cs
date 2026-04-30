@@ -65,9 +65,16 @@ public sealed class ServiceAction(
 		var identity = connection.websocketContext.GetIdentity();
 		
 		logger.LogDebug("\"{identity}\" received game info", identity);
-		
-		UpdateSSEGameInfo(identity, collection);
-		await UpdateDiscordServerInfoMessageAsync(identity, collection);
+
+		try
+		{
+			UpdateSSEGameInfo(identity, collection);
+			await UpdateDiscordServerInfoMessageAsync(identity, collection);
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "\"FlatJsonStringAction\" threw an exception...");
+		}
 	}
 	
 	private readonly List<string> ctxList = [];
