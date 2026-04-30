@@ -113,9 +113,13 @@ public class Util
 
 	public static IEnumerable<FileInfo> GetFilesFileInfos(IEnumerable<string> paths)
 	{
-		return paths.Select(path => 
-			new FileInfo(Path.Combine(AssemblyPath, path))
-		);
+		return paths.Select(path =>
+		{
+			var fileInfo = new FileInfo(Path.Combine(AssemblyPath, path));
+			return fileInfo.Exists ? 
+				fileInfo : 
+				throw new FileNotFoundException($"File \"{path}\" not found");
+		});
 	}
 
 	public static List<string> GetDirectoryFileNames(string path)
@@ -129,9 +133,9 @@ public class Util
 				v => v.CreationTime
 			);
 
-		var list = dict.OrderByDescending(x => x.Value).ToList();
-	
-		return list[0].Key;
+		return dict
+			.MaxBy(x => x.Value)
+			.Key;
 	}
 
 	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)
