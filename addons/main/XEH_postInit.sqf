@@ -39,6 +39,7 @@ if (isServer) then {
           _payload
         ] call EFUNC(webhook,sendJsonFormat);
 
+        [QGVARMAIN(Mission_Unload_Server)] call CBA_fnc_LocalEvent;
         (this # 0) displayRemoveEventHandler [_thisEvent, _thisEventHandler];
       }];
     };
