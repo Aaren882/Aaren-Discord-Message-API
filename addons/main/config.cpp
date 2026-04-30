@@ -37,15 +37,15 @@ class CfgFunctions
 		class init
 		{
 			file=QPATHTOF(functions\init);
-			class init_player;
-			class refresh_webhooks;
+			class init_player {};
+			class refresh_webhooks {};
 		};
 		class functions
 		{
 			file=QPATHTOF(functions);
-			class FormatJson;
-			class GetPathFiles;
-			class Deserialize_ExtensionOutput;
+			class FormatJson {};
+			class GetPathFiles {};
+			class Deserialize_ExtensionOutput {};
 		};
 	};
 };
