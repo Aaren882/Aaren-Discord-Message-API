@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Arma3WebService.Factory;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
@@ -17,7 +16,7 @@ namespace Arma3WebService.Models
 
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
-		ServiceAction serviceAction,
+		ServiceActionManager serviceActionManager,
 		WebsocketContextEntityFactory contextEntityFactory,
 		IConnectionFactory connectionFactory,
 		IConnectionManager connectionManager
@@ -34,7 +33,7 @@ namespace Arma3WebService.Models
 				: throw new NullReferenceException($"No \"{connectionIdentity}\" is not found.");
 		}
 		public Task InvokeArmaCallBack(Arma3RemoteCommand command)
-			=> serviceAction.CallBackAction(
+			=> serviceActionManager.CallBackAction(
 				GetConnection(command.gameId),
 				command.payload
 			);

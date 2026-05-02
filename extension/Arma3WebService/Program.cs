@@ -42,7 +42,7 @@ namespace Arma3WebService
 			builder.Services.AddSingleton<IArma3ActionFactory, Arma3ActionFactory>();
 			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
 			builder.Services.AddSingleton<WebsocketContextEntityFactory>();
-			builder.Services.AddSingleton<ServiceAction>();
+			builder.Services.AddSingleton<ServiceActionManager>();
 			builder.Services.AddSingleton<RemoteStateManager>();
 			builder.Services.AddScoped<JwtHelpers>();
 			

@@ -9,8 +9,8 @@ using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService.Entity;
 
-public sealed class ServiceAction(
-	ILogger<ServiceAction> logger,
+public sealed class ServiceActionManager(
+	ILogger<ServiceActionManager> logger,
 	IServiceProvider serviceProvider,
 	IDiscordBotService discordBotService,
 	IServiceScopeFactory ServiceScopeFactory
