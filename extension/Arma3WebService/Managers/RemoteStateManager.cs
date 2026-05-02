@@ -1,0 +1,59 @@
+using System.Collections.Concurrent;
+using Arma3WebService.DBContext;
+using Arma3WebService.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Arma3WebService.Managers;
+
+public sealed class RemoteStateManager(
+	IServiceScopeFactory ServiceScopeFactory,
+	IServiceProvider ServiceProvider
+)
+{
+	private readonly ConcurrentDictionary<ulong, IConnection> _gameSessionCache = [];
+	private readonly ConcurrentDictionary<ulong, ServerInfoTemplate> _serverInfoCache = [];
+
+	internal async Task<IConnection> GetGameSession(ulong messageId)
+	{
+		if (_gameSessionCache.TryGetValue(messageId, out var session))
+			return session;
+
+		using var scope = ServiceScopeFactory.CreateScope();
+		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		
+		var serverIdentity = await dbContext.GetServerIdentityFromMessageIdAsync(messageId);
+		if (serverIdentity == null)
+			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
+		
+		var webSocketService = ServiceProvider.GetRequiredService<IWebSocketService>();
+		var connection = webSocketService.GetConnection(serverIdentity.profileName);
+		_gameSessionCache[messageId] = connection;
+
+		return connection;
+	}
+	
+	internal void UpdateExistingServerInfoCache(ulong messageId, ServerInfoTemplate serverInfo)
+	{
+		if (_serverInfoCache.TryGetValue(messageId, out _)) return;
+		_serverInfoCache[messageId] = serverInfo;
+	}
+
+	internal async Task<ServerInfoTemplate> GetServerInfoTemplate(ulong messageId)
+	{
+		if (_serverInfoCache.TryGetValue(messageId, out var template))
+			return template;
+		
+		using var scope = ServiceScopeFactory.CreateScope();
+		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		
+		var infoTemplate = await dbContext.ServerInfoList
+			.FirstOrDefaultAsync(o => o.messageId == messageId);
+
+		if (infoTemplate == null) throw new NullReferenceException("\"infoTemplate\" does not exist.");
+		
+		_serverInfoCache.AddOrUpdate(messageId, infoTemplate, 
+			(_, _) => infoTemplate);
+		
+		return infoTemplate;
+	} 
+}

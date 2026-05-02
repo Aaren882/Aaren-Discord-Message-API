@@ -103,7 +103,7 @@ public sealed class ServiceAction(
 		var serverInfo = dbContext.ServerInfoList.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
 		if (serverInfo is null) return;
 		
-		var infoMessage = await File.ReadAllTextAsync(serverInfo.filePath);
+		var infoMessage = await File.ReadAllTextAsync(serverInfo.messageTemplatePath);
 		infoMessage = logItem.Aggregate(
 			infoMessage,
 			(current, item) => current.Replace(item.Key, item.Value)
