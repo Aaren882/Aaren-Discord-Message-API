@@ -7,13 +7,13 @@ namespace Arma3WebService.Entity.DiscordBotAction;
 public enum DiscordBotButtonActionType
 {
 	Respond,
-	SendFile,
+	WithFile,
 	RespondModal,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(DiscordBotButtonRespond), nameof(DiscordBotButtonActionType.Respond))]
-[JsonDerivedType(typeof(DiscordBotButtonSendFile), nameof(DiscordBotButtonActionType.SendFile))]
+[JsonDerivedType(typeof(DiscordBotButtonWithFile), nameof(DiscordBotButtonActionType.WithFile))]
 [JsonDerivedType(typeof(DiscordBotButtonModalRespond), nameof(DiscordBotButtonActionType.RespondModal))]
 public abstract record DiscordBotButton : DiscordBotActionBase
 {
@@ -47,7 +47,7 @@ public record DiscordBotButtonRespond(
 	}
 }
 
-public record DiscordBotButtonSendFile(
+public record DiscordBotButtonWithFile(
 	DiscordMessageDto message,
 	bool? ephemeral,
 	AllowedMentions? allowedMentions,
@@ -55,23 +55,35 @@ public record DiscordBotButtonSendFile(
 ): DiscordBotButton
 {
 	public override async Task Run(SocketMessageComponent component) {
-		var stream = File.OpenRead(Path.GetFullPath(message.File!));
-		var embed = message.ConvertEmbeds();
-		var components = message.ConvertComponents();
+		if (message.File is null)
+		{
+			await component.RespondAsync(text: "Please specify a file.", ephemeral: true);
+			return;
+		}
+		try
+		{
+			var stream = File.OpenRead(Path.GetFullPath(message.File));
+			var embed = message.ConvertEmbeds();
+			var components = message.ConvertComponents();
 		
-		await component.RespondWithFileAsync(
-			fileStream: stream,
-			fileName: message.FileName,
-			text: message.Content,
-			isTTS : message.Tts ?? false,
-			ephemeral: ephemeral ?? false,
-			allowedMentions: allowedMentions,
-			components: components,
-			embeds: embed,
-			options: options,
-			// poll: poll,
-			flags: message.Flags
-		);
+			await component.RespondWithFileAsync(
+				fileStream: stream,
+				fileName: message.FileName,
+				text: message.Content,
+				isTTS : message.Tts ?? false,
+				ephemeral: ephemeral ?? false,
+				allowedMentions: allowedMentions,
+				components: components,
+				embeds: embed,
+				options: options,
+				// poll: poll,
+				flags: message.Flags
+			);
+		}
+		catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+		{
+			await component.RespondAsync(text: $"File exception : {e.Message}", ephemeral: true);
+		}
 	}
 }
 

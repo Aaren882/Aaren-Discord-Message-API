@@ -4,7 +4,6 @@ using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Managers;
 using Discord;
 using Discord.WebSocket;
-using ServiceConnection.Discord;
 
 namespace Arma3WebService.Models
 {
@@ -63,6 +62,7 @@ namespace Arma3WebService.Models
 				catch (Exception e)
 				{
 					logger.LogError("ERROR ButtonExecuted : {Error}", e.Message);
+					await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
 				}
 			};
 			
