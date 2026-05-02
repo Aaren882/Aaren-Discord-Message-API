@@ -47,6 +47,14 @@ class CfgFunctions
 			class GetPathFiles {};
 			class Deserialize_ExtensionOutput {};
 		};
+    //#TODO - Deprecate these
+		class Deprecation
+		{
+			class sendMessage
+      {
+        file=QPATHTOEF(webhook,functions\fnc_sendMessage.sqf);
+      };
+		};
 	};
 };
 
