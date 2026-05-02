@@ -16,7 +16,7 @@ namespace Arma3WebService.Controllers
 	public class ArmaController(
 		ILogger<ArmaController> logger,
 		IWebSocketService webSocketService,
-		ServiceAction serviceAction
+		ServiceActionManager serviceAction
 	) : ControllerBase
 	{
 		[HttpPost("RemoteCommand")]

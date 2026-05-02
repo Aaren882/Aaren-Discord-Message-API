@@ -8,7 +8,7 @@ public interface IArma3ActionManager
 	Task GetAction(Arma3Action action);
 }
 
-public sealed class Arma3ActionManager(ServiceAction serviceAction) : IArma3ActionManager
+public sealed class Arma3ActionManager(ServiceActionManager serviceAction) : IArma3ActionManager
 {
 	public Task GetAction(Arma3Action action)
 	{
