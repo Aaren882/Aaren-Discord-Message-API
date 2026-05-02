@@ -60,11 +60,11 @@ public sealed class ServiceDbContext: DbContext
 			await ServerInfoList.AddAsync(new ServerInfoTemplate
 			{
 				messageId = parsedId,
-				filePath = fileInfo.FullName,
+				messageTemplatePath = fileInfo.FullName,
 				fileCreateTime = fileInfo.CreationTime
 			});
 		} else {
-			exist.filePath = fileInfo.FullName;
+			exist.messageTemplatePath = fileInfo.FullName;
 			exist.lastUpdate = DateTime.Now;
 		}
 		
