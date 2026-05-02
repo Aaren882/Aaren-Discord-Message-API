@@ -15,7 +15,7 @@ public class ServiceInteractions
 	private static readonly Arma3ServiceSecret ServiceSecret = GetServiceSecret();
 	
 	private string? AccessName;
-	public readonly string RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
+	public readonly string RPTDirectory = Path.GetFullPath(GetServiceSecret().RPT_Directory);
 
 	public event Action<IdentityRolesReturnPayload>? ServiceAccessResult = (authTokenPayload) => {
 		var callBack = new Arma3PayloadCallBack(
@@ -24,11 +24,11 @@ public class ServiceInteractions
 		);
 		Util.CallExtensionCallback(Callback, callBack);
 	};
-	private readonly WebSocketClient _wsClient = new (ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
+	public readonly WebSocketClient WsClient = new (ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
 
 	public ServiceInteractions()
 	{
-		_wsClient.Connected += () =>
+		WsClient.Connected += () =>
 		{
 			Logger(null, "INFO: Connected to server");
 			
@@ -38,7 +38,7 @@ public class ServiceInteractions
 			);
 			Util.CallExtensionCallback(Callback, callBack);
 		};
-		_wsClient.Disconnected += () =>
+		WsClient.Disconnected += () =>
 		{
 			Logger(null, "INFO: Disconnected from server");
 			
@@ -48,7 +48,7 @@ public class ServiceInteractions
 			);
 			Util.CallExtensionCallback(Callback, callBack);
 		};
-		_wsClient.MessageReceived += (message) =>
+		WsClient.MessageReceived += (message) =>
 		{
 			Tracer("MessageReceived (message)", message.ToString());
 			Util.CallExtensionCallback(Callback, message);
@@ -57,18 +57,18 @@ public class ServiceInteractions
 	
 	public async Task EstablishWebSocketConnection(string accessName, string profilePayload)
 	{
-		if (_wsClient.Status() == WebSocketState.Open)
+		if (WsClient.Status() == WebSocketState.Open)
 		{
 			Logger(null, "WebSocket connection already established.");
 			return;
 		}
 		
 		var tokenPayload = await GetAccessToken(accessName, profilePayload);
-		await _wsClient.ConnectAsync(tokenPayload.AuthToken);
+		await WsClient.ConnectAsync(tokenPayload.AuthToken);
 	}
 	public async Task DisconnectWebSocket(string description = "Client disconnect")
 	{
-		await _wsClient.DisconnectAsync(description);
+		await WsClient.DisconnectAsync(description);
 	}
 	public async Task ReconnectWebSocket(string profilePayload)
 	{
@@ -76,10 +76,11 @@ public class ServiceInteractions
 		await EstablishWebSocketConnection(AccessName, profilePayload);
 	}
 	public Task SendWebSocketMessage(string messageJson)
-		=> _wsClient.SendMessageAsync(messageJson);
+		=> WsClient.SendMessageAsync(messageJson);
 
 	public async Task SendWebSocketBinaries(Dictionary<string,string> binaryDict, int chunkSize = 64 * 1024)
 	{
+		Logger(null, "INFO: Sending binaries");
 		foreach (var path in binaryDict)
 			await SendWebSocketBinary(path);
 	}
@@ -103,7 +104,7 @@ public class ServiceInteractions
 		try
 		{
 			await SendWebSocketMessage(metaJson);
-			await _wsClient.SendBinaryAsync(filePath, metadata, chunkSize);
+			await WsClient.SendBinaryAsync(filePath, metadata, chunkSize);
 		}
 		catch (Exception e)
 		{
@@ -117,6 +118,7 @@ public class ServiceInteractions
 	    var fileInfo = new FileInfo(filePath);
 	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
 
+	    Logger(null, $"INFO: Sending binary file \"{fileInfo.Name}\"");
 	    // Send Metadata (as text message)
 	    var metadata = new Arma3PayloadBinary
 	    (
@@ -131,7 +133,7 @@ public class ServiceInteractions
 		try
 		{
 			await SendWebSocketMessage(metaJson);
-			await _wsClient.SendBinaryAsync(filePath, metadata, chunkSize);
+			await WsClient.SendBinaryAsync(filePath, metadata, chunkSize);
 		}
 		catch (Exception e)
 		{
