@@ -71,7 +71,7 @@ public sealed class ServiceDbContext: DbContext
 		await SaveChangesAsync();
 	}
 	
-	public async Task<ServerIdentity?> GetServerIdentityMessageIdAsync(string profileName)
+	public async Task<ServerIdentity?> GetServerIdentityFromProfileNameAsync(string profileName)
 	{
 		var exist = await ServerIdentities.FirstOrDefaultAsync(
 			o => o.profileName == profileName
@@ -79,6 +79,17 @@ public sealed class ServiceDbContext: DbContext
 
 		if (exist is null)
 			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
+		
+		return exist;
+	}
+	public async Task<ServerIdentity?> GetServerIdentityFromMessageIdAsync(ulong messageId)
+	{
+		var exist = await ServerIdentities.FirstOrDefaultAsync(
+			o => o.messageId == messageId
+		);
+
+		if (exist is null)
+			logger.LogError("\"{messageId}\" ServerIdentity  is not found !!", messageId);
 		
 		return exist;
 	}

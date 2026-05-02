@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Arma3WebService.Entity;
 using Arma3WebService.Entity.DiscordBotAction;
+using Arma3WebService.Managers;
 using Discord;
 using Discord.WebSocket;
 using ServiceConnection.Discord;
@@ -17,8 +18,10 @@ namespace Arma3WebService.Models
 		public Task<IUserMessage> SendMessageAsync(DiscordMessageDto message);
 	}
 
-	public sealed class DiscordBotService(ILogger<DiscordBotService> logger)
-		: BackgroundService, IDiscordBotService
+	public sealed class DiscordBotService(
+		ILogger<DiscordBotService> logger,
+		RemoteStateManager remoteStateManager
+	) : BackgroundService, IDiscordBotService
 	{
 		private static readonly DiscordSocketClient Client = new();
 		private static readonly ulong TestChannel = ulong.Parse(Environment.GetEnvironmentVariable("TestChannel")!);
@@ -47,7 +50,10 @@ namespace Arma3WebService.Models
 			{
 				try
 				{
-					var json = await File.ReadAllTextAsync("testBotCreateModal.json", stoppingToken);
+					var currentTemplate = await remoteStateManager.GetServerInfoTemplate(component.Message.Id);
+					if (currentTemplate.messageActionPath is null) return;
+					
+					var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
 					var deserialize = JsonSerializer.Deserialize(
 						json,
 						DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
