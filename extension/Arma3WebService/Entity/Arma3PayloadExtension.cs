@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Arma3WebService.DBContext;
+using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Components.Entity;
 using Discord;
@@ -14,24 +15,6 @@ public enum Arma3PayLoadTypeExtension
 	UpdateServerIdentity = 2,
 	UpdateServerInfo = 3,
 	RegisterServerIdentity = 4,
-}
-
-public record struct Arma3ClientProfileConfiguration
-{
-	private string _messageTemplate;
-	private string _messageActions;
-
-	public string MessageTemplate
-	{
-		get => _messageTemplate;
-		set => _messageTemplate = Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}");
-	}
-
-	public string MessageActions
-	{
-		get => _messageActions;
-		set => _messageTemplate = Path.GetFullPath($".profile/MessageActions/{Path.GetFileName(value)}");
-	}
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "ProcessType")]
@@ -94,25 +77,23 @@ public record UpdateServerInfoTemplateExtension
 	{
 		var messageId = ulong.Parse(MessageId);
 		var exist = await dbContext.ServerInfoList.FirstOrDefaultAsync(x => x.messageId == messageId);
-
-		var fullPath = Configuration.MessageTemplate;
-		var fileInfo = new FileInfo(fullPath);
+		
 		if (exist == null)
 		{
-			await dbContext.ServerInfoList.AddAsync(new ServerInfoTemplate
-			{
-				messageId = messageId,
-				filePath = fullPath,
-				fileCreateTime = fileInfo.CreationTime
-			});
+			await dbContext.ServerInfoList.AddAsync(
+				Configuration.CreateInfoTemplate(messageId)
+			);
 		}
 		else
 		{
-			exist.filePath = fullPath;
-			exist.fileCreateTime = fileInfo.CreationTime;
+			Configuration.ModifyInfoTemplate(exist);
 		}
 		
 		await dbContext.SaveChangesAsync();
+		
+		//- Update cache for other services
+		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
+		remoteStateManager.UpdateExistingServerInfoCache(messageId, exist!);
 	}
 	/*public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
@@ -129,6 +110,48 @@ public record UpdateServerInfoTemplateExtension
 
 		return new FileInfo(file);
 	}*/
+}
+
+public record struct Arma3ClientProfileConfiguration
+{
+	private FileInfo _messageTemplate;
+	private FileInfo _messageActions;
+
+	public string MessageTemplate
+	{
+		get => _messageTemplate.Exists ? 
+			_messageTemplate.FullName : 
+			throw new FileNotFoundException("\"MessageTemplate\" does not exist.");
+		
+		set => _messageTemplate = new FileInfo(
+			Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}")
+		);
+	}
+
+	public string? MessageActions
+	{
+		get => _messageActions.Exists ? _messageActions.FullName : null;
+		set => _messageActions = new FileInfo(
+			Path.GetFullPath($".profile/MessageActions/{Path.GetFileName(value)}")
+		);
+	}
+
+	public ServerInfoTemplate CreateInfoTemplate(ulong messageId)
+	{
+		return new ServerInfoTemplate
+		{
+			messageId = messageId,
+			messageTemplatePath = MessageTemplate,
+			messageActionPath = MessageActions,
+			fileCreateTime = _messageTemplate.CreationTime
+		};
+	}
+	public void ModifyInfoTemplate(ServerInfoTemplate template)
+	{
+		template.messageTemplatePath = MessageTemplate;
+		template.messageActionPath = MessageActions;
+		template.fileCreateTime = _messageTemplate.CreationTime;
+	}
 }
 
 public record RegisterServerIdentity

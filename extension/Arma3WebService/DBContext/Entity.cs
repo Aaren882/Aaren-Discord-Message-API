@@ -14,7 +14,8 @@ public class ServerIdentity
 public class ServerInfoTemplate
 {
 	public ulong messageId { get; set; }
-	public string filePath  { get; set; }
+	public string messageTemplatePath { get; set; }
+	public string? messageActionPath { get; set; }
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
 	public DateTime fileCreateTime  { get; set; }
 }
