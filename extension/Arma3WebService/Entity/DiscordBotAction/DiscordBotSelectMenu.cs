@@ -8,7 +8,7 @@ namespace Arma3WebService.Entity.DiscordBotAction;
 [JsonDerivedType(typeof(DiscordBotSelectMenuRespond), nameof(DiscordBotButtonActionType.Respond))]
 public abstract record DiscordBotSelectMenu : DiscordBotActionBase
 {
-	public override Task Run(SocketMessageComponent component) => Task.CompletedTask;
+	public virtual Task Run(SocketMessageComponent component, string selectedValue) => Task.CompletedTask;
 }
 
 public record DiscordBotSelectMenuRespond(
@@ -18,12 +18,11 @@ public record DiscordBotSelectMenuRespond(
 	RequestOptions? options
 ): DiscordBotSelectMenu
 {
-	public override async Task Run(SocketMessageComponent component)
+	public override async Task Run(SocketMessageComponent component, string? selectedValue)
 	{
 		var embed = message.ConvertEmbeds();
 		var components = message.ConvertComponents();
 		var pollProperties = message.ConvertPolls();
-		var selectedValue = component.Data.Values.First();
 		
 		await component.RespondAsync(
 			text: $"You selected: {selectedValue}",

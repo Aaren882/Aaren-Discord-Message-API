@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Discord;
 using Discord.WebSocket;
 
 namespace Arma3WebService.Entity.DiscordBotAction;
@@ -30,7 +31,7 @@ public class DiscordBotInteraction
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "componentType")]
-[JsonDerivedType(typeof(DiscordBotButtonActions), nameof(DiscordBotActionComponentType.Button))]
+[JsonDerivedType(typeof(DiscordBotInteractionActions), nameof(DiscordBotActionComponentType.Button))]
 [JsonDerivedType(typeof(DiscordBotSelectMenuActions), nameof(DiscordBotActionComponentType.SelectMenu))]
 public abstract record DiscordBotActionsBase
 {
@@ -38,9 +39,9 @@ public abstract record DiscordBotActionsBase
 	public abstract Task Execute(SocketMessageComponent component);
 }
 
-public record DiscordBotButtonActions : DiscordBotActionsBase
+public record DiscordBotInteractionActions : DiscordBotActionsBase
 {
-	public IEnumerable<DiscordBotButton> Steps { get; set; }
+	public IEnumerable<DiscordBotSimpleAction> Steps { get; set; }
 	public override async Task Execute(SocketMessageComponent component)
 	{
 		foreach (var discordBotAction in Steps)
@@ -49,10 +50,13 @@ public record DiscordBotButtonActions : DiscordBotActionsBase
 }
 public record DiscordBotSelectMenuActions : DiscordBotActionsBase
 {
-	public IEnumerable<DiscordBotSelectMenu> Steps { get; set; }
+	public IDictionary<string, DiscordBotInteractionActions> Options { get; set; }
 	public override async Task Execute(SocketMessageComponent component)
 	{
-		foreach (var discordBotAction in Steps)
+		var selectedValue = component.Data.Values.First();
+		var action = Options[selectedValue];
+		
+		foreach (var discordBotAction in action.Steps.ToList())
 			await discordBotAction.Run(component);
 	}
 }

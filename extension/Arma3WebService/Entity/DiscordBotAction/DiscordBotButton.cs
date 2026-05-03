@@ -15,7 +15,7 @@ public enum DiscordBotButtonActionType
 [JsonDerivedType(typeof(DiscordBotButtonRespond), nameof(DiscordBotButtonActionType.Respond))]
 [JsonDerivedType(typeof(DiscordBotButtonWithFile), nameof(DiscordBotButtonActionType.WithFile))]
 [JsonDerivedType(typeof(DiscordBotButtonModalRespond), nameof(DiscordBotButtonActionType.RespondModal))]
-public abstract record DiscordBotButton : DiscordBotActionBase
+public abstract record DiscordBotSimpleAction : DiscordBotActionBase
 {
 	public override Task Run(SocketMessageComponent component) => Task.CompletedTask;
 }
@@ -25,7 +25,7 @@ public record DiscordBotButtonRespond(
 	bool? ephemeral,
 	AllowedMentions? allowedMentions,
 	RequestOptions? options
-): DiscordBotButton
+): DiscordBotSimpleAction
 {
 	public override async Task Run(SocketMessageComponent component)
 	{
@@ -52,7 +52,7 @@ public record DiscordBotButtonWithFile(
 	bool? ephemeral,
 	AllowedMentions? allowedMentions,
 	RequestOptions? options
-): DiscordBotButton
+): DiscordBotSimpleAction
 {
 	public override async Task Run(SocketMessageComponent component) {
 		if (message.File is null)
@@ -90,7 +90,7 @@ public record DiscordBotButtonWithFile(
 public record DiscordBotButtonModalRespond(
 	DiscordDto.ModalComponent message,
 	RequestOptions? options
-): DiscordBotButton
+): DiscordBotSimpleAction
 {
 	public override async Task Run(SocketMessageComponent component)
 	{
