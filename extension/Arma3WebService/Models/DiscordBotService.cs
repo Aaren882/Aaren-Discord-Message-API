@@ -65,6 +65,26 @@ namespace Arma3WebService.Models
 					await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
 				}
 			};
+			Client.SelectMenuExecuted += async (component) =>
+			{
+				try
+				{
+					var currentTemplate = await remoteStateManager.GetServerInfoTemplate(component.Message.Id);
+					if (currentTemplate.messageActionPath is null) return;
+					
+					var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+					var deserialize = JsonSerializer.Deserialize(
+						json,
+						DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
+					);
+					await deserialize!.Execute(component);
+				}
+				catch (Exception e)
+				{
+					logger.LogError("ERROR ButtonExecuted : {Error}", e.Message);
+					await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
+				}
+			};
 			
 			await Client.LoginAsync(
 				TokenType.Bot, 
