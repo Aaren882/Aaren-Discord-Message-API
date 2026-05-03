@@ -93,7 +93,7 @@ public record UpdateServerInfoTemplateExtension
 		
 		//- Update cache for other services
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
-		remoteStateManager.UpdateExistingServerInfoCache(messageId, exist!);
+		remoteStateManager.TryUpdateExistingServerInfoCache(messageId, exist!);
 	}
 	/*public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{

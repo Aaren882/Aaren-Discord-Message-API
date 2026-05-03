@@ -32,10 +32,11 @@ public sealed class RemoteStateManager(
 		return connection;
 	}
 	
-	internal void UpdateExistingServerInfoCache(ulong messageId, ServerInfoTemplate serverInfo)
+	internal bool TryUpdateExistingServerInfoCache(ulong messageId, ServerInfoTemplate serverInfo)
 	{
-		if (_serverInfoCache.TryGetValue(messageId, out _)) return;
+		if (!_serverInfoCache.TryGetValue(messageId, out _)) return false;
 		_serverInfoCache[messageId] = serverInfo;
+		return true;
 	}
 
 	internal async Task<ServerInfoTemplate> GetServerInfoTemplate(ulong messageId)
