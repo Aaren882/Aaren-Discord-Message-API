@@ -12,6 +12,7 @@ public sealed class RemoteStateManager(
 {
 	private readonly ConcurrentDictionary<ulong, IConnection> _gameSessionCache = [];
 	private readonly ConcurrentDictionary<ulong, ServerInfoTemplate> _serverInfoCache = [];
+	private readonly ConcurrentDictionary<string, ulong> _serverInfoProfileNameCache = [];
 
 	internal async Task<IConnection> GetGameSession(ulong messageId)
 	{
@@ -39,7 +40,7 @@ public sealed class RemoteStateManager(
 		return true;
 	}
 
-	internal async Task<ServerInfoTemplate> GetServerInfoTemplate(ulong messageId)
+	internal async Task<ServerInfoTemplate> GetServerInfoTemplateAsync(ulong messageId)
 	{
 		if (_serverInfoCache.TryGetValue(messageId, out var template))
 			return template;
@@ -56,5 +57,22 @@ public sealed class RemoteStateManager(
 			(_, _) => infoTemplate);
 		
 		return infoTemplate;
-	} 
+	}
+	internal async Task<ServerInfoTemplate> GetServerInfoTemplateAsync(string profileName)
+	{
+		if (_serverInfoProfileNameCache.TryGetValue(profileName, out var messageId))
+			return await GetServerInfoTemplateAsync(messageId);
+		
+		using var scope = ServiceScopeFactory.CreateScope();
+		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+
+		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(profileName);
+		if (serverIdentity is null)
+			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
+
+		_serverInfoProfileNameCache.AddOrUpdate(profileName, serverIdentity.messageId, 
+			(_, _) => serverIdentity.messageId);
+		
+		return await GetServerInfoTemplateAsync(serverIdentity.messageId);
+	}
 }

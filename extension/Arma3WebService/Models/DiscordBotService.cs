@@ -3,6 +3,7 @@ using Arma3WebService.Entity;
 using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Managers;
 using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 
 namespace Arma3WebService.Models
@@ -19,10 +20,12 @@ namespace Arma3WebService.Models
 
 	public sealed class DiscordBotService(
 		ILogger<DiscordBotService> logger,
+		IServiceProvider serviceProvider,
 		RemoteStateManager remoteStateManager
 	) : BackgroundService, IDiscordBotService
 	{
 		private static readonly DiscordSocketClient Client = new();
+		public static readonly InteractionService DiscordInteractionService = new(Client);
 		private static readonly ulong TestChannel = ulong.Parse(Environment.GetEnvironmentVariable("TestChannel")!);
 
 		public DiscordSocketClient GetClient() => Client;
@@ -49,7 +52,7 @@ namespace Arma3WebService.Models
 			{
 				try
 				{
-					var currentTemplate = await remoteStateManager.GetServerInfoTemplate(component.Message.Id);
+					var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
 					if (currentTemplate.messageActionPath is null) return;
 					
 					var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
@@ -61,7 +64,7 @@ namespace Arma3WebService.Models
 				}
 				catch (Exception e)
 				{
-					logger.LogError("ERROR ButtonExecuted : {Error}", e.Message);
+					logger.LogError("ButtonExecuted : {Error}", e.Message);
 					await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
 				}
 			};
@@ -69,7 +72,7 @@ namespace Arma3WebService.Models
 			{
 				try
 				{
-					var currentTemplate = await remoteStateManager.GetServerInfoTemplate(component.Message.Id);
+					var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
 					if (currentTemplate.messageActionPath is null) return;
 					
 					var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
@@ -81,8 +84,29 @@ namespace Arma3WebService.Models
 				}
 				catch (Exception e)
 				{
-					logger.LogError("ERROR ButtonExecuted : {Error}", e.Message);
+					logger.LogError("SelectMenuExecuted : {Error}", e.Message);
 					await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
+				}
+			};
+
+			var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
+			webSocketService.OnDisconnected += async entity =>
+			{
+				try
+				{
+					var profileName = entity.GetIdentity();
+					var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(profileName);
+
+					var json = await File.ReadAllTextAsync(currentTemplate.messageOfflinePath, stoppingToken);
+					var deserialize = JsonSerializer.Deserialize(
+						json,
+						MsgPayload_JsonContext.Default.DiscordMessageDto
+					);
+					await ModifyMessageAsync(currentTemplate.messageId, deserialize!);
+				}
+				catch(Exception e)
+				{
+					logger.LogError("GameSession Disconnected : {Error}", e.Message);
 				}
 			};
 			
