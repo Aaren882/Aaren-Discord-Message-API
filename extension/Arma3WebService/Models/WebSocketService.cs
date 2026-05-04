@@ -12,6 +12,8 @@ namespace Arma3WebService.Models
 		IConnection GetConnection(string connectionIdentity);
 		Task InvokeArmaCallBack(Arma3RemoteCommand command);
 		Task CreateConnection(HttpContext context);
+		event Action<WebsocketContextEntity>? OnConnected;
+		event Action<WebsocketContextEntity>? OnDisconnected;
 	}
 
 	public sealed class WebSocketService(
@@ -25,6 +27,8 @@ namespace Arma3WebService.Models
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
 		private readonly ConcurrentDictionary<string, IConnection> Connections = new();
+		public event Action<WebsocketContextEntity>? OnConnected;
+		public event Action<WebsocketContextEntity>? OnDisconnected;
 
 		public IConnection GetConnection(string connectionIdentity)
 		{
@@ -96,6 +100,7 @@ namespace Arma3WebService.Models
 					Connections.Count
 				);
 
+				OnConnected?.Invoke(contextEntity);
 				await connectionManager.HandleConnection(connection);
 			}
 			catch (OperationCanceledException)
@@ -144,14 +149,21 @@ namespace Arma3WebService.Models
 			}
 			finally
 			{
-				Connections.TryRemove(connectionIdentity, out connection!);
-				_logger.LogInformation(
-					"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}", 
-					connection.CloseStatusDescription(),
-					contextEntity.GetIdentity(),
-					contextEntity.ClientIpAddress,
-					Connections.Count
-				);
+				if (Connections.TryRemove(connectionIdentity, out connection!))
+				{
+					OnDisconnected?.Invoke(contextEntity);
+					_logger.LogInformation(
+						"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}", 
+						connection.CloseStatusDescription(),
+						contextEntity.GetIdentity(),
+						contextEntity.ClientIpAddress,
+						Connections.Count
+					);
+				}
+				else
+				{
+					_logger.LogError("{connectionIdentity} was not found.", connectionIdentity);
+				}
 			}
 		}
 
