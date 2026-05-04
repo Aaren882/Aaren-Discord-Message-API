@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text.Json.Serialization;
 using Discord;
 using Discord.WebSocket;
@@ -11,13 +12,11 @@ public enum DiscordBotActionComponentType
 	Modal,
 }
 
-public class DiscordBotInteraction
+public sealed class DiscordBotInteraction: Dictionary<string, DiscordBotActionsBase>
 {
-	public IDictionary<string, DiscordBotActionsBase> Actions { get; set; }
-
 	public async Task Execute(SocketMessageComponent component)
 	{
-		var queried = Actions
+		var queried = this
 			.Where(
 				x => x.Key == component.Data.CustomId
 			)
