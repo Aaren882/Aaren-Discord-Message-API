@@ -43,4 +43,10 @@
     <ProjectReference Include="..\Components\Components.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include=".profile\MessageOfflineTemplate\default.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
