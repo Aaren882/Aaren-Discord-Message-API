@@ -2,13 +2,11 @@ using Discord.WebSocket;
 
 namespace Arma3WebService.Entity.DiscordBotAction;
 
-public record DiscordBotModalInteraction
+public sealed class DiscordBotModalInteraction: Dictionary<string, DiscordBotModalActions>
 {
-	public IDictionary<string, DiscordBotModalActions> Actions { get; set; }
-
 	public async Task Execute(SocketModal modal)
 	{
-		var results = Actions.Join(
+		var results = this.Join(
 			modal.Data.Components,
 			action => action.Key,
 			component => component.CustomId,
