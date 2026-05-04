@@ -14,7 +14,7 @@ public sealed class RemoteStateManager(
 	private readonly ConcurrentDictionary<ulong, ServerInfoTemplate> _serverInfoCache = [];
 	private readonly ConcurrentDictionary<string, ulong> _serverInfoProfileNameCache = [];
 
-	internal async Task<IConnection> GetGameSession(ulong messageId)
+	internal async Task<IConnection> GetGameSessionAsync(ulong messageId)
 	{
 		if (_gameSessionCache.TryGetValue(messageId, out var session))
 			return session;
