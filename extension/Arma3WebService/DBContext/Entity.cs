@@ -16,6 +16,7 @@ public class ServerInfoTemplate
 	public ulong messageId { get; set; }
 	public string messageTemplatePath { get; set; }
 	public string? messageActionPath { get; set; }
+	public string messageOfflinePath { get; set; } = Path.GetFullPath(".profile/MessageOfflineTemplate/default.json");
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
 	public DateTime fileCreateTime  { get; set; }
 }
