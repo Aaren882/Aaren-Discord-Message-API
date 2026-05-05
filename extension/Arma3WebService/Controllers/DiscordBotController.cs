@@ -14,13 +14,6 @@ namespace Arma3WebService.Controllers
 			"Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 		};
 
-		[HttpPost(Name = "PostBotOnline")]
-		public async Task<IActionResult> PostBotOnline(string text)
-		{
-			var result = await service.PostBotOnline(text);
-			return Ok(result);
-		}
-
 		//////////////////////
 		[HttpGet($"File/{{id}}")]
 		public async Task<IActionResult> DownloadFile(string id)
