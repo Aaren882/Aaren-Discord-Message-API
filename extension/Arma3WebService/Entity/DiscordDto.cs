@@ -332,6 +332,8 @@ public record DiscordMessageDto : DiscordMessage
 				
 				return new EmbedBuilder
 				{
+					Title = x.title,
+					Description = x.description,
 					Author = new EmbedAuthorBuilder
 					{
 						IconUrl = x.author.icon_url,
@@ -340,7 +342,6 @@ public record DiscordMessageDto : DiscordMessage
 					},
 					ThumbnailUrl = x.thumbnail.url,
 					ImageUrl = x.image.url,
-					Description = x.description,
 					Fields = fields,
 					Footer = new EmbedFooterBuilder
 					{
