@@ -26,7 +26,7 @@ namespace Arma3WebService.Models
 	{
 		private static readonly DiscordSocketClient Client = new();
 		public static readonly InteractionService DiscordInteractionService = new(Client);
-		private static readonly ulong TestChannel = ulong.Parse(Environment.GetEnvironmentVariable("TestChannel")!);
+		private static readonly ulong MonitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel")!);
 
 		public DiscordSocketClient GetClient() => Client;
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -119,7 +119,7 @@ namespace Arma3WebService.Models
 		
 		public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
 		{
-			var channel = await GetMessageChannelAsync(TestChannel);
+			var channel = await GetMessageChannelAsync(MonitorChannel);
 
 			var modifyResult = await channel!.ModifyMessageAsync(messageID, msg =>
 			{
@@ -140,7 +140,7 @@ namespace Arma3WebService.Models
 		
 		public async Task<IUserMessage> SendMessageAsync(DiscordMessageDto message)
 		{
-			var channel = await GetMessageChannelAsync(TestChannel);
+			var channel = await GetMessageChannelAsync(MonitorChannel);
 
 			var component = message.ConvertComponents();
 			
@@ -179,7 +179,7 @@ namespace Arma3WebService.Models
 
 		public async Task<IUserMessage> PostBotOnline(string text)
 		{
-			var channel = await GetMessageChannelAsync(TestChannel);
+			var channel = await GetMessageChannelAsync(MonitorChannel);
 			
 			var buttton = ButtonBuilder
 				.CreatePrimaryButton("I'm button", "custom-id-1");
