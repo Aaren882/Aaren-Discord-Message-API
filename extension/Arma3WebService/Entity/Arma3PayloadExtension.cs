@@ -48,7 +48,9 @@ public record DiscordJsonExtension
 	{
 		return ulong.TryParse(MessageId, out var id) ? 
 			service.ModifyMessageAsync(id, DiscordMessage) : 
-			service.SendMessageAsync(DiscordMessage);
+			service.SendMessageAsync(
+				service.GetPresetMessageChannelId(DiscordBotChannel.Monitor),
+				DiscordMessage);
 	}
 }
 
