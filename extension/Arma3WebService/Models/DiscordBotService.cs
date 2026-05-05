@@ -177,23 +177,6 @@ namespace Arma3WebService.Models
 			return await sentMessage;
 		}
 
-		public async Task<IUserMessage> PostBotOnline(string text)
-		{
-			var channel = await GetMessageChannelAsync(MonitorChannel);
-			
-			var buttton = ButtonBuilder
-				.CreatePrimaryButton("I'm button", "custom-id-1");
-			// var buttton = ButtonBuilder
-			// 	.CreateLinkButton("i'm Sec", requestURL);
-
-			var component = new ComponentBuilder()
-				.WithButton(buttton);
-				// .WithSelectMenu(menuBuilder);
-				
-			var message = await channel.SendMessageAsync(text: text, components: component.Build());
-
-			return message;
-		}
 
 		public Task<byte[]> SendLocalFile(string filename)
 			=> File.ReadAllBytesAsync(Path.GetFullPath(filename));
