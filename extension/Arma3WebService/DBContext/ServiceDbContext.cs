@@ -18,6 +18,7 @@ public sealed class ServiceDbContext: DbContext
 	
 	public DbSet<ServerIdentity> ServerIdentities { get; set; }
 	public DbSet<ServerInfoTemplate> ServerInfoList { get; set; }
+	public DbSet<InternalManagement> InternalManagement { get; set; }
 
 	public async Task<bool> CreateServerIdentityAsync(string profileName, string messageId)
 	{
