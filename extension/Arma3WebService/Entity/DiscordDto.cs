@@ -313,34 +313,44 @@ public record DiscordMessageDto : DiscordMessage
 	}
 	public Embed[]? ConvertEmbeds()
 	{
-		return Embeds?.Select(x => 
-			new EmbedBuilder
+		return Embeds?.Select(x =>
 			{
-				Author = new EmbedAuthorBuilder
+				List<EmbedFieldBuilder> fields = [];
+				if (x.fields is not null)
 				{
-					IconUrl	= x.author.icon_url,
-					Name = x.author.name,
-					Url = x.author.url
-				},
-				ThumbnailUrl = x.thumbnail.url,
-				ImageUrl = x.image.url,
-				Description = x.description,
-				Fields = x.fields
-					.Select(f => new EmbedFieldBuilder
+					fields = x.fields
+						.Select(f => 
+							new EmbedFieldBuilder
+							{
+								IsInline = f.inline,
+								Name = f.name,
+								Value = f.value
+							}
+						).ToList();
+				}
+				
+				
+				return new EmbedBuilder
+				{
+					Author = new EmbedAuthorBuilder
 					{
-						IsInline = f.inline,
-						Name = f.name,
-						Value = f.value 
-					})
-					.ToList(),
-				Footer = new EmbedFooterBuilder
-				{
-					IconUrl	= x.footer.icon_url,
-					Text = x.footer.text
-				},
-				Timestamp = string.IsNullOrEmpty(x.timestamp) ? null : DateTime.Parse(x.timestamp),
-				Color = string.IsNullOrEmpty(x.color) ? null : uint.Parse(x.color)
-			}.Build()
+						IconUrl = x.author.icon_url,
+						Name = x.author.name,
+						Url = x.author.url
+					},
+					ThumbnailUrl = x.thumbnail.url,
+					ImageUrl = x.image.url,
+					Description = x.description,
+					Fields = fields,
+					Footer = new EmbedFooterBuilder
+					{
+						IconUrl = x.footer.icon_url,
+						Text = x.footer.text
+					},
+					Timestamp = string.IsNullOrEmpty(x.timestamp) ? null : DateTime.Parse(x.timestamp),
+					Color = string.IsNullOrEmpty(x.color) ? null : uint.Parse(x.color)
+				}.Build();
+			}
 		).ToArray();
 	}
 	public PollProperties? ConvertPolls() => poll?.Build();

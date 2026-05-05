@@ -111,7 +111,7 @@ public record struct EmbedData
     public Types.Image image { get; init; }
     public Types.Thumbnail thumbnail { get; init; }
     public Types.Footer footer { get; init; }
-    public List<Types.FieldEmbed> fields { get; init; }
+    public List<Types.FieldEmbed>? fields { get; init; }
 
     public EmbedData(List<string> data, List<List<string>> fieldsData)
     {
