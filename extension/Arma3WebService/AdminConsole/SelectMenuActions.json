@@ -1,0 +1,31 @@
+{
+  "admin_advanced_tools" : {
+    "componentType": "SelectMenu",
+    "Options": {
+      "upload_list": {
+        "Steps": [
+          {
+            "$type": "RespondModal",
+            "message": {
+              "custom_id": "bug_submit_modal",
+              "title": "Upload Mod List (html)",
+              "components": [
+                {
+                  "type": 18,
+                  "label": "File Upload",
+                  "description": "Please upload the mod list for the mission. (It only takes one html file)",
+                  "component": {
+                    "type": 19,
+                    "custom_id": "file_upload",
+                    "min_values": 1,
+                    "required": true
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

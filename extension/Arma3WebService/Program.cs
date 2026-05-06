@@ -29,11 +29,12 @@ namespace Arma3WebService
 			builder.Services.AddHostedService<DiscordBotService>();
 			//- Register Bot Service -//
 
-			builder.Services.AddSingleton<WebSocketService>();
+			// builder.Services.AddSingleton<WebSocketService>();
 			builder.Services.AddHostedService<WebSocketService>();
 			//- Register WebSocket Service -//
 
 			//- Add controllers
+			builder.Services.AddSingleton<AdminConsoleManager>();
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 			
