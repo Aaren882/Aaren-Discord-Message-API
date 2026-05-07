@@ -28,94 +28,61 @@ public interface IDiscordBotService
 public sealed class DiscordBotService(
 	ILogger<DiscordBotService> logger,
 	IServiceProvider serviceProvider,
-	RemoteStateManager remoteStateManager,
-	IServiceScopeFactory serviceScopeFactory
+	RemoteStateManager remoteStateManager
 ) : BackgroundService, IDiscordBotService
 {
 	private static readonly DiscordSocketClient Client = new();
-	public static readonly InteractionService DiscordInteractionService = new(Client);
 	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel")!);
-	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel")!);
 
 	public DiscordSocketClient GetClient() => Client;
-	private async Task CreateAdminConsole()
-	{
-		var channel = await GetMessageChannelAsync(_adminChannel);
-		try
-		{
-			using var scope = serviceScopeFactory.CreateScope();
-			await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
-			var exist = dbContext.InternalManagement.FirstOrDefault(
-				o => 
-					o.managementType == InternalManagementType.AdminConsole
-				);
-
-			IMessage message;
-			var updateColumn = false;
-			
-			//- Checking DB data
-			if (exist is null || true)
-			{
-				var json = await File.ReadAllTextAsync("AdminConsole.json");
-				var deserialize = JsonSerializer.Deserialize(
-					json,
-					MsgPayload_JsonContext.Default.DiscordMessageDto
-				);
-				message = await SendMessageAsync(_adminChannel, deserialize!);
-
-				await dbContext.InternalManagement.AddAsync(
-					new InternalManagement
-					{
-						messageId = message.Id,
-						description = "it's used for handling remote action on Discord."
-					}
-				);
-			} else
-			{
-				message = await channel.GetMessageAsync(exist.messageId);
-				updateColumn = exist.messageId != message.Id;
-				
-				if (updateColumn) exist.messageId = message.Id;
-			}
-			
-			//- Make sure DB updated
-			if (updateColumn)
-				await dbContext.SaveChangesAsync();
-		}
-		catch (Exception e)
-		{
-			logger.LogError("ERROR CreateAdminConsole : {Error}", e.Message);
-			await channel.SendMessageAsync($"Exception : {e.Message}");
-		}
-	}
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
+		await Client.LoginAsync(
+			TokenType.Bot, 
+			Environment.GetEnvironmentVariable("BotToken")
+		);
+		await Client.StartAsync();
+		
+		var adminConsoleService = serviceProvider.GetRequiredService<AdminConsoleManager>();
+		await adminConsoleService.CreateAdminConsole();
+		
 		Client.Log += Log;
-		Client.ModalSubmitted += async (component) =>
+		Client.ModalSubmitted += async (socketModal) =>
 		{
 			try
 			{
-				var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
+				string json;
+				if (socketModal.Message.Id == adminConsoleService.AdminMessageId)
+					json = await adminConsoleService.GetActionJson(AdminConsoleManager.ActionType.Modal);
+				else 
+					json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
+				
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotModalInteraction
 				);
-				await deserialize!.Execute(component);
+				await deserialize!.Execute(socketModal);
 			}
 			catch (Exception e)
 			{
-				logger.LogError("ERROR ModalSubmitted : {Error}", e.Message);
-				await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
+				logger.LogError("ModalSubmitted : {Error}", e.Message);
+				await socketModal.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
 			}
 		};
 		Client.ButtonExecuted += async (component) =>
 		{
 			try
 			{
-				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
-				if (currentTemplate.messageActionPath is null) return;
+				string json;
+				if (component.Message.Id == adminConsoleService.AdminMessageId)
+					json = await adminConsoleService.GetActionJson(AdminConsoleManager.ActionType.Button);
+				else
+				{
+					var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
+					if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
+					json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+				}
 				
-				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
@@ -132,10 +99,16 @@ public sealed class DiscordBotService(
 		{
 			try
 			{
-				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
-				if (currentTemplate.messageActionPath is null) return;
+				string json;
+				if (component.Message.Id == adminConsoleService.AdminMessageId)
+					json = await adminConsoleService.GetActionJson(AdminConsoleManager.ActionType.SelectMenu);
+				else 
+				{
+					var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
+					if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
+					json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+				}
 				
-				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
@@ -150,7 +123,7 @@ public sealed class DiscordBotService(
 		};
 
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
-		webSocketService.OnDisconnected += async entity =>
+		webSocketService.OnDisconnected += async (entity, connection) =>
 		{
 			try
 			{
@@ -169,14 +142,6 @@ public sealed class DiscordBotService(
 				logger.LogError("GameSession Disconnected : {Error}", e.Message);
 			}
 		};
-		
-		await Client.LoginAsync(
-			TokenType.Bot, 
-			Environment.GetEnvironmentVariable("BotToken")
-		);
-		await Client.StartAsync();
-
-		await CreateAdminConsole();
 	}
 	
 	public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
@@ -204,7 +169,7 @@ public sealed class DiscordBotService(
 		var channelId = channelType switch
 		{
 			DiscordBotChannel.Monitor => _monitorChannel,
-			DiscordBotChannel.AdminConsole => _adminChannel,
+			// DiscordBotChannel.AdminConsole => AdminChannel,
 			_ => throw new ArgumentOutOfRangeException(nameof(channelType), channelType, null)
 		};
 		return channelId;
