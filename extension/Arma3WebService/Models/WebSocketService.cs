@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using Arma3WebService.Entity;
 using Arma3WebService.Factory;
+using Arma3WebService.Managers;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using static Arma3WebService.Managers.WebSocketConnectionManager;
 
@@ -12,13 +13,14 @@ namespace Arma3WebService.Models
 		IConnection GetConnection(string connectionIdentity);
 		Task InvokeArmaCallBack(Arma3RemoteCommand command);
 		Task CreateConnection(HttpContext context);
-		event Action<WebsocketContextEntity>? OnConnected;
-		event Action<WebsocketContextEntity>? OnDisconnected;
+		event Action<WebsocketContextEntity, IConnection> OnConnected;
+		event Action<WebsocketContextEntity, IConnection> OnDisconnected;
 	}
 
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
 		ServiceActionManager serviceActionManager,
+		RemoteStateManager remoteStateManager,
 		WebsocketContextEntityFactory contextEntityFactory,
 		IConnectionFactory connectionFactory,
 		IConnectionManager connectionManager
@@ -26,13 +28,22 @@ namespace Arma3WebService.Models
 	{
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
-		private readonly ConcurrentDictionary<string, IConnection> Connections = new();
-		public event Action<WebsocketContextEntity>? OnConnected;
-		public event Action<WebsocketContextEntity>? OnDisconnected;
+		private readonly ConcurrentDictionary<string, IConnection> _connections = new();
+		public event Action<WebsocketContextEntity, IConnection> OnConnected = (entity, connection) =>
+		{
+			var profileName = entity.GetIdentity();
+			_ = remoteStateManager.GetServerInfoTemplateAsync(profileName);
+			_ = remoteStateManager.UpdateGameSessionCacheAsync(profileName, connection);
+		};
+
+		public event Action<WebsocketContextEntity, IConnection> OnDisconnected = (entity, connection) =>
+		{
+			_ = remoteStateManager.UpdateGameSessionCacheAsync(entity.GetIdentity());
+		};
 
 		public IConnection GetConnection(string connectionIdentity)
 		{
-			return Connections.TryGetValue(connectionIdentity, out var session)
+			return _connections.TryGetValue(connectionIdentity, out var session)
 				? session
 				: throw new NullReferenceException($"No \"{connectionIdentity}\" is not found.");
 		}
@@ -58,7 +69,7 @@ namespace Arma3WebService.Models
 			finally
 			{
 				// Wait until the task completes or the stop token triggers
-				var connections = Connections.Values
+				var connections = _connections.Values
 					.ToAsyncEnumerable()
 					.WithCancellation(cancellationToken);
 				
@@ -76,7 +87,7 @@ namespace Arma3WebService.Models
 			var contextEntity = contextEntityFactory.CreateJsonStringContext(context);
 			var connectionIdentity = contextEntity.GetIdentity();
 
-			if (Connections.ContainsKey(connectionIdentity))
+			if (_connections.ContainsKey(connectionIdentity))
 			{
 				_logger.LogError(
 					"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'", 
@@ -90,17 +101,17 @@ namespace Arma3WebService.Models
 			try
 			{
 				connection = connectionFactory.CreateConnection(contextEntity);
-				Connections.TryAdd(contextEntity.GetIdentity(), connection);
+				_connections.TryAdd(contextEntity.GetIdentity(), connection);
 
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
 					connectionIdentity,
 					contextEntity.Id, 
 					contextEntity.ClientIpAddress,
-					Connections.Count
+					_connections.Count
 				);
 
-				OnConnected?.Invoke(contextEntity);
+				OnConnected.Invoke(contextEntity, connection);
 				await connectionManager.HandleConnection(connection);
 			}
 			catch (OperationCanceledException)
@@ -111,7 +122,7 @@ namespace Arma3WebService.Models
 					connectionIdentity,
 					contextEntity.Id, 
 					contextEntity.ClientIpAddress,
-					Connections.Count
+					_connections.Count
 				);
 			}
 			catch (WebSocketException e) when (e.WebSocketErrorCode == WebSocketError.ConnectionClosedPrematurely)
@@ -122,7 +133,7 @@ namespace Arma3WebService.Models
 					connectionIdentity,
 					contextEntity.Id, 
 					contextEntity.ClientIpAddress,
-					Connections.Count
+					_connections.Count
 				);
 			}
 			catch (WebSocketException e)
@@ -133,7 +144,7 @@ namespace Arma3WebService.Models
 					connectionIdentity,
 					contextEntity.Id, 
 					contextEntity.ClientIpAddress,
-					Connections.Count
+					_connections.Count
 				);
 			}
 			catch (Exception e)
@@ -144,20 +155,20 @@ namespace Arma3WebService.Models
 					connectionIdentity,
 					contextEntity.Id, 
 					contextEntity.ClientIpAddress,
-					Connections.Count
+					_connections.Count
 				);
 			}
 			finally
 			{
-				if (Connections.TryRemove(connectionIdentity, out connection!))
+				if (_connections.TryRemove(connectionIdentity, out connection!))
 				{
-					OnDisconnected?.Invoke(contextEntity);
+					OnDisconnected.Invoke(contextEntity, connection);
 					_logger.LogInformation(
 						"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}", 
 						connection.CloseStatusDescription(),
 						contextEntity.GetIdentity(),
 						contextEntity.ClientIpAddress,
-						Connections.Count
+						_connections.Count
 					);
 				}
 				else
