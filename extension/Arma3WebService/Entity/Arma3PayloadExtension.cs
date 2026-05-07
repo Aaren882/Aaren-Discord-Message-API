@@ -62,8 +62,14 @@ public record UpdateServerIdentityExtension
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerIdentity;
-	public override Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
-	=> dbContext.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
+	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	{
+		await dbContext.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
+		
+		var messageId = ulong.Parse(MessageId);
+		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
+		remoteStateManager.TryUpdateServerInfoMessageId(profileName, messageId);
+	}
 }
 
 public record UpdateServerInfoTemplateExtension
@@ -95,7 +101,7 @@ public record UpdateServerInfoTemplateExtension
 		
 		//- Update cache for other services
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
-		remoteStateManager.TryUpdateExistingServerInfoCache(messageId, exist!);
+		remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, exist!);
 	}
 	/*public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
