@@ -19,6 +19,7 @@ public class ServerInfoTemplate
 	public string messageTemplatePath { get; set; }
 	public string? messageActionPath { get; set; }
 	public string messageOfflinePath { get; set; } = Path.GetFullPath(".profile/MessageOfflineTemplate/default.json");
+	public string? modListUrl { get; set; }
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
 }
 
