@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Arma3WebService.Handler;
 using Discord.WebSocket;
 
 namespace Arma3WebService.Entity.DiscordBotAction;
@@ -37,7 +38,7 @@ public sealed class DiscordBotAdminInteraction: Dictionary<DiscordBotAdminModalT
 		
 		simpleAction.ModalType = type;
 		simpleAction.ConnectionsNames = connectionsNames;
-		await simpleAction.Run(component);
+		await simpleAction.Extension(component);
 	}
 	public async Task Execute(SocketModal modal, IServiceProvider serviceProvider)
 	{
@@ -47,7 +48,7 @@ public sealed class DiscordBotAdminInteraction: Dictionary<DiscordBotAdminModalT
 		);
 		
 		simpleAction.ModalType = type;
-		await simpleAction.Run(modal, serviceProvider);
+		await simpleAction.Extension(modal, serviceProvider);
 	}
 }
 
