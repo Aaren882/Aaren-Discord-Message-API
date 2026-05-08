@@ -28,6 +28,30 @@ public sealed class DiscordBotInteraction: Dictionary<string, DiscordBotActionsB
 			await discordBotAction.Execute(component);
 	}
 }
+public sealed class DiscordBotAdminInteraction: Dictionary<DiscordBotAdminModalType, DiscordBotAdminSimpleAction>
+{
+	public async Task Execute(SocketMessageComponent component, IEnumerable<string> connectionsNames)
+	{
+		var selectedValue = component.Data.Values.First();
+		var (type, simpleAction) = this.FirstOrDefault(
+			x => string.Equals(x.Key.ToString(), selectedValue, StringComparison.OrdinalIgnoreCase)
+		);
+		
+		simpleAction.ModalType = type;
+		simpleAction.ConnectionsNames = connectionsNames;
+		await simpleAction.Run(component);
+	}
+	public async Task Execute(SocketModal modal, IServiceProvider serviceProvider)
+	{
+		var (type, simpleAction) = this.FirstOrDefault(
+			x => 
+				string.Equals(x.Key.ToString(), modal.Data.CustomId, StringComparison.OrdinalIgnoreCase)
+		);
+		
+		simpleAction.ModalType = type;
+		await simpleAction.Run(modal, serviceProvider);
+	}
+}
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "componentType")]
 [JsonDerivedType(typeof(DiscordBotInteractionActions), nameof(DiscordBotActionComponentType.Button))]
@@ -71,6 +95,7 @@ public record DiscordBotActionBase
 )]
 [
 	JsonSerializable(typeof(DiscordBotInteraction)),
-	JsonSerializable(typeof(DiscordBotModalInteraction))
+	JsonSerializable(typeof(DiscordBotModalInteraction)),
+	JsonSerializable(typeof(DiscordBotAdminInteraction))
 ]
 public sealed partial class DiscordBotActionJsonSerializerContext : JsonSerializerContext;
