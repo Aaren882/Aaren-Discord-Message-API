@@ -44,6 +44,33 @@ internal static class DiscordBotAdminModalRespondHelper
 		};
 		return modalComponent;
 	}
+	private static DiscordDto.ModalComponent AdminRestartMission(DiscordBotAdminSimpleAction simpleAction)
+	{
+		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
+		{
+			components = [
+				CreateSessionSelectMenuComponent(simpleAction)
+			]
+		};
+		return modalComponent;
+	}
+	private static DiscordDto.ModalComponent AdminBroadcast(DiscordBotAdminSimpleAction simpleAction)
+	{
+		var label = new DiscordDto.LabelComponent
+		{
+			label = simpleAction.ComponentTitle ?? "Broadcast Message",
+			description = simpleAction.Description,
+			component = new DiscordDto.TextInputComponent("broadcast_text", null, 1, 2000, true, null, TextInputStyle.Paragraph)
+		};
+		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
+		{
+			components = [
+				CreateSessionSelectMenuComponent(simpleAction),
+				label
+			]
+		};
+		return modalComponent;
+	}
 	
 	private static DiscordDto.LabelComponent CreateSessionSelectMenuComponent(DiscordBotAdminSimpleAction simpleAction)
 	{

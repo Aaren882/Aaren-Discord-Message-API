@@ -29,7 +29,8 @@ public sealed class DiscordBotAdminInteraction: Dictionary<DiscordBotAdminModalT
 {
 	public async Task Execute(SocketMessageComponent component, IEnumerable<string> connectionsNames)
 	{
-		var selectedValue = component.Data.Values.First();
+		var values = component.Data.Values ?? [];
+		var selectedValue = values.FirstOrDefault(component.Data.CustomId);
 		var (type, simpleAction) = this.FirstOrDefault(
 			x => string.Equals(x.Key.ToString(), selectedValue, StringComparison.OrdinalIgnoreCase)
 		);

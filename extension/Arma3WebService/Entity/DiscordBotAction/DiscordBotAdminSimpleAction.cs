@@ -11,7 +11,9 @@ public enum DiscordBotAdminModalType
 {
 	upload_list,
 	print_log,
-	export_log
+	export_log,
+	admin_restart_mission,
+	admin_broadcast,
 }
 
 public record SessionMenuOptions(
