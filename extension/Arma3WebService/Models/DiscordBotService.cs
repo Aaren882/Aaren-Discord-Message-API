@@ -75,18 +75,17 @@ public sealed class DiscordBotService(
 		{
 			try
 			{
-				DiscordBotInteraction? deserialize;
-				string json;
-				/*if (component.Message.Id == adminConsoleManager.AdminMessageId)
-					deserialize = await adminConsoleManager.GetActionJson(AdminConsoleManager.ActionType.SelectMenu);
-				else 
+				if (component.Message.Id == adminConsoleManager.AdminMessageId)
 				{
-					
-				}*/
+					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.Button);
+					await adminAction!.Execute(component, adminConsoleManager.CreateSessionsNames());
+					return;
+				}
+				
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
 				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
-				json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
-				deserialize = JsonSerializer.Deserialize(
+				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
 				);
