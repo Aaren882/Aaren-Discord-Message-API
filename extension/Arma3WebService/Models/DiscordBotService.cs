@@ -43,20 +43,22 @@ public sealed class DiscordBotService(
 		);
 		await Client.StartAsync();
 		
-		var adminConsoleService = serviceProvider.GetRequiredService<AdminConsoleManager>();
-		await adminConsoleService.CreateAdminConsole();
+		var adminConsoleManager = serviceProvider.GetRequiredService<AdminConsoleManager>();
+		await adminConsoleManager.CreateAdminConsole();
 		
 		Client.Log += Log;
 		Client.ModalSubmitted += async (socketModal) =>
 		{
 			try
 			{
-				string json;
-				if (socketModal.Message.Id == adminConsoleService.AdminMessageId)
-					json = await adminConsoleService.GetActionJson(AdminConsoleManager.ActionType.Modal);
-				else 
-					json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
+				if (socketModal.Message.Id == adminConsoleManager.AdminMessageId)
+				{
+					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.Modal);
+					await adminAction!.Execute(socketModal, serviceProvider);
+					return;
+				} 
 				
+				var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotModalInteraction
@@ -66,49 +68,51 @@ public sealed class DiscordBotService(
 			catch (Exception e)
 			{
 				logger.LogError("ModalSubmitted : {Error}", e.Message);
-				await socketModal.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
+				await socketModal.RespondAsync(text: $"`Exception : {e.Message}`", ephemeral: true);
 			}
 		};
 		Client.ButtonExecuted += async (component) =>
 		{
 			try
 			{
+				DiscordBotInteraction? deserialize;
 				string json;
-				if (component.Message.Id == adminConsoleService.AdminMessageId)
-					json = await adminConsoleService.GetActionJson(AdminConsoleManager.ActionType.Button);
-				else
+				/*if (component.Message.Id == adminConsoleManager.AdminMessageId)
+					deserialize = await adminConsoleManager.GetActionJson(AdminConsoleManager.ActionType.SelectMenu);
+				else 
 				{
-					var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
-					if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
-					json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
-				}
-				
-				var deserialize = JsonSerializer.Deserialize(
+					
+				}*/
+				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
+				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
+				json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+				deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
 				);
+				
 				await deserialize!.Execute(component);
 			}
 			catch (Exception e)
 			{
 				logger.LogError("ButtonExecuted : {Error}", e.Message);
-				await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
+				await component.RespondAsync(text: $"`Exception : {e.Message}`", ephemeral: true);
 			}
 		};
 		Client.SelectMenuExecuted += async (component) =>
 		{
 			try
 			{
-				string json;
-				if (component.Message.Id == adminConsoleService.AdminMessageId)
-					json = await adminConsoleService.GetActionJson(AdminConsoleManager.ActionType.SelectMenu);
-				else 
+				if (component.Message.Id == adminConsoleManager.AdminMessageId)
 				{
-					var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
-					if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
-					json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.SelectMenu);
+					await adminAction!.Execute(component, adminConsoleManager.CreateSessionsNames());
+					return;
 				}
 				
+				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
+				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
+				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
@@ -118,7 +122,7 @@ public sealed class DiscordBotService(
 			catch (Exception e)
 			{
 				logger.LogError("SelectMenuExecuted : {Error}", e.Message);
-				await component.RespondAsync(text: $"Exception : {e.Message}", ephemeral: true);
+				await component.RespondAsync(text: $"`Exception : {e.Message}`", ephemeral: true);
 			}
 		};
 
