@@ -68,7 +68,7 @@ public sealed class DiscordBotService(
 			catch (Exception e)
 			{
 				logger.LogError("ModalSubmitted : {Error}", e.Message);
-				await socketModal.RespondAsync(text: $"`Exception : {e.Message}`", ephemeral: true);
+				await socketModal.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
 		Client.ButtonExecuted += async (component) =>
@@ -96,7 +96,7 @@ public sealed class DiscordBotService(
 			catch (Exception e)
 			{
 				logger.LogError("ButtonExecuted : {Error}", e.Message);
-				await component.RespondAsync(text: $"`Exception : {e.Message}`", ephemeral: true);
+				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
 		Client.SelectMenuExecuted += async (component) =>
@@ -122,7 +122,7 @@ public sealed class DiscordBotService(
 			catch (Exception e)
 			{
 				logger.LogError("SelectMenuExecuted : {Error}", e.Message);
-				await component.RespondAsync(text: $"`Exception : {e.Message}`", ephemeral: true);
+				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
 
