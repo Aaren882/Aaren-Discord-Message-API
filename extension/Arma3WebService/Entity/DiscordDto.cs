@@ -66,18 +66,18 @@ public class DiscordDto
 		    => new (label, custom_id, style, url, emoji, disabled, sukId, Id);
     }
     
-    public record SelectMenuComponent(
-	    string custom_Id, 
-	    string? placeholder,
-	    List<SelectMenuOption>? options,
-	    List<ChannelType>? channelTypes,
-	    List<SelectMenuDefaultValue>? defaultValues,
-	    int min_values = 1,
-	    int max_values = 1,
-	    bool required = true,
-	    bool disabled = false
-	): ComponentBase
+    public record SelectMenuComponent: ComponentBase
     {
+	    public string custom_Id { get; set; } 
+	    public string? placeholder { get; set; }
+		public IEnumerable<SelectMenuOption>? options { get; set; }
+	    public List<ChannelType>? channelTypes { get; set; }
+		public List<SelectMenuDefaultValue>? defaultValues { get; set; }
+		public int min_values { get; set; } = 1;
+		public int max_values { get; set; } = 1;
+		public bool required  { get; set; } = true;
+		public bool disabled { get; set; } = false; 
+		    
 	    [JsonIgnore] 
 		public override ComponentType type => ComponentType.SelectMenu;
 	    public override int? Id { get; set; }
@@ -194,12 +194,12 @@ public class DiscordDto
 		    => new (accentColor, isSpoiler, Id, components.Select(x => x.Convert()));
     }
     
-    public record LabelComponent(
-	    string label,
-	    string? description,
-	    ComponentBase component
-    ) : ComponentBase
+    public record LabelComponent : ComponentBase
     {
+	    public string label { get; set; }
+	    public string? description { get; set; } = null;
+	    public ComponentBase component { get; set; }
+	    
 	    [JsonIgnore] 
 	    public override ComponentType type => ComponentType.Label;
 		
@@ -231,7 +231,7 @@ public class DiscordDto
     {
 	    public ComponentType type { get; }
 	    public int? Id { get; set; }
-	    public IEnumerable<ComponentBase>? components { get; set; }
+	    public IList<ComponentBase>? components { get; set; }
 	    public ComponentBase? component { get; set; }
 
 	    public Modal Build()
