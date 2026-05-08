@@ -61,8 +61,7 @@ public sealed class ServiceDbContext: DbContext
 			await ServerInfoList.AddAsync(new ServerInfoTemplate
 			{
 				messageId = parsedId,
-				messageTemplatePath = fileInfo.FullName,
-				fileCreateTime = fileInfo.CreationTime
+				messageTemplatePath = fileInfo.FullName
 			});
 		} else {
 			exist.messageTemplatePath = fileInfo.FullName;

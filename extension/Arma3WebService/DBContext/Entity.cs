@@ -20,7 +20,6 @@ public class ServerInfoTemplate
 	public string? messageActionPath { get; set; }
 	public string messageOfflinePath { get; set; } = Path.GetFullPath(".profile/MessageOfflineTemplate/default.json");
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
-	public DateTime fileCreateTime  { get; set; }
 }
 
 public enum InternalManagementType
