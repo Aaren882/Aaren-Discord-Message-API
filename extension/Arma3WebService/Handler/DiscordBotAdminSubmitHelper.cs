@@ -1,31 +1,39 @@
 using System.Net.Mime;
 using Arma3WebService.DBContext;
-using Arma3WebService.Managers;
+using Arma3WebService.Entity.DiscordBotAction;
 using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Handler;
 
 internal static class DiscordBotAdminSubmitHelper
 {
-	public delegate Task SubmitAction(SocketModal component, IServiceProvider serviceProvider);
-	public static async Task UploadList(SocketModal component, IServiceProvider serviceProvider)
+	private delegate Task SubmitAction(SocketModal component, IServiceProvider serviceProvider);
+
+	public static async Task Extension(this DiscordBotAdminSimpleAction simpleAction, SocketModal component,
+		IServiceProvider serviceProvider)
+	{
+		SubmitAction content = (simpleAction.ModalType) switch
+		{
+			DiscordBotAdminModalType.upload_list => UploadList,
+			// DiscordBotAdminModalType.print_log => PrintLog,
+			// DiscordBotAdminModalType.export_log => ExportLog,
+			_ => throw new ArgumentOutOfRangeException(nameof(simpleAction), "\"ModalType\" does not exist in the options.")
+		};
+		await content(component, serviceProvider);
+	}
+	private static async Task UploadList(SocketModal component, IServiceProvider serviceProvider)
 	{
 		var attachments = component.Data.Attachments.ToList();
 		var attachment = attachments[0];
 		if (!attachment.ContentType.Contains(MediaTypeNames.Text.Html)) throw new Exception("Invalid content type.");
 		
-		
-		var serviceScopeFactory= serviceProvider.GetRequiredService<IServiceScopeFactory>();
-		// var remoteStateManager= serviceProvider.GetRequiredService<RemoteStateManager>();
-		
-		var sessionName = GetSelectedSession(component);
-		
 		//- Saving Url
+		var serviceScopeFactory= serviceProvider.GetRequiredService<IServiceScopeFactory>();
 		await using var scoped = serviceScopeFactory.CreateAsyncScope();
 		await using var dbContext = scoped.ServiceProvider.GetRequiredService<ServiceDbContext>();
 		
 		//- Get correct server info
+		var sessionName = GetSelectedSession(component);
 		var serverIdentity= await dbContext.GetServerIdentityFromProfileNameAsync(sessionName);
 		if (serverIdentity is null)
 			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
@@ -53,7 +61,7 @@ internal static class DiscordBotAdminSubmitHelper
 			? throw new Exception("Cannot Find Session Select Menu")
 			: sessionSelectMenu.Values.First();
 	}
-	/*public static DiscordDto.ModalComponent PrintLog(DiscordBotAdminSimpleAction simpleAction)
+	/*private static DiscordDto.ModalComponent PrintLog(DiscordBotAdminSimpleAction simpleAction)
 	{
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
 		{
@@ -63,7 +71,7 @@ internal static class DiscordBotAdminSubmitHelper
 		};
 		return modalComponent;
 	}
-	public static DiscordDto.ModalComponent ExportLog(DiscordBotAdminSimpleAction simpleAction)
+	private static DiscordDto.ModalComponent ExportLog(DiscordBotAdminSimpleAction simpleAction)
 	{
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
 		{

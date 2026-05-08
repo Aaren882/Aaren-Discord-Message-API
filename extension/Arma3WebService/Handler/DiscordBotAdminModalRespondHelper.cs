@@ -1,17 +1,34 @@
 using Arma3WebService.Entity;
 using Arma3WebService.Entity.DiscordBotAction;
+using Discord;
+using Discord.WebSocket;
 
 namespace Arma3WebService.Handler;
 
 internal static class DiscordBotAdminModalRespondHelper
 {
-	public delegate DiscordDto.ModalComponent RespondAction(DiscordBotAdminSimpleAction simpleAction);
+	private delegate DiscordDto.ModalComponent RespondAction(DiscordBotAdminSimpleAction simpleAction);
+
+	public static async Task Extension(this DiscordBotAdminSimpleAction simpleAction, SocketMessageComponent component)
+	{
+		RespondAction content = (simpleAction.ModalType) switch
+		{
+			DiscordBotAdminModalType.upload_list => UploadList,
+			DiscordBotAdminModalType.print_log => PrintLog,
+			DiscordBotAdminModalType.export_log => ExportLog,
+			DiscordBotAdminModalType.admin_restart_mission => AdminRestartMission,
+			DiscordBotAdminModalType.admin_broadcast => AdminBroadcast,
+			_ => throw new ArgumentOutOfRangeException(nameof(simpleAction), "\"ModalType\" for this ModalRespond does not exist.")
+		};
+		var modal = content(simpleAction).Build();
+		await component.RespondWithModalAsync(modal);
+	}
 	
-	public static DiscordDto.ModalComponent UploadList(DiscordBotAdminSimpleAction simpleAction)
+	private static DiscordDto.ModalComponent UploadList(DiscordBotAdminSimpleAction simpleAction)
 	{
 		var label = new DiscordDto.LabelComponent
 		{
-			label = simpleAction.ComponentTitle,
+			label = simpleAction.ComponentTitle ?? "File Upload",
 			description = simpleAction.Description,
 			component = new DiscordDto.FileUploadComponent("file_upload")
 		};
@@ -24,7 +41,7 @@ internal static class DiscordBotAdminModalRespondHelper
 		};
 		return modalComponent;
 	}
-	public static DiscordDto.ModalComponent PrintLog(DiscordBotAdminSimpleAction simpleAction)
+	private static DiscordDto.ModalComponent PrintLog(DiscordBotAdminSimpleAction simpleAction)
 	{
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
 		{
@@ -34,7 +51,7 @@ internal static class DiscordBotAdminModalRespondHelper
 		};
 		return modalComponent;
 	}
-	public static DiscordDto.ModalComponent ExportLog(DiscordBotAdminSimpleAction simpleAction)
+	private static DiscordDto.ModalComponent ExportLog(DiscordBotAdminSimpleAction simpleAction)
 	{
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
 		{
