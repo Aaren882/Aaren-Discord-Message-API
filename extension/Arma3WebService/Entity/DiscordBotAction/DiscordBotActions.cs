@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Text.Json.Serialization;
-using Discord;
 using Discord.WebSocket;
 
 namespace Arma3WebService.Entity.DiscordBotAction;
@@ -9,7 +7,6 @@ public enum DiscordBotActionComponentType
 {
 	Button,
 	SelectMenu,
-	Modal,
 }
 
 public sealed class DiscordBotInteraction: Dictionary<string, DiscordBotActionsBase>
