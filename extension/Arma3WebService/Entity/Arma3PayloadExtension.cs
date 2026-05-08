@@ -151,14 +151,12 @@ public record struct Arma3ClientProfileConfiguration
 			messageId = messageId,
 			messageTemplatePath = MessageTemplate,
 			messageActionPath = MessageActions,
-			fileCreateTime = _messageTemplate.CreationTime
 		};
 	}
 	public void ModifyInfoTemplate(ServerInfoTemplate template)
 	{
 		template.messageTemplatePath = MessageTemplate;
 		template.messageActionPath = MessageActions;
-		template.fileCreateTime = _messageTemplate.CreationTime;
 	}
 }
 
