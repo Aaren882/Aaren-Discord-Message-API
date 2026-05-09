@@ -54,13 +54,13 @@ public class WebSocketClient(string serverUri)
 			await Task.Delay(500); //- # Wait for the RPT get written first.   
 			
 			// Send Chunks (as binary messages)
-			await using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+			await using (FileStream fs = new (filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
 				for (var i = 1; i < payloadRpt.TotalChunks + 1; i++)
 				{
 					var buffer = new byte[chunkSize];			
 					Tracer("SendBinaryAsync (Progress)", $"{i}/{payloadRpt.TotalChunks}");
-					var bytesRead = await fileStream.ReadAsync(buffer, _cancellationTokenSource?.Token ?? CancellationToken.None);
+					var bytesRead = await fs.ReadAsync(buffer, _cancellationTokenSource?.Token ?? CancellationToken.None);
 					
 					// If the last chunk is smaller than the buffer size
 					var chunkBytes = new byte[bytesRead];
@@ -70,6 +70,35 @@ public class WebSocketClient(string serverUri)
 				}
 			}
 			Logger(null ,$"Sent Binary: {filePath}");
+		}
+		else
+		{
+			Logger(null ,"WebSocket is not connected. Cannot send message.");
+		}
+	}
+	public async Task SendRptLinesAsync(string filePath, int linesCount)
+	{
+		if (Status() == WebSocketState.Open)
+		{
+			var encoding = Encoding.UTF8;
+			var readLines = File.ReadLinesAsync(filePath, encoding);
+
+			var charCount = 0;
+			await foreach (var line in readLines.TakeLast(linesCount))
+			{
+				var wLine = line + "\n";
+				charCount += wLine.Length;
+				if  (charCount > 2000)
+				{
+					Logger(null ,$"SendRptLines has reached limit: {line}");
+					break;
+				}
+				var bytes = encoding.GetBytes(wLine);
+				await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, false, CancellationToken.None);
+			}
+			await _webSocket.SendAsync(new ArraySegment<byte>([]), WebSocketMessageType.Binary, true, CancellationToken.None);
+			
+			Logger(null ,$"SendRptLines: {filePath}");
 		}
 		else
 		{
