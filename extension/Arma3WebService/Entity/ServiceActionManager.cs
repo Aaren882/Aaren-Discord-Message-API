@@ -1,9 +1,11 @@
 using System.Collections.Concurrent;
+using System.Net.Mime;
 using System.Text.Json;
 using Arma3WebService.DBContext;
 using Arma3WebService.Extensions;
 using Arma3WebService.Models;
 using Components.Entity;
+using Discord;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
@@ -37,6 +39,21 @@ public sealed class ServiceActionManager(
 					
 		await connection.ReceiveBinary(fileStream);
 		logger.LogDebug("Stored binary file '{PayloadFileName}'", payload.FileName);
+	}
+	public async Task RptLineAction(IConnection connection, Arma3PayloadRptLine payload)
+	{
+		logger.LogInformation("Receiving metaData for Rpt Line '{RptLineAction}'", payload);
+
+		const string tempDir = ".temp";
+		if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+		
+		await using var fileStream = new FileStream(
+			Path.Combine(tempDir, payload.FileName),
+			FileMode.Create, FileAccess.Write
+		);
+					
+		await connection.ReceiveBinary(fileStream);
+		logger.LogDebug("Stored binary file '{RptLineAction}'", payload.FileName);
 	}
 	public async Task JsonStringAction(IConnection connection, Arma3PayloadJson payload)
 	{
@@ -109,19 +126,36 @@ public sealed class ServiceActionManager(
 			(current, item) => current.Replace(item.Key, item.Value)
 		);
 
-		var payload = JsonSerializer.Deserialize(
+		var messageDto = JsonSerializer.Deserialize(
 			infoMessage,
 			MsgPayload_JsonContext.Default.DiscordMessageDto
 		);
-			
-		await discordBotService.ModifyMessageAsync(serverIdentity.messageId, payload!);
+		
+		//- Inject components
+		List<DiscordDto.ComponentBase> components = [];
+		if (serverInfo.modListUrl is not null)
+		{
+			components.Add(
+				new DiscordDto.ButtonComponent(
+					label: "查看模組清單",
+					url: serverInfo.modListUrl,
+					emoji: new Emote(0, "📦"),
+					style: ButtonStyle.Link
+				)
+			);
+		}
+
+		if (components.Count != 0)
+			messageDto!.Components = [new DiscordDto.ActionRowComponent(components)];
+		
+		await discordBotService.ModifyMessageAsync(serverIdentity.messageId, messageDto!);
 	}
 	public async Task SSE_Logging(HttpContext ctx, string sessionIdentity)
 	{
 		var ctxID = ctx.TraceIdentifier;
 		ctxList.Add(ctxID);
 
-		ctx.Response.Headers.Append(HeaderNames.ContentType, "text/event-stream");
+		ctx.Response.Headers.Append(HeaderNames.ContentType, MediaTypeNames.Text.EventStream);
 		while (!ctx.RequestAborted.IsCancellationRequested)
 		{
 			await Task.Delay(1000);

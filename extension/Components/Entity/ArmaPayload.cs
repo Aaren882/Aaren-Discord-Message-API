@@ -8,7 +8,7 @@ public enum Arma3PayLoadType
 	Text = 1,
 	Binary = 2, //- in game *.rpt logs
 	Command = 3,
-	GameInfo = 4,
+	RptLine = 4,
 	JsonString = 5,
 	FlatJsonString = 6,
 }
@@ -17,6 +17,7 @@ public enum Arma3PayLoadType
 [JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
 [JsonDerivedType(typeof(Arma3PayloadBinary), (int)Arma3PayLoadType.Binary)]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
+[JsonDerivedType(typeof(Arma3PayloadRptLine), (int)Arma3PayLoadType.RptLine)]
 [JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
 [JsonDerivedType(typeof(Arma3PayloadFlatJsonString), (int)Arma3PayLoadType.FlatJsonString)]
 public abstract record Arma3Payload
@@ -45,6 +46,16 @@ public record Arma3PayloadBinary
 {
 	[JsonIgnore]
 	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
+};
+
+public record Arma3PayloadRptLine
+(
+	string FileName,
+	DateTime CreatedTime
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.RptLine;
 };
 
 public record Arma3PayloadCallBack(
