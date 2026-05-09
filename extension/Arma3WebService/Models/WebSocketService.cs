@@ -13,6 +13,7 @@ namespace Arma3WebService.Models
 		IConnection GetConnection(string connectionIdentity);
 		Task InvokeArmaCallBack(Arma3RemoteCommand command);
 		Task CreateConnection(HttpContext context);
+		IEnumerable<string> GetConnectionsNames();
 		event Action<WebsocketContextEntity, IConnection> OnConnected;
 		event Action<WebsocketContextEntity, IConnection> OnDisconnected;
 	}
@@ -45,8 +46,11 @@ namespace Arma3WebService.Models
 		{
 			return _connections.TryGetValue(connectionIdentity, out var session)
 				? session
-				: throw new NullReferenceException($"No \"{connectionIdentity}\" is not found.");
+				: throw new NullReferenceException($"No \"{connectionIdentity}\" connection is not found.");
 		}
+
+		public IEnumerable<string> GetConnectionsNames() => _connections.Keys;
+		
 		public Task InvokeArmaCallBack(Arma3RemoteCommand command)
 			=> serviceActionManager.CallBackAction(
 				GetConnection(command.gameId),
