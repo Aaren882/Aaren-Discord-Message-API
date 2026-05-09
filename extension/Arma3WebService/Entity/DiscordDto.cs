@@ -49,11 +49,11 @@ public class DiscordDto
 		    => new (Components.Select(x => x.Convert()).ToArray(), Id);
     }
     public record ButtonComponent(
-	    ulong? sukId,
-	    string? label,
-	    string? custom_id,
-	    Emote? emoji,
-	    string? url,
+	    ulong? sukId = null,
+	    string? label = null,
+	    string? custom_id = null,
+	    Emote? emoji = null,
+	    string? url = null,
 	    ButtonStyle style = ButtonStyle.Primary,
 	    bool disabled = false
     ): ComponentBase
