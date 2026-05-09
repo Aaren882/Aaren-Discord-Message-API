@@ -78,7 +78,7 @@ public sealed class DiscordBotService(
 				if (component.Message.Id == adminConsoleManager.AdminMessageId)
 				{
 					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.Button);
-					await adminAction!.Execute(component, adminConsoleManager.CreateSessionsNames());
+					await adminAction!.Execute(component, adminConsoleManager);
 					return;
 				}
 				
@@ -105,7 +105,7 @@ public sealed class DiscordBotService(
 				if (component.Message.Id == adminConsoleManager.AdminMessageId)
 				{
 					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.SelectMenu);
-					await adminAction!.Execute(component, adminConsoleManager.CreateSessionsNames());
+					await adminAction!.Execute(component, adminConsoleManager);
 					return;
 				}
 				

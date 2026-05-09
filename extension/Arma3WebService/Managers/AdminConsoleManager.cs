@@ -81,6 +81,22 @@ public sealed class AdminConsoleManager(
 			? names
 			: throw new Exception("No game session found.");
 	}
+	public IEnumerable<string> CreateSessionsNames(DiscordBotAdminModalType adminModalType)
+	{
+		return (adminModalType) switch
+		{
+			DiscordBotAdminModalType.upload_list => DbProfileNames(),
+			_ => CreateSessionsNames()
+		};
+
+		List<string> DbProfileNames()
+		{
+			using var scope = serviceScopeFactory.CreateScope();
+			using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+			var queryable = dbContext.ServerIdentities.Select(x => x.profileName);
+			return queryable.ToList();
+		}
+	}
 	
 	public async Task CreateAdminConsole()
     {
