@@ -25,9 +25,9 @@ public record DiscordBotAdminSimpleAction : DiscordBotActionBase
 {
 	[JsonIgnore]
 	public DiscordBotAdminModalType ModalType { get; set; }
-	public string ModalTitle { get; set; }
+	public string ModalTitle { get; set; } = string.Empty;
 	public string? ComponentTitle { get; set; }
 	public string? Description { get; set; }
 	public SessionMenuOptions SessionMenu { get; set; } = new("Game Session");
-	public IEnumerable<string> ConnectionsNames { get; set; }
+	public IEnumerable<string>? ConnectionsNames { get; set; } = null;
 }
