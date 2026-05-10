@@ -13,6 +13,7 @@ public interface IConnection
 	Task<WebSocketCloseStatus?> KeepReceiving();
 	Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream);
 	Task<WebSocketReceiveResult> ReceiveBinary(FileStream fileStream);
+	IAsyncEnumerable<string> ReceiveAndReadBinary();
 	Task SendArmaCallBackMessage(Arma3Payload callBack);
 	Task Send(string message);
 	Task StartAsync();
@@ -86,6 +87,26 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 		} while (!result.EndOfMessage);
 
 		return result;
+	}
+	
+	public async IAsyncEnumerable<string> ReceiveAndReadBinary()
+	{
+		var readBuffer = new ArraySegment<byte>(new byte[10 * 1024]);
+
+		WebSocketReceiveResult result;
+		do
+		{
+			result = await _webSocket.ReceiveAsync(readBuffer, _cts);
+
+			if (result.MessageType == WebSocketMessageType.Close)
+			{
+				yield break; // Exit loop on close frame
+			}
+
+			// Append chunk to string
+			yield return Encoding.UTF8.GetString(readBuffer.Array!,  0, result.Count);
+			
+		} while (!result.EndOfMessage);
 	}
 	
 	public async Task SendArmaCallBackMessage(Arma3Payload callBack)
