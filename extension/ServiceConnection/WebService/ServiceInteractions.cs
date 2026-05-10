@@ -27,7 +27,7 @@ public class ServiceInteractions
 		);
 		Util.CallExtensionCallback(Callback, callBack);
 	};
-	public readonly WebSocketClient WsClient = new (ServiceSecret.WebSocketServiceUri + "/api/ws/ingame");
+	public readonly WebSocketClient WsClient = new (ServiceSecret.WebSocketServiceUri);
 
 	public ServiceInteractions()
 	{
@@ -86,7 +86,7 @@ public class ServiceInteractions
 	{
 		Logger(null, "INFO: Sending binaries");
 		foreach (var path in binaryDict)
-			await SendWebSocketBinary(path);
+			await SendWebSocketBinary(path, chunkSize);
 	}
 	
 	public async Task SendWebSocketRptLines(string filePath, int linesCount)
