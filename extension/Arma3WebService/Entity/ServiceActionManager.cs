@@ -8,6 +8,7 @@ using Components.Entity;
 using Discord;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
+using ServiceConnection.Discord;
 
 namespace Arma3WebService.Entity;
 
@@ -44,15 +45,19 @@ public sealed class ServiceActionManager(
 	{
 		logger.LogInformation("Receiving metaData for Rpt Line '{RptLineAction}'", payload);
 
-		const string tempDir = ".temp";
-		if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+		var content = "```ts\n";
+		var readEnumerable = connection.ReceiveAndReadBinary();
+		await foreach (var line in readEnumerable)
+		{
+			content += line;
+		}
+		content += "```";
+		logger.LogInformation("Receiving for Rpt Line '{TotalLength}'", content.Length);
 		
-		await using var fileStream = new FileStream(
-			Path.Combine(tempDir, payload.FileName),
-			FileMode.Create, FileAccess.Write
-		);
-					
-		await connection.ReceiveBinary(fileStream);
+		var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
+		var message = new DiscordMessageDto { Content = content };
+		await discordBotService.SendMessageAsync(channelId, message);
+		
 		logger.LogDebug("Stored binary file '{RptLineAction}'", payload.FileName);
 	}
 	public async Task JsonStringAction(IConnection connection, Arma3PayloadJson payload)
