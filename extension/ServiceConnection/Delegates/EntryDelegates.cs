@@ -259,6 +259,15 @@ public static class EntryDelegates
 	        
             return 1;
         }
+        internal static int SendWebSocketRptLines(IOutputBuilder output, string[] args, int argCount)
+        {
+	        if (!int.TryParse(args[0], out var linesCount))
+		        throw new Exception("INCORRECT NUMBER OF ARGUMENTS");
+	        
+	        _ = serviceInteractions.SendWebSocketRptLines(RptFileDirectory, linesCount);
+	        
+	        return 1;
+        }
         internal static int SendWebSocketAssemblyDirectoryBinaries(IOutputBuilder output, string[] args, int argCount)
         {
 	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);

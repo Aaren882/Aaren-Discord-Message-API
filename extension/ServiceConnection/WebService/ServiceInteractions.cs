@@ -84,6 +84,29 @@ public class ServiceInteractions
 		foreach (var path in binaryDict)
 			await SendWebSocketBinary(path);
 	}
+	
+	public async Task SendWebSocketRptLines(string filePath, int linesCount)
+	{
+		Logger(null, "INFO: Sending RPT lines");
+		var fileInfo = new FileInfo(filePath);
+		var metadata = new Arma3PayloadRptLine
+		(
+			fileInfo.Name,
+			fileInfo.CreationTime
+		);
+		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		
+		try
+		{
+			await WsClient.SendMessageAsync(metaJson);
+			await Task.Delay(2000);
+			await WsClient.SendRptLinesAsync(filePath, linesCount);
+		}
+		catch (Exception e)
+		{
+			Logger(e, "");
+		}
+	}
 
 	public async Task SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
     {
