@@ -100,18 +100,8 @@ public class DllEntry
 	[UnmanagedCallersOnly(EntryPoint = "RVExtension")]
 	public static void RVExtension(nint outputPrt, int outputSize, nint function)
 	{
-		var inputKey = Marshal.PtrToStringUTF8(function)!;
-
-		try
-		{
-			ServiceStartup.Callback!("CallBack Name", inputKey, "data");
-		}
-		catch (Exception e)
-		{
-			LoggerBase.Log(e);
-		}
-
-		ServiceStartup.localServices.Output(outputPrt, outputSize, inputKey);
+		// var inputKey = Marshal.PtrToStringUTF8(function)!;
+		// ServiceStartup.localServices.Output(outputPrt, outputSize, inputKey);
 	}
 
 	/// <summary>
