@@ -46,7 +46,7 @@ public static class EntryDelegates
         /// <returns></returns>
         internal static int Init_Player(IOutputBuilder output, string[] args, int argCount)
         {
-            /*if (ExtensionInit)
+            /*if (ExtensionWebhookInit)
             {
                 throw new Exception("Extension has already been initiated.");
             }*/
@@ -58,7 +58,7 @@ public static class EntryDelegates
 	    internal static int Init_Server(IOutputBuilder output, string[] args, int argCount)
         {
 	        // var webhooksCount = 0;
-	        // if (ExtensionInit) return webhooksCount;
+	        // if (ExtensionWebhookInit) return webhooksCount;
 	        // _ = ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
 	        var webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
 
@@ -82,7 +82,7 @@ public static class EntryDelegates
 
             var webhooksCount = ALLWebhooks?.Webhooks.Length ?? 0;
             var webhookSel = Math.Min(int.Parse(args[0]), webhooksCount - 1);
-            ExtensionInit = true;
+            ExtensionWebhookInit = true;
 
             //- Exit if there's no Webhook
             if (webhooksCount == 0)

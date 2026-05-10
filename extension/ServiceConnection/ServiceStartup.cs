@@ -6,23 +6,24 @@ using ServiceConnection.WebService;
 
 namespace ServiceConnection;
 
-public class ServiceStartup
+public static class ServiceStartup
 {
-	internal static Action<string, string> Tracer;
-	internal static Action<Exception?, string> Logger;
-	public static string? InitTime;
+	internal static Action<string, string> Tracer { get; private set; }
+	internal static Action<Exception?, string> Logger { get; private set; }
+	public static string? InitTime { get; set; }
 	
-	public static bool ExtensionInit { get; set; }
-	public static WebhooksStorage? ALLWebhooks;
+	public static bool ExtensionInit { get; private set; }
+	public static bool ExtensionWebhookInit { get; set; }
+	public static WebhooksStorage? ALLWebhooks { get; set; }
 	public static string? RptFileDirectory { get; private set; }
 	
-	public static CallContext ContextInfo;
+	public static CallContext ContextInfo { get; set; }
 	public static ExtensionCallback? Callback = (name, function, data) => 0;
 
-	public static ServiceInteractions? serviceInteractions;
+	public static ServiceInteractions? serviceInteractions { get; private set; }
 	
-	public static IServiceProvider ServiceProvider;
-	public static ILocalServices localServices;
+	public static IServiceProvider ServiceProvider { get; private set; }
+	public static ILocalServices localServices { get; private set; }
 
 	public static void InitConfiguration(
 		Action<string, string> tracer, 
