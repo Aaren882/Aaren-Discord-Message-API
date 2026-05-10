@@ -13,7 +13,6 @@ public sealed class AdminConsoleManager(
 	IServiceScopeFactory serviceScopeFactory
 )
 {
-	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel")!);
 	internal ulong AdminMessageId;
 	
 	public enum ActionType
@@ -73,9 +72,8 @@ public sealed class AdminConsoleManager(
 	public IEnumerable<string> CreateSessionsNames()
 	{
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
-
-		// var names = webSocketService.GetConnectionsName().ToList();
-		List<string> names = ["FeatureTest","test2"];
+		var names = webSocketService.GetConnectionsNames().ToList();
+		// List<string> names = ["FeatureTest","test2"];
 
 		return names.Count != 0
 			? names
@@ -100,7 +98,8 @@ public sealed class AdminConsoleManager(
 	
 	public async Task CreateAdminConsole()
     {
-    	var channel = await discordBotService.GetMessageChannelAsync(_adminChannel);
+    	var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
+    	var channel = await discordBotService.GetMessageChannelAsync(channelId);
     	try
     	{
     		using var scope = serviceScopeFactory.CreateScope();
@@ -121,7 +120,7 @@ public sealed class AdminConsoleManager(
     				json,
     				MsgPayload_JsonContext.Default.DiscordMessageDto
     			);
-    			message = await discordBotService.SendMessageAsync(_adminChannel, deserialize!);
+    			message = await discordBotService.SendMessageAsync(channelId, deserialize!);
 
     			await dbContext.InternalManagement.AddAsync(
     				new InternalManagement
