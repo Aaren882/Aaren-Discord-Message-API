@@ -241,21 +241,27 @@ public static class EntryDelegates
         internal static int SendWebSocketMessage(IOutputBuilder output, string[] args, int argCount)
         {
             var message = args[0];
-            _ = serviceInteractions.SendWebSocketMessage(message);
+            
+            var task = serviceInteractions.SendWebSocketMessage(message);
+			serviceInteractions.WebSocketTrafficWriter(task);
+			
             return 1;
         }
         internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
 	        var lastestRpt= Util.GetLastestFile(serviceInteractions.RPTDirectory);
 	        output.Append(lastestRpt); //- Return lastest Rpt directory
-	        _ = serviceInteractions.SendWebSocketBinary(lastestRpt, args[0]);
+	        
+	        var task = serviceInteractions.SendWebSocketBinary(lastestRpt, args[0]);
+			serviceInteractions.WebSocketTrafficWriter(task);
 	        
             return 1;
         }
         internal static int SendWebSocketBinaries(IOutputBuilder output, string[] args, int argCount)
         {
 	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
-	        _ = serviceInteractions.SendWebSocketBinaries(binaryDict!);
+	        var task = serviceInteractions.SendWebSocketBinaries(binaryDict!);
+	        serviceInteractions.WebSocketTrafficWriter(task);
 	        
             return 1;
         }
@@ -264,7 +270,8 @@ public static class EntryDelegates
 	        if (!int.TryParse(args[0], out var linesCount))
 		        throw new Exception("INCORRECT NUMBER OF ARGUMENTS");
 	        
-	        _ = serviceInteractions.SendWebSocketRptLines(RptFileDirectory, linesCount);
+	        var task = serviceInteractions.SendWebSocketRptLines(RptFileDirectory, linesCount);
+	        serviceInteractions.WebSocketTrafficWriter(task);
 	        
 	        return 1;
         }
@@ -272,11 +279,12 @@ public static class EntryDelegates
         {
 	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
 	        
-	        _ = serviceInteractions.SendWebSocketBinaries(
+	        var task = serviceInteractions.SendWebSocketBinaries(
 		        binaryDict!.Select(x => 
 			        new KeyValuePair<string, string>(x.Key, Path.Combine(Util.AssemblyPath, x.Value))
 		        ).ToDictionary()
 		    );
+	        serviceInteractions.WebSocketTrafficWriter(task);
 	        
             return 1;
         }

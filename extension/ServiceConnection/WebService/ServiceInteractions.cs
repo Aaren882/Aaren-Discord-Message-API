@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
@@ -16,6 +17,8 @@ public class ServiceInteractions
 	
 	private string? AccessName;
 	public readonly string RPTDirectory = Path.GetFullPath(GetServiceSecret().RPT_Directory);
+	private readonly ConcurrentQueue<Task> _websocketWorkerQueue = new ();
+	private Task? SocketWorker { get; set; } 
 
 	public event Action<IdentityRolesReturnPayload>? ServiceAccessResult = (authTokenPayload) => {
 		var callBack = new Arma3PayloadCallBack(
@@ -31,6 +34,7 @@ public class ServiceInteractions
 		WsClient.Connected += () =>
 		{
 			Logger(null, "INFO: Connected to server");
+			SocketWorker ??= WebSocketTrafficReader();
 			
 			var callBack = new Arma3PayloadCallBack(
 				Data : "[true]",
@@ -98,8 +102,7 @@ public class ServiceInteractions
 		
 		try
 		{
-			await WsClient.SendMessageAsync(metaJson);
-			await Task.Delay(2000);
+			await SendWebSocketMessage(metaJson);
 			await WsClient.SendRptLinesAsync(filePath, linesCount);
 		}
 		catch (Exception e)
@@ -163,7 +166,28 @@ public class ServiceInteractions
 			Logger(e, "");
 		}
     }
-	
+
+	public void WebSocketTrafficWriter(Task webSocketTask)
+	{
+		_websocketWorkerQueue.Enqueue(webSocketTask);
+	}
+	private async Task WebSocketTrafficReader()
+	{
+		Logger(null, "New WebSocketTrafficReader created.");
+		while (true)
+		{
+			await Task.Delay(500);
+			try
+			{
+				if (_websocketWorkerQueue.TryDequeue(out var task))
+					await task;
+			}
+			catch (Exception e)
+			{
+				Logger(e, "");
+			}
+		}
+	}
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
 	/// </summary>
