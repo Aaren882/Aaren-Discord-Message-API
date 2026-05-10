@@ -33,6 +33,7 @@ public sealed class DiscordBotService(
 {
 	private static readonly DiscordSocketClient Client = new();
 	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel")!);
+	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel")!);
 
 	public DiscordSocketClient GetClient() => Client;
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -172,7 +173,7 @@ public sealed class DiscordBotService(
 		var channelId = channelType switch
 		{
 			DiscordBotChannel.Monitor => _monitorChannel,
-			// DiscordBotChannel.AdminConsole => AdminChannel,
+			DiscordBotChannel.AdminConsole => _adminChannel,
 			_ => throw new ArgumentOutOfRangeException(nameof(channelType), channelType, null)
 		};
 		return channelId;
