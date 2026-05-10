@@ -88,7 +88,7 @@ public class WebSocketClient(string serverUri)
 			{
 				var wLine = line + "\n";
 				charCount += wLine.Length;
-				if  (charCount > 2000)
+				if  (charCount > 1980)
 				{
 					Logger(null ,$"SendRptLines has reached limit: {line}");
 					break;

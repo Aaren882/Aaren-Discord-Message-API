@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceConnection.Entity;
+using ServiceConnection.Tools;
 using ServiceConnection.WebService;
 
 namespace ServiceConnection;
@@ -13,6 +14,7 @@ public class ServiceStartup
 	
 	public static bool ExtensionInit { get; set; }
 	public static WebhooksStorage? ALLWebhooks;
+	public static string? RptFileDirectory { get; private set; }
 	
 	public static CallContext ContextInfo;
 	public static ExtensionCallback? Callback = (name, function, data) => 0;
@@ -36,6 +38,11 @@ public class ServiceStartup
 		try
 		{
 			localServices = serviceProvider.GetRequiredService<ILocalServices>();
+			if (serviceInteractions != null)
+			{
+				RptFileDirectory = Util.GetLastestFile(serviceInteractions.RPTDirectory);
+				Logger(null, "Registered RPT File : " + RptFileDirectory);
+			}
 			Tracer(nameof(localServices), "Local Services Initialized");
 		}
 		catch (Exception e) when (e is SocketException or HttpRequestException)
