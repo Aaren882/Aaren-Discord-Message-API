@@ -3,12 +3,12 @@ using System.Net.Mime;
 using System.Text.Json;
 using Arma3WebService.DBContext;
 using Arma3WebService.Extensions;
+using Arma3WebService.Handler;
 using Arma3WebService.Models;
 using Components.Entity;
 using Discord;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
-using ServiceConnection.Discord;
 
 namespace Arma3WebService.Entity;
 
@@ -45,20 +45,39 @@ public sealed class ServiceActionManager(
 	{
 		logger.LogInformation("Receiving metaData for Rpt Line '{RptLineAction}'", payload);
 
-		var content = "```ts\n";
-		var readEnumerable = connection.ReceiveAndReadBinary();
-		await foreach (var line in readEnumerable)
+		try
 		{
-			content += line;
+			var content = "```ts\n";
+			var readEnumerable = connection.ReceiveAndReadBinary();
+			await foreach (var line in readEnumerable)
+			{
+				content += line;
+			}
+			content += "```";
+			logger.LogInformation("Receiving for Rpt Line '{TotalLength}'", content.Length);
+		
+			var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
+		
+			if (payload.RequestGuildId is null)
+			{
+				var message = new DiscordMessageDto { Content = content };
+				await discordBotService.SendMessageAsync(channelId, message);
+			}
+			else
+			{
+				if (!DiscordBotAdminSubmitHelper.
+					    SubmittedPrintLogModalSockets.
+					    TryRemove(payload.RequestGuildId,
+						    out var modalSocket)
+				   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
+			
+				await modalSocket.RespondAsync(text: content, ephemeral: true);
+			}
 		}
-		content += "```";
-		logger.LogInformation("Receiving for Rpt Line '{TotalLength}'", content.Length);
-		
-		var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
-		var message = new DiscordMessageDto { Content = content };
-		await discordBotService.SendMessageAsync(channelId, message);
-		
-		logger.LogDebug("Stored binary file '{RptLineAction}'", payload.FileName);
+		catch (Exception e)
+		{
+			logger.LogError(e, "\"RptLineAction\" threw an exception...");
+		}
 	}
 	public async Task JsonStringAction(IConnection connection, Arma3PayloadJson payload)
 	{
@@ -79,7 +98,6 @@ public sealed class ServiceActionManager(
 			logger.LogError(e, "JsonStringAction threw an exception...");
 		}
 	}
-	
 	
 	public async Task FlatJsonStringAction(IConnection connection, Arma3PayloadFlatJsonString payload)
 	{
