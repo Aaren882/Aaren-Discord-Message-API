@@ -51,7 +51,8 @@ public record Arma3PayloadBinary
 public record Arma3PayloadRptLine
 (
 	string FileName,
-	DateTime CreatedTime
+	DateTime CreatedTime,
+	string? RequestGuildId = null
 ) : Arma3Payload
 {
 	[JsonIgnore]
