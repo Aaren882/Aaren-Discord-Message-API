@@ -7,8 +7,17 @@ namespace Arma3WebService.Handler;
 
 internal static class DiscordBotAdminModalRespondHelper
 {
+	internal const string SessionSelectMenuComponentCustomId = "sessions";
 	private delegate DiscordDto.ModalComponent RespondAction(DiscordBotAdminSimpleAction simpleAction);
-
+	private static readonly Dictionary<DiscordBotAdminModalType, IEnumerable<string>> ComponentCustomId = new Dictionary<DiscordBotAdminModalType, IEnumerable<string>> 
+	{
+		{ DiscordBotAdminModalType.upload_list, ["file_upload"] },
+		{ DiscordBotAdminModalType.admin_broadcast, ["broadcast_inputText"] }
+	};
+	
+	public static IEnumerable<string> GetComponentCustomId(this DiscordBotAdminModalType modalType)
+		=> ComponentCustomId[modalType];
+	
 	public static async Task Extension(this DiscordBotAdminSimpleAction simpleAction, SocketMessageComponent component)
 	{
 		RespondAction content = (simpleAction.ModalType) switch
@@ -26,11 +35,12 @@ internal static class DiscordBotAdminModalRespondHelper
 	
 	private static DiscordDto.ModalComponent UploadList(DiscordBotAdminSimpleAction simpleAction)
 	{
+		var componentCustomId = simpleAction.ModalType.GetComponentCustomId().First();
 		var label = new DiscordDto.LabelComponent
 		{
 			label = simpleAction.ComponentTitle ?? "File Upload",
 			description = simpleAction.Description,
-			component = new DiscordDto.FileUploadComponent("file_upload")
+			component = new DiscordDto.FileUploadComponent(componentCustomId)
 		};
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
 		{
@@ -73,11 +83,12 @@ internal static class DiscordBotAdminModalRespondHelper
 	}
 	private static DiscordDto.ModalComponent AdminBroadcast(DiscordBotAdminSimpleAction simpleAction)
 	{
+		var customId = simpleAction.ModalType.GetComponentCustomId().First();
 		var label = new DiscordDto.LabelComponent
 		{
 			label = simpleAction.ComponentTitle ?? "Broadcast Message",
 			description = simpleAction.Description,
-			component = new DiscordDto.TextInputComponent("broadcast_text", null, 1, 2000, true, null, TextInputStyle.Paragraph)
+			component = new DiscordDto.TextInputComponent(customId, null, 1, 2000, true, null, TextInputStyle.Paragraph)
 		};
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
 		{
@@ -91,7 +102,7 @@ internal static class DiscordBotAdminModalRespondHelper
 	
 	private static DiscordDto.LabelComponent CreateSessionSelectMenuComponent(DiscordBotAdminSimpleAction simpleAction)
 	{
-		var options = simpleAction.ConnectionsNames.Select(
+		var options = simpleAction.ConnectionsNames?.Select(
 			name => new DiscordDto.SelectMenuOption(
 				name, name, null, null
 			)
@@ -103,7 +114,7 @@ internal static class DiscordBotAdminModalRespondHelper
 			description = simpleAction.SessionMenu.Description,
 			component = new DiscordDto.SelectMenuComponent
 			{
-				custom_Id = "sessions",
+				custom_Id = SessionSelectMenuComponentCustomId,
 				options = options
 			}
 		};
