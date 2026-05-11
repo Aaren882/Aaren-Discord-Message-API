@@ -18,7 +18,7 @@ public static class ServiceStartup
 	public static string? RptFileDirectory { get; private set; }
 	
 	public static CallContext ContextInfo { get; set; }
-	public static ExtensionCallback? Callback = (name, function, data) => 0;
+	public static ExtensionCallback Callback = (name, function, data) => 0;
 
 	public static ServiceInteractions? serviceInteractions { get; private set; }
 	
