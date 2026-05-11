@@ -114,13 +114,8 @@ public sealed class AdminConsoleManager(
     		
     		//- Checking DB data
     		if (exist is null)
-    		{
-    			var json = await File.ReadAllTextAsync("AdminConsole.json");
-    			var deserialize = JsonSerializer.Deserialize(
-    				json,
-    				MsgPayload_JsonContext.Default.DiscordMessageDto
-    			);
-    			message = await discordBotService.SendMessageAsync(channelId, deserialize!);
+		    {
+			    message = await CreateConsole();
 
     			await dbContext.InternalManagement.AddAsync(
     				new InternalManagement
@@ -131,18 +126,32 @@ public sealed class AdminConsoleManager(
     			);
     		} else
     		{
-    			message = await channel.GetMessageAsync(exist.messageId);
-    			updateColumn = exist.messageId != message.Id;
+			    message = await channel.GetMessageAsync(exist.messageId);
+				var id = message?.Id ?? 0;
+				if (id == 0)
+					message = await CreateConsole();
     			
-    			if (updateColumn) exist.messageId = message.Id;
+				updateColumn = exist.messageId != id;
+    			if (updateColumn) exist.messageId = message!.Id;
     		}
 
-		    AdminMessageId = message.Id;
+		    AdminMessageId = message!.Id;
     		
     		//- Make sure DB updated
     		if (updateColumn)
     			await dbContext.SaveChangesAsync();
-    	}
+			
+		    //- Local Method
+		    async Task<IMessage> CreateConsole()
+		    {
+			    var json = await File.ReadAllTextAsync("AdminConsole.json");
+			    var deserialize = JsonSerializer.Deserialize(
+				    json,
+				    MsgPayload_JsonContext.Default.DiscordMessageDto
+			    );
+			    return await discordBotService.SendMessageAsync(channelId, deserialize!);
+		    };
+	    }
     	catch (Exception e)
     	{
     		logger.LogError("ERROR CreateAdminConsole : {Error}", e.Message);
