@@ -22,8 +22,8 @@ public sealed class Arma3ActionManager(ServiceActionManager serviceAction) : IAr
 				serviceAction.BinaryAction(connection, (Arma3PayloadBinary) payload),
 			Arma3PayLoadType.Command =>
 				serviceAction.CallBackAction(connection, (Arma3PayloadCallBack) payload),
-			Arma3PayLoadType.RptLine =>
-				serviceAction.RptLineAction(connection, (Arma3PayloadRptLine) payload),
+			Arma3PayLoadType.ServiceRequest => 
+				serviceAction.ServiceRequestAction(connection, (Arma3PayloadServiceRequest) payload),
 			Arma3PayLoadType.JsonString =>
 				serviceAction.JsonStringAction(connection, (Arma3PayloadJson) payload),
 			Arma3PayLoadType.FlatJsonString => 

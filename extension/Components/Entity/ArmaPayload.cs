@@ -11,6 +11,7 @@ public enum Arma3PayLoadType
 	RptLine = 4,
 	JsonString = 5,
 	FlatJsonString = 6,
+	ServiceRequest = 7,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
@@ -20,6 +21,7 @@ public enum Arma3PayLoadType
 [JsonDerivedType(typeof(Arma3PayloadRptLine), (int)Arma3PayLoadType.RptLine)]
 [JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
 [JsonDerivedType(typeof(Arma3PayloadFlatJsonString), (int)Arma3PayLoadType.FlatJsonString)]
+[JsonDerivedType(typeof(Arma3PayloadServiceRequest), (int)Arma3PayLoadType.ServiceRequest)]
 public abstract record Arma3Payload
 {
 	public abstract Arma3PayLoadType Type { get; }
@@ -83,6 +85,17 @@ public record Arma3PayloadFlatJsonString
 {
 	[JsonIgnore]
 	public override Arma3PayLoadType Type => Arma3PayLoadType.FlatJsonString;
+};
+
+public record Arma3PayloadServiceRequest
+(
+	ushort ActionType,
+	string RequestGuildId,
+	Arma3Payload? Payload = null
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.ServiceRequest;
 };
 
 //- Service
