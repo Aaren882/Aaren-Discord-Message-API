@@ -89,15 +89,14 @@ public class ServiceInteractions
 			await SendWebSocketBinary(path, chunkSize);
 	}
 	
-	public async Task SendWebSocketRptLines(string filePath, int linesCount, string? guildId)
+	public async Task SendWebSocketRptLines(string filePath, int linesCount)
 	{
 		Logger(null, "INFO: Sending RPT lines");
 		var fileInfo = new FileInfo(filePath);
 		var metadata = new Arma3PayloadRptLine
 		(
 			fileInfo.Name,
-			fileInfo.CreationTime,
-			RequestGuildId: guildId
+			fileInfo.CreationTime
 		);
 		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 		
