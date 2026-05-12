@@ -269,12 +269,8 @@ public static class EntryDelegates
         {
 	        if (!int.TryParse(args[0], out var linesCount))
 		        throw new Exception("INCORRECT NUMBER OF ARGUMENTS");
-	        
-	        string? guildId = null;
-	        if (args.Length > 1)
-				guildId = args[1];
-	        
-	        var task = serviceInteractions.SendWebSocketRptLines(RptFileDirectory, linesCount, guildId);
+
+	        var task = serviceInteractions.SendWebSocketRptLines(RptFileDirectory, linesCount);
 	        serviceInteractions.WebSocketTrafficWriter(task);
 	        
 	        return 1;
