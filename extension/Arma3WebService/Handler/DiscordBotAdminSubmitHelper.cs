@@ -73,12 +73,23 @@ internal static class DiscordBotAdminSubmitHelper
 			return;
 		}*/
 		SubmittedPrintLogModalSockets[guildId] = component;
-		var command = new Arma3PayloadRptLine("", component.CreatedAt.DateTime, guildId);
+		var command = new Arma3PayloadServiceRequest(1, guildId);
 		await connection.SendArmaCallBackMessage(command);
 	}
+
+	internal static ConcurrentDictionary<string, SocketModal> SubmittedExportLogModalSockets = new();
 	private static async Task ExportLog(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
-		
+		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
+		var session = GetSelectedSession(component);
+		var connection = webSocketService.GetConnection(session);
+
+		//component.GuildId
+		var guildId = $"{component.GuildId}";
+		SubmittedExportLogModalSockets[guildId] = component;
+
+		var command = new Arma3PayloadServiceRequest(2, guildId);
+		await connection.SendArmaCallBackMessage(command);
 	}
 	private static async Task AdminRestartMission(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{

@@ -35,6 +35,7 @@ namespace Arma3WebService
 
 			//- Add controllers
 			builder.Services.AddSingleton<AdminConsoleManager>();
+			builder.Services.AddSingleton<DiscordBotRequestHandler>();
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 			

@@ -150,6 +150,12 @@ public class WebSocketClient(string serverUri)
 					
 					//- Invoke callback
 					MessageReceived?.Invoke(payload);
+					
+					//- Respond request to the service 
+					if (payload is Arma3PayloadServiceRequest request)
+					{
+						ServiceRequestHandler.RespondRequest(request, message);
+					}
 				}
 				else if (result.MessageType == WebSocketMessageType.Close)
 				{
