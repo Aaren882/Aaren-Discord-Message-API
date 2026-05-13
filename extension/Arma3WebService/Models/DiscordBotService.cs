@@ -12,7 +12,8 @@ namespace Arma3WebService.Models;
 public enum DiscordBotChannel
 {
 	Monitor,
-	AdminConsole
+	AdminConsole,
+	Logging
 }
 
 public interface IDiscordBotService
@@ -34,6 +35,7 @@ public sealed class DiscordBotService(
 	private static readonly DiscordSocketClient Client = new();
 	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel")!);
 	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel")!);
+	private readonly ulong _loggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("LoggingChannel")!);
 
 	public DiscordSocketClient GetClient() => Client;
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -174,6 +176,7 @@ public sealed class DiscordBotService(
 		{
 			DiscordBotChannel.Monitor => _monitorChannel,
 			DiscordBotChannel.AdminConsole => _adminChannel,
+			DiscordBotChannel.Logging => _loggingChannel,
 			_ => throw new ArgumentOutOfRangeException(nameof(channelType), channelType, null)
 		};
 		return channelId;
