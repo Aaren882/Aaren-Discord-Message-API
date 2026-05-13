@@ -6,7 +6,7 @@ namespace Components.Entity;
 public enum Arma3PayLoadType
 {
 	Text = 1,
-	Binary = 2, //- in game *.rpt logs
+	Binary = 2,
 	Command = 3,
 	RptLine = 4,
 	JsonString = 5,

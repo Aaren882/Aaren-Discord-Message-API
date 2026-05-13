@@ -125,17 +125,17 @@ public class ServiceInteractions
 		    totalChunks,
 		    directoryPrefix
 	    );
-		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+	    var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 
-		try
-		{
-			await SendWebSocketMessage(metaJson);
-			await WsClient.SendBinaryAsync(filePath, metadata, chunkSize);
-		}
-		catch (Exception e)
-		{
-			Logger(e, "");
-		}
+	    try
+	    {
+		    await SendWebSocketMessage(metaJson);
+		    await WsClient.SendBinaryAsync(filePath, metadata, chunkSize);
+	    }
+	    catch (Exception e)
+	    {
+		    Logger(e, "");
+	    }
     }
 	public async Task SendWebSocketBinary(KeyValuePair<string,string> fileValuePair, int chunkSize = 64 * 1024)
 	{
