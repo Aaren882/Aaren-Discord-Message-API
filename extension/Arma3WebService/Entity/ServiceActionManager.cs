@@ -142,12 +142,12 @@ public sealed class ServiceActionManager(
 		
 		//- Inject components
 		List<DiscordDto.ComponentBase> components = [];
-		if (serverInfo.modListUrl is not null)
+		if (serverIdentity.modListUrl is not null)
 		{
 			components.Add(
 				new DiscordDto.ButtonComponent(
-					label: "查看模組清單",
-					url: serverInfo.modListUrl,
+					label: "MOD",
+					url: serverIdentity.modListUrl,
 					emoji: new Emote(0, "📦"),
 					style: ButtonStyle.Link
 				)

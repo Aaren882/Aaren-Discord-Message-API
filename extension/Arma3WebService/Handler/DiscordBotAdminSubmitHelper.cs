@@ -45,12 +45,7 @@ internal static class DiscordBotAdminSubmitHelper
 		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(sessionName);
 		if (serverIdentity is null)
 			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
-
-		var infoTemplate = dbContext.ServerInfoList
-			.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
-
-		if (infoTemplate == null) throw new NullReferenceException("\"infoTemplate\" does not exist.");
-
+		
 		//- http://cdn.discordapp.com/attachments/1315253136511991818/1386731812268540054/TFOX_2025.html?ex=6a049aa4&is=6a034924&hm=e88ebbf4e32e3edfe24fb4078a23545ec5ab1a9d2e2ce2aa6b5d9f866bc3e46f&
 		//https://cdn.discordapp.com/ephemeral-attachments/1502234846066376807/1502236089145098350/Arma_3_Preset_tfox_greensea.html?ex=69fef9e1&is=69fda861&hm=645634eced13e56caf4cf41039a5f735542f2efacc9c3d40e540cb8152214ac0&
 		var url = attachment.Url;
@@ -83,7 +78,7 @@ internal static class DiscordBotAdminSubmitHelper
 			);
 
 			var sentAttachment = message.Attachments.First();
-			infoTemplate.modListUrl = sentAttachment.Url;
+			serverIdentity.modListUrl = sentAttachment.Url;
 		}
 		
 		await dbContext.SaveChangesAsync();
