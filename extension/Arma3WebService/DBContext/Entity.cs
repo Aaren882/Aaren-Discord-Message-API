@@ -10,6 +10,7 @@ public class ServerIdentity
 	public string profileName { get; set; }
 	public ulong messageId { get; set; }
 	public long profileStateStamp { get; set; }
+	public string? modListUrl { get; set; }
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
 }
 [PrimaryKey(nameof(messageId))]
@@ -19,7 +20,6 @@ public class ServerInfoTemplate
 	public string messageTemplatePath { get; set; }
 	public string? messageActionPath { get; set; }
 	public string messageOfflinePath { get; set; } = Path.GetFullPath(".profile/MessageOfflineTemplate/default.json");
-	public string? modListUrl { get; set; }
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
 }
 
