@@ -329,7 +329,7 @@ public record DiscordMessageDto : DiscordMessage
 						).ToList();
 				}
 				
-				DateTimeOffset? timeStamp = string.IsNullOrEmpty(x.timestamp) ? null : DateTimeOffset.FromUnixTimeSeconds(long.Parse(x.timestamp));
+				DateTimeOffset? timeStamp = string.IsNullOrEmpty(x.timestamp) ? null : DateTime.Parse(x.timestamp);
 				
 				
 				return new EmbedBuilder
