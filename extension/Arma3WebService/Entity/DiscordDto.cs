@@ -329,6 +329,8 @@ public record DiscordMessageDto : DiscordMessage
 						).ToList();
 				}
 				
+				DateTimeOffset? timeStamp = string.IsNullOrEmpty(x.timestamp) ? null : DateTimeOffset.FromUnixTimeSeconds(long.Parse(x.timestamp));
+				
 				
 				return new EmbedBuilder
 				{
@@ -348,7 +350,7 @@ public record DiscordMessageDto : DiscordMessage
 						IconUrl = x.footer.icon_url,
 						Text = x.footer.text
 					},
-					Timestamp = string.IsNullOrEmpty(x.timestamp) ? null : DateTime.Parse(x.timestamp),
+					Timestamp = timeStamp,
 					Color = string.IsNullOrEmpty(x.color) ? null : uint.Parse(x.color)
 				}.Build();
 			}
