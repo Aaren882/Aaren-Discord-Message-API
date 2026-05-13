@@ -29,7 +29,7 @@ internal static class DiscordBotAdminSubmitHelper
 		};
 		await content(component, simpleAction, serviceProvider);
 	}
-	private static HttpClient _httpClient = new ();
+	private static readonly HttpClient _httpClient = new ();
 	private static async Task UploadList(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		var attachments = component.Data.Attachments.ToList();
@@ -62,11 +62,13 @@ internal static class DiscordBotAdminSubmitHelper
 			var embedBuilder = new EmbedBuilder()
 				.WithAuthor(component.User.GlobalName)
 				.WithThumbnailUrl(component.User.GetAvatarUrl(size: 64))
-				.WithTitle("📂 File Upload Log")
+				.WithTitle("📂 Mod List Update")
 				.WithColor(3447003)
 				.AddField("Filename", attachment.Filename, true)
 				.AddField("Size", $"{attachment.Size:##,###} Bytes", true)
-				.AddField("Channel", $"https://discord.com/channels/{component.GuildId}/{component.Channel.Id}")
+				.AddField("Session", $"`{serverIdentity.profileName}`", true)
+				.AddField("Channel", $"https://discord.com/channels/{component.GuildId}/{component.Channel.Id}",true)
+				.AddField("Panel", component.Message.GetJumpUrl(), true)
 				.WithFooter("System Logger")
 				.WithCurrentTimestamp();
 		
@@ -147,7 +149,7 @@ internal static class DiscordBotAdminSubmitHelper
 			)
 		};
 		await webSocketService.InvokeArmaCallBack(remoteCommand);
-		await component.RespondAsync($"`\"{nameof(AdminBroadcast)}\" Completed !`", ephemeral: true);
+		await component.RespondAsync($"`\"{nameof(AdminBroadcast)}\" => \"{sessionName}\" Completed !`", ephemeral: true);
 	}
 
 	private static string GetSelectedSession(SocketModal component)
