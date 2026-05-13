@@ -199,7 +199,7 @@ public sealed class AdminConsoleManager(
 				var sessionCount = GetSessionNames().Count;
 				var sessionCountColor = sessionCount == 0 ? "arm" : "fix";
 				samples["{TOTAL_SESSIONS}"] = @$"{sessionCountColor}\n{sessionCount}";
-				samples["{SYSTEM_TIME}"] = $"{((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}";
+				samples["{SYSTEM_TIMESTAMP}"] = $"{((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}";
 				
 				var json = await File.ReadAllTextAsync("AdminConsole.json");
 				json = samples.Aggregate(
