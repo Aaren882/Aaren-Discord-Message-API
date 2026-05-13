@@ -40,7 +40,6 @@ public sealed class ServiceActionManager(
 		);
 					
 		await connection.ReceiveBinary(fileStream);
-		logger.LogDebug("Stored binary file '{PayloadFileName}'", payload.FileName);
 	}
 	
 	public async Task ServiceRequestAction(IConnection connection, Arma3PayloadServiceRequest payload)

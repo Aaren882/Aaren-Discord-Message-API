@@ -49,6 +49,8 @@ public class WebSocketClient(string serverUri)
 	}
 	public async Task SendBinaryAsync(string filePath, Arma3PayloadBinary payloadRpt, int chunkSize = 64 * 1024)
 	{
+		Logger(null, "INFO: Sending Binary");
+		
 		if (Status() == WebSocketState.Open)
 		{
 			await Task.Delay(500); //- # Wait for the RPT get written first.   
@@ -78,6 +80,8 @@ public class WebSocketClient(string serverUri)
 	}
 	public async Task SendRptLinesAsync(string filePath, int linesCount)
 	{
+		Logger(null, $"INFO: Sending RPT : {linesCount} lines");
+		
 		if (Status() == WebSocketState.Open)
 		{
 			var encoding = Encoding.UTF8;
