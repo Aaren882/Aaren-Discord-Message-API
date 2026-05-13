@@ -85,6 +85,11 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
 
 [QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
 [QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
+[QGVAR(AdminBroadcast), {
+  params ["_msg"];
+  INFO_1("AdminBroadcast ""%1""",_this);
+  [_msg] remoteExec ["BIS_fnc_infoText"];
+}] call CBA_fnc_addEventHandler;
 
 [QGVAR(ServiceAccessResult), {
   INFO_1("ServiceAccessResult : %1",_this);

@@ -127,22 +127,22 @@ internal static class DiscordBotAdminSubmitHelper
 	{
 		//- Saving Url
 		var webSocketService= serviceProvider.GetRequiredService<IWebSocketService>();
-		var serviceScopeFactory= serviceProvider.GetRequiredService<IServiceScopeFactory>();
+		/*var serviceScopeFactory= serviceProvider.GetRequiredService<IServiceScopeFactory>();
 		await using var scoped = serviceScopeFactory.CreateAsyncScope();
-		await using var dbContext = scoped.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		await using var dbContext = scoped.ServiceProvider.GetRequiredService<ServiceDbContext>();*/
 		
 		//- Get correct server info
 		var sessionName = GetSelectedSession(component);
-		var serverIdentity= await dbContext.GetServerIdentityFromProfileNameAsync(sessionName);
+		/*var serverIdentity= await dbContext.GetServerIdentityFromProfileNameAsync(sessionName);
 		if (serverIdentity is null)
-			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
+			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");*/
 
 		var componentCustomId = simpleAction.ModalType.GetComponentCustomId().First();
 		var inputComponent = component.Data.Components.First(x => string.Equals(x.CustomId, componentCustomId, StringComparison.OrdinalIgnoreCase));
 		
 		var remoteCommand = new Arma3RemoteCommand
 		{
-			gameId = serverIdentity.profileName,
+			gameId = sessionName,
 			payload = new Arma3PayloadCallBack(
 				nameof(AdminBroadcast),
 				$"[\"{inputComponent.Value}\"]"
