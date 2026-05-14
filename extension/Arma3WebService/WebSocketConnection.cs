@@ -12,7 +12,7 @@ public interface IConnection
 	public WebsocketContextEntity websocketContext { get; init; }
 	Task<WebSocketCloseStatus?> KeepReceiving();
 	Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream);
-	Task<WebSocketReceiveResult> ReceiveBinary(FileStream fileStream);
+	Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream);
 	IAsyncEnumerable<string> ReceiveAndReadBinary();
 	Task SendArmaCallBackMessage(Arma3Payload callBack);
 	Task Send(string message);
@@ -74,7 +74,7 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 
 		return result;
 	}
-	public async Task<WebSocketReceiveResult> ReceiveBinary(FileStream fileStream)
+	public async Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream)
 	{
 		var readBuffer = new ArraySegment<byte>(new byte[64 * 1024]);
 
