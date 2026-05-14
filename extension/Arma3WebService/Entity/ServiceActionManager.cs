@@ -49,15 +49,7 @@ public sealed class ServiceActionManager(
 
 		try
 		{
-			switch (payload.ActionType)
-			{
-				case 1:
-					await requestHandler.ReceiveRptLineAction(connection, payload);
-					break;
-				case 2:
-					await requestHandler.BinaryAction(connection, payload);
-					break;
-			}
+			await requestHandler.OnReceived(connection, payload);
 		}
 		catch (Exception e)
 		{
