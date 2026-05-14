@@ -45,36 +45,20 @@ public sealed class DiscordBotRequestHandler(
 		
 		if (payload.Payload is Arma3PayloadBinary binaryPayload)
 		{
-			if (!Directory.Exists(binaryPayload.DirectoryPrefix)) Directory.CreateDirectory(binaryPayload.DirectoryPrefix);
+			await using Stream memoryStream = new MemoryStream(); 
+			await connection.ReceiveBinary(memoryStream);
+			
+			if (!DiscordBotAdminSubmitHelper.
+				    SubmittedExportLogModalSockets.
+				    TryRemove(payload.RequestGuildId,
+					    out var modalSocket)
+			   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
 
-			var path = Path.GetFullPath(Path.Combine(binaryPayload.DirectoryPrefix, binaryPayload.FileName));
-			await using (FileStream fileStream = new(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
-			{
-				await connection.ReceiveBinary(fileStream);
-			};
-
-			
-			var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
-			
-			if (payload.RequestGuildId is null)
-			{
-				var message = new DiscordMessageDto { FileName = binaryPayload.FileName, File = path };
-				await discordBotService.SendMessageAsync(channelId, message);
-			}
-			else
-			{
-				if (!DiscordBotAdminSubmitHelper.
-					    SubmittedExportLogModalSockets.
-					    TryRemove(payload.RequestGuildId,
-						    out var modalSocket)
-				   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
-			
-				await modalSocket.RespondWithFileAsync(
-					fileName: binaryPayload.FileName,
-					filePath: path,
-					ephemeral: true
-				);
-			}
+			await modalSocket.RespondWithFileAsync(
+				fileStream: memoryStream,
+				fileName: binaryPayload.FileName,
+				ephemeral: true
+			);
 		}
 		else
 		{
