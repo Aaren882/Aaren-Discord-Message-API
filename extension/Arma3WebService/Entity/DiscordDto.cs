@@ -295,6 +295,7 @@ public class DiscordDto
 
 public record DiscordMessageDto : DiscordMessage
 {
+	public Stream? FileStream { get; set; }
 	public string? FileName { get; set; }
 	public MessageFlags Flags { get; set; } = MessageFlags.None;
 	public IEnumerable<FileAttachment>? Attachments { get; set; }
