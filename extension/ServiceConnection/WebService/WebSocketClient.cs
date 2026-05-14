@@ -84,11 +84,13 @@ public class WebSocketClient(string serverUri)
 		
 		if (Status() == WebSocketState.Open)
 		{
+			// var readLines = File.ReadLinesAsync(filePath, encoding);
 			var encoding = Encoding.UTF8;
-			var readLines = File.ReadLinesAsync(filePath, encoding);
+			await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			var readLines = ReadLinesAsyncEnumerable(fileStream).TakeLast(linesCount).Reverse();
 
 			var charCount = 0;
-			await foreach (var line in readLines.TakeLast(linesCount))
+			await foreach (var line in readLines)
 			{
 				var wLine = line + "\n";
 				charCount += wLine.Length;
@@ -107,6 +109,20 @@ public class WebSocketClient(string serverUri)
 		else
 		{
 			Logger(null ,"WebSocket is not connected. Cannot send message.");
+		}
+
+		return;
+			
+		//- Local function
+		async IAsyncEnumerable<string> ReadLinesAsyncEnumerable(Stream stream)
+		{
+			using var reader = new StreamReader(stream);
+			while (!reader.EndOfStream)
+			{
+				var line = await reader.ReadLineAsync();
+				if (line != null)
+					yield return line;
+			}
 		}
 	}
 
@@ -197,6 +213,7 @@ public class WebSocketClient(string serverUri)
 			_cancellationTokenSource?.Cancel();
 			_webSocket?.Dispose();
 			_cancellationTokenSource?.Dispose();
+			Disconnected?.Invoke();
 
 			Logger(null ,"Disconnected successfully.");
 		}

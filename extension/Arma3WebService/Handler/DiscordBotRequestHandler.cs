@@ -20,7 +20,7 @@ public sealed class DiscordBotRequestHandler(
 	private async Task ReceiveRptLineAction(IConnection connection, Arma3PayloadServiceRequest payload)
 	{
 		var content = "```ts\n";
-		var readEnumerable = connection.ReceiveAndReadBinary();
+		var readEnumerable = connection.ReceiveAndReadBinary().Reverse();
 		await foreach (var line in readEnumerable)
 		{
 			content += line;
