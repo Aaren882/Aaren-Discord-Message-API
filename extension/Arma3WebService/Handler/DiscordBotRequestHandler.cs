@@ -9,7 +9,18 @@ public sealed class DiscordBotRequestHandler(
 	IDiscordBotService discordBotService
 )
 {
-	public async Task ReceiveRptLineAction(IConnection connection, Arma3PayloadServiceRequest payload)
+	private delegate Task ReceivedAction(IConnection connection, Arma3PayloadServiceRequest payload);
+	public async Task OnReceived(IConnection connection, Arma3PayloadServiceRequest payload)
+	{
+		ReceivedAction action = (payload) switch
+		{
+			{ ActionType : 1 } => ReceiveRptLineAction,
+			{ ActionType : 2 } => BinaryAction
+		};
+
+		await action(connection, payload);
+	}
+	private async Task ReceiveRptLineAction(IConnection connection, Arma3PayloadServiceRequest payload)
 	{
 		var content = "```ts\n";
 		var readEnumerable = connection.ReceiveAndReadBinary();
@@ -20,26 +31,16 @@ public sealed class DiscordBotRequestHandler(
 		content += "```";
 		logger.LogInformation("Receiving for Rpt Line '{TotalLength}'", content.Length);
 		
-		var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
-		
-		if (payload.RequestGuildId is null)
-		{
-			var message = new DiscordMessageDto { Content = content };
-			await discordBotService.SendMessageAsync(channelId, message);
-		}
-		else
-		{
-			if (!DiscordBotAdminSubmitHelper.
-				    SubmittedPrintLogModalSockets.
-				    TryRemove(payload.RequestGuildId,
-					    out var modalSocket)
-			   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
+		if (!DiscordBotAdminSubmitHelper.
+			    SubmittedPrintLogModalSockets.
+			    TryRemove(payload.RequestGuildId,
+				    out var modalSocket)
+		   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
 			
-			await modalSocket.RespondAsync(text: content, ephemeral: true);
-		}
+		await modalSocket.RespondAsync(text: content, ephemeral: true);
 	}
 	
-	public async Task BinaryAction(IConnection connection, Arma3PayloadServiceRequest payload)
+	private async Task BinaryAction(IConnection connection, Arma3PayloadServiceRequest payload)
 	{
 		logger.LogInformation("Receiving metaData for binary file '{Arma3PayloadRpt}'", payload);
 		
