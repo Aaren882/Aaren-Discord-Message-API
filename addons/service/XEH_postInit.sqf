@@ -115,22 +115,25 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
       
       if (_isNewIdentity || _isDifferent) then {
         INFO("It seems [ServiceAccessResult] ""_isNewIdentity/_isDifferent"" is changed. Updating backend profile config/data");
-        // sleep 1; //- Make sure stack can be released properly
+        _messageId spawn {
+          sleep 1; //- Make sure stack can be released properly
 
-        private _profileConfiguration = call FUNC(GetProfileConfiguration);
-        // private _messageId = _profileConfiguration getOrDefault ["MessageId", ""];
-        private _configuration = _profileConfiguration getOrDefault ["Configuration", createHashMap];
-        [_messageId, _configuration] call FUNC(UpdateServerInfoTemplate);
-        
-        
-        // sleep 1; //- Small delay to ensure profile data is updated
+          private _messageId = _this;
+          private _profileConfiguration = call FUNC(GetProfileConfiguration);
+          private _configuration = _profileConfiguration getOrDefault ["Configuration", createHashMap];
+          [_messageId, _configuration] call FUNC(UpdateServerInfoTemplate);
+          
+          sleep 1; //- Small delay to ensure profile data is updated
 
-        //- Setup directory for backend storage
-        private _toArray = _configuration toArray true;
-        private _prefixDirectories = (_toArray # 0) apply {".profile/" + _x};
+          //- Setup directory for backend storage
+          private _toArray = _configuration toArray true;
+          private _prefixDirectories = (_toArray # 0) apply {".profile/" + _x};
 
-        private _payload = _prefixDirectories createHashMapFromArray (_toArray # 1);
-        "DiscordMessageAPI" callExtension ["SendWebSocketAssemblyDirectoryBinaries", [toJSON _payload]];
+          private _payload = _prefixDirectories createHashMapFromArray (_toArray # 1);
+          "DiscordMessageAPI" callExtension ["SendWebSocketAssemblyDirectoryBinaries", [toJSON _payload]];
+
+          INFO("ServiceAccessResult callback executed successfully.");
+        };
       };
   }, _this, 10, {
     WARNING("ServiceAccessResult callback wait timeout. It seems the service is not responding or taking too long to respond.");
