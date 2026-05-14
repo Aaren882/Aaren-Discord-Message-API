@@ -1,12 +1,9 @@
-using Arma3WebService.Entity;
-using Arma3WebService.Models;
 using Components.Entity;
 
 namespace Arma3WebService.Handler;
 
 public sealed class DiscordBotRequestHandler(
-	ILogger<DiscordBotRequestHandler> logger,
-	IDiscordBotService discordBotService
+	ILogger<DiscordBotRequestHandler> logger
 )
 {
 	private delegate Task ReceivedAction(IConnection connection, Arma3PayloadServiceRequest payload);
