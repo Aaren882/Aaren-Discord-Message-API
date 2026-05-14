@@ -133,22 +133,22 @@ public sealed class ServiceActionManager(
 		);
 		
 		//- Inject components
-		List<DiscordDto.ComponentBase> components = [];
+		var components = messageDto.Components ?? [];
 		if (serverIdentity.modListUrl is not null)
 		{
-			components.Add(
+			List<DiscordDto.ComponentBase> additionalComponents =
+			[
 				new DiscordDto.ButtonComponent(
 					label: "MOD",
 					url: serverIdentity.modListUrl,
 					emoji: new Emote(0, "📦"),
 					style: ButtonStyle.Link
 				)
-			);
+			];
+			components.Add(new DiscordDto.ActionRowComponent(additionalComponents));
 		}
 
-		if (components.Count != 0)
-			messageDto!.Components = [new DiscordDto.ActionRowComponent(components)];
-		
+		messageDto.Components = components;
 		await discordBotService.ModifyMessageAsync(serverIdentity.messageId, messageDto!);
 	}
 	public async Task SSE_Logging(HttpContext ctx, string sessionIdentity)
