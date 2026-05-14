@@ -300,7 +300,7 @@ public record DiscordMessageDto : DiscordMessage
 	public MessageFlags Flags { get; set; } = MessageFlags.None;
 	public IEnumerable<FileAttachment>? Attachments { get; set; }
 	public IEnumerable<EmbedData>? Embeds { get; set; }
-	public IReadOnlyCollection<DiscordDto.ComponentBase>? Components { get; set; }
+	public List<DiscordDto.ComponentBase>? Components { get; set; }
 	public DiscordDto.PollPropertiesDto? poll { get; set; }
 	
 	public MessageComponent? ConvertComponents()
@@ -308,8 +308,7 @@ public record DiscordMessageDto : DiscordMessage
 		if (Components is null) return null;
 
 		return new ComponentBuilderV2(
-			Components
-				.Select(x => x.Convert())
+			Components.Select(x => x.Convert())
 		).Build();
 	}
 	public Embed[]? ConvertEmbeds()
