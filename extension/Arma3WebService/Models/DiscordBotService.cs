@@ -209,6 +209,16 @@ public sealed class DiscordBotService(
 					components: component,
 					flags: message.Flags
 				),
+			{ FileStream: not null } => channel
+				.SendFileAsync(
+					stream: message.FileStream,
+					filename : message.FileName,
+					text: message.Content,
+					isTTS: message.Tts ?? false,
+					embeds: embeds,
+					components: component,
+					flags: message.Flags
+				),
 			_ => channel
 				.SendMessageAsync(
 					text: message.Content,
