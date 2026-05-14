@@ -90,6 +90,19 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   INFO_1("AdminBroadcast ""%1""",_this);
   [_msg] remoteExec ["BIS_fnc_infoText"];
 }] call CBA_fnc_addEventHandler;
+[QGVAR(AdminRestartMission), {
+  params ["_password","_callerGlobalName","_callerId"];
+  INFO_2("AdminRestartMission by ""%1:%2""",_callerGlobalName,_callerId);
+
+  private _passwordWasOK = _password serverCommand "#restart";
+  if (_passwordWasOK) then
+  {
+    WARNING_2("Mission Restarted by Admin ""%1:%2""",_callerGlobalName,_callerId);
+  } else
+  {
+    WARNING_2("Failed Mission Restart Attempt by Admin ""%1:%2""",_callerGlobalName,_callerId);
+  }
+}] call CBA_fnc_addEventHandler;
 
 [QGVAR(ServiceAccessResult), {
   INFO_1("ServiceAccessResult : %1",_this);

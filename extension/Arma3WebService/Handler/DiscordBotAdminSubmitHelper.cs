@@ -121,7 +121,22 @@ internal static class DiscordBotAdminSubmitHelper
 	}
 	private static async Task AdminRestartMission(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
+		var password = Environment.GetEnvironmentVariable("AdminPassword");
+		if (password is null) throw new Exception("Missing AdminPassword (make sure password is set in environment variables)");
 		
+		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
+		var sessionName = GetSelectedSession(component);
+		
+		var remoteCommand = new Arma3RemoteCommand
+		{
+			gameId = sessionName,
+			payload = new Arma3PayloadCallBack(
+				nameof(AdminRestartMission),
+				$"[\"{password}\",\"{component.User.GlobalName}\", \"{component.User.Id}\"]"
+			)
+		};
+		await webSocketService.InvokeArmaCallBack(remoteCommand);
+		await component.RespondAsync($"`\"{nameof(AdminRestartMission)}\" => \"{sessionName}\" Completed !`", ephemeral: true);
 	}
 	private static async Task AdminBroadcast(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
@@ -145,7 +160,7 @@ internal static class DiscordBotAdminSubmitHelper
 			gameId = sessionName,
 			payload = new Arma3PayloadCallBack(
 				nameof(AdminBroadcast),
-				$"[\"{inputComponent.Value}\"]"
+				$"[\"{inputComponent.Value}\",\"{component.User.GlobalName}\", \"{component.User.Id}\"]"
 			)
 		};
 		await webSocketService.InvokeArmaCallBack(remoteCommand);
