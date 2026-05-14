@@ -109,7 +109,7 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   
   //- Wait for websocket connection
   [
-    {GVAR(Avaliable)}, {
+    {GVAR(Available)}, {
       params ["_successful","_serviceReturnPayload"];
       _serviceReturnPayload params ["_profileName","_messageId","_isNewIdentity","_isDifferent"];
       
