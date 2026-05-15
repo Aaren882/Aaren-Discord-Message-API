@@ -121,7 +121,14 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
           private _messageId = _this;
           private _profileConfiguration = call FUNC(GetProfileConfiguration);
           private _configuration = _profileConfiguration getOrDefault ["Configuration", createHashMap];
-          [_messageId, _configuration] call FUNC(UpdateServerInfoTemplate);
+          private _infoTemplateUpdated = [_messageId, _configuration] call FUNC(UpdateServerInfoTemplate);
+
+          if (!_infoTemplateUpdated) exitWith {
+            ERROR("""ServiceAccessResult"" Exception : Failed to update server info template.");
+          };
+          if (count _configuration == 0) exitWith {
+            WARNING("No configuration found in profile. Skipping directory synchronization. (Will be using default configuration)");
+          };
           
           sleep 1; //- Small delay to ensure profile data is updated
 

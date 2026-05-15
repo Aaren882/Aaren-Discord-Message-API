@@ -24,10 +24,10 @@ TRACE_1("fnc_GetProfileConfiguration",_this);
 
 private _profile = GVAR(Profiles) call FUNC(GetProfile);
 
-private _configuration = _profile getOrDefault ["Configuration", createHashMap];
+/* private _configuration = _profile getOrDefault ["Configuration", createHashMap];
 if (count _configuration == 0) exitWith {
-  ERROR_1("Cannot find ""MessageFile""=> ""%1"" from current profile !!",_configuration);
+  ERROR_1("Cannot find ""MessageFile"" => ""%1"" from current profile !!",_configuration);
   nil
-};
+}; */
 
 _profile

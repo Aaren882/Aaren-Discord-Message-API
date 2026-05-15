@@ -16,10 +16,20 @@ public class ServerIdentity
 [PrimaryKey(nameof(messageId))]
 public class ServerInfoTemplate
 {
+	private string _messageTemplatePath = ".profile/MessageTemplate/default.json";
+	private string _messageOfflinePath = ".profile/MessageOfflineTemplate/default.json";
+
 	public ulong messageId { get; set; }
-	public string messageTemplatePath { get; set; }
+
+	public string? messageTemplatePath {
+		get => Path.GetFullPath(_messageTemplatePath);
+		set => _messageTemplatePath = value ?? _messageTemplatePath;
+	}
+	public string? messageOfflinePath { 
+		get => Path.GetFullPath(_messageOfflinePath);
+		set => _messageOfflinePath = value ?? _messageOfflinePath;
+	}
 	public string? messageActionPath { get; set; }
-	public string messageOfflinePath { get; set; } = Path.GetFullPath(".profile/MessageOfflineTemplate/default.json");
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
 }
 

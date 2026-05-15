@@ -22,7 +22,7 @@ Examples
 Author:
     Aaren
 ---------------------------------------------------------------------------- */
-if (!GVAR(Available)) exitWith {};
+if (!GVAR(Available) || isRemoteExecuted) exitWith {};
 
 params [
   ["_messageId", "", [""]],
@@ -31,13 +31,18 @@ params [
 
 TRACE_1("fnc_UpdateServerInfoTemplate",_this);
 if (
-  _messageId isEqualTo "" ||
+  _messageId isEqualTo "" /* ||
   _configuration getOrDefault ["MessageTemplate", ""] isEqualTo "" ||
-  _configuration getOrDefault ["MessageActions", ""] isEqualTo ""
-) exitWith {};
+  _configuration getOrDefault ["MessageActions", ""] isEqualTo "" */
+) exitWith {
+  ERROR("""fnc_UpdateServerInfoTemplate"" Exception : Missing required parameters (MessageId)");
+  false
+};
 
 private _map = createHashMap;
 _map set ["MessageId", _messageId];
 _map set ["Configuration", _configuration];
 
 [_map, __UpdateServerInfoExtension__] call FUNC(SendWebSocketJSON);
+
+true
