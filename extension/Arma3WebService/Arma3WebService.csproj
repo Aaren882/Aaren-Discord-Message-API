@@ -32,36 +32,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update=".env">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <Content Include=".profile\MessageOfflineTemplate\default.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include=".profile\MessageTemplate\default.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Update="AdminConsole\AdminSelectMenu.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-    <Content Update="AdminConsole\SessionSelectMenu.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
     <Content Include="ecosystem.config.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Remove="testBot.json" />
-    <None Include="testBot.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <Content Remove="testBotCreateModal.json" />
-    <None Include="testBotCreateModal.json" />
-    <Content Remove="testBotModal.json" />
-    <None Include="testBotModal.json" />
-    <Content Remove="testBotSelectMenu.json" />
-    <None Include="testBotSelectMenu.json" />
-    <Content Remove="FileUploadLog.json" />
-    <None Include="FileUploadLog.json" />
   </ItemGroup>
 
   <ItemGroup>
