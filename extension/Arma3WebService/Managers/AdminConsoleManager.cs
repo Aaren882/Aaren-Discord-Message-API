@@ -176,14 +176,14 @@ public sealed class AdminConsoleManager(
 		{
 			InstrumentPublished = (instrument, listener) =>
 			{
-				if (instrument.Meter.Name == rmMeterName &&
-				    instrument.Name.StartsWith("container."))
+				if (instrument.Meter.Name == rmMeterName)
 				{
 					listener.EnableMeasurementEvents(instrument, null);
 				}
 			}
 		};
-    
+		
+		//- Keys can be found from https://learn.microsoft.com/en-us/dotnet/core/diagnostics/built-in-metrics-diagnostics#microsoftextensionsdiagnosticsresourcemonitoring
 		meterListener.SetMeasurementEventCallback<double>((instrument, measurement, tags, state) =>
 		{
 			if (instrument.Meter.Name != rmMeterName) return;
@@ -204,7 +204,12 @@ public sealed class AdminConsoleManager(
 				var json = await File.ReadAllTextAsync("AdminConsole.json");
 				json = samples.Aggregate(
 					json,
-					(current, item) => current.Replace(item.Key, item.Value, StringComparison.OrdinalIgnoreCase)
+					(current, item) =>
+					{
+						var (key, value) = item;
+						logger.LogDebug("Admin Panel : {KEY}, {Value}",key, value);
+						return current.Replace(key, value, StringComparison.OrdinalIgnoreCase);
+					}
 				);
 				
 				var message = JsonSerializer.Deserialize(
