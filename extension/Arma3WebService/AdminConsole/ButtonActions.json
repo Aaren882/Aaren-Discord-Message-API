@@ -1,15 +1,15 @@
 {
   "admin_restart_mission": {
-    "ModalTitle": "重啟任務",
+    "ModalTitle": "Restart Mission",
     "SessionMenu": {
-      "title": "遊戲場次"
+      "title": "Game Sessions"
     }
   },
   "admin_broadcast": {
-    "ModalTitle": "發送全服公告",
-    "ComponentTitle": "Broadcast Message",
+    "ModalTitle": "Send Server-Wide Announcement",
     "SessionMenu": {
-      "title": "遊戲場次"
-    }
+      "title": "Game Sessions"
+    },
+    "ComponentTitle": "Broadcast Message"
   }
 }
