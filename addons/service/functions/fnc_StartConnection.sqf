@@ -20,7 +20,6 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
-TRACE_1("fnc_StartConnection",_this);
 
 private _profile = call FUNC(GetProfileConfiguration);
 
@@ -31,15 +30,20 @@ private _map = createHashMap;
 _map set ["type", 2]; //- payload type "GameServer"
 _map set ["MessageId", _messageId];
 
-private _dateTimes = "DiscordMessageAPI" callExtension [
-  "GetDirectoryFilesDateTime",
-  values _configuration
-];
+//- Get timeStamp from the "profile.Configuration"
+if (count _configuration > 0) then {
+  private _dateTimes = "DiscordMessageAPI" callExtension [
+    "GetDirectoryFilesDateTime",
+    values _configuration
+  ];
 
-//- Get DateOffset in UNIX format
-_map set [
-  "ProfileDateOffsets",
-  _dateTimes call DiscordAPI_fnc_Deserialize_ExtensionOutput
-];
+  //- Get DateOffset in UNIX format
+  _map set [
+    "ProfileDateOffsets",
+    _dateTimes call DiscordAPI_fnc_Deserialize_ExtensionOutput
+  ];
+};
+
+TRACE_1("fnc_StartConnection",_map);
 
 "DiscordMessageAPI" callExtension ["ConnectWebSocket", [call FUNC(GetProfileName), toJSON _map]];

@@ -21,21 +21,22 @@ public record IdentityEntity
 
 public record ProfileIdentityCheck(
 	string MessageId,
-	List<string> ProfileDateOffsets
+	List<string>? ProfileDateOffsets
 ) : IdentityEntity
 {
 	public override async Task<string> Run(IdentityRolesPayload payload, IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		var profileName = payload.Identity.AccessName;
 		var messageId = ulong.Parse(MessageId);
-		var profileLastUpdate = ProfileDateOffsets.Sum(long.Parse);
 		
 		var exist = await dbContext.ServerIdentities.FirstOrDefaultAsync(
 			o => 
 				o.profileName == profileName
 		);
-
+		
 		var isNewIdentity = exist == null;
+
+		var profileLastUpdate = ProfileDateOffsets?.Sum(long.Parse) ?? 0;
 		var isDifferent = profileLastUpdate != exist?.profileStateStamp || exist!.messageId != messageId;
 		if (isNewIdentity)
 		{

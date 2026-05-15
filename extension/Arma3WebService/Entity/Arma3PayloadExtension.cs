@@ -85,16 +85,15 @@ public record UpdateServerInfoTemplateExtension
 	{
 		var messageId = ulong.Parse(MessageId);
 		var exist = await dbContext.ServerInfoList.FirstOrDefaultAsync(x => x.messageId == messageId);
+		var updated = Configuration.CreateInfoTemplate(messageId);
 		
 		if (exist == null)
 		{
-			await dbContext.ServerInfoList.AddAsync(
-				Configuration.CreateInfoTemplate(messageId)
-			);
+			await dbContext.ServerInfoList.AddAsync(updated);
 		}
 		else
 		{
-			Configuration.ModifyInfoTemplate(exist);
+			dbContext.Entry(exist).CurrentValues.SetValues(updated);
 		}
 		
 		await dbContext.SaveChangesAsync();
@@ -122,23 +121,37 @@ public record UpdateServerInfoTemplateExtension
 
 public record struct Arma3ClientProfileConfiguration
 {
-	private FileInfo _messageTemplate;
-	private FileInfo _messageActions;
+	private FileInfo? _messageTemplate;
+	private FileInfo? _messageOfflineTemplate;
+	private FileInfo? _messageActions;
 
-	public string MessageTemplate
+	public string? MessageTemplate
 	{
-		get => _messageTemplate.Exists ? 
-			_messageTemplate.FullName : 
-			throw new FileNotFoundException("\"MessageTemplate\" does not exist.");
-		
-		set => _messageTemplate = new FileInfo(
-			Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}")
-		);
+		get => _messageTemplate?.Exists ?? false ? _messageTemplate.FullName : null;
+		set {
+			if (value is not null) {
+				_messageTemplate = new FileInfo(
+					Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}")
+				);
+			}
+		}
+	}
+	
+	public string? MessageOfflineTemplate
+	{
+		get => _messageOfflineTemplate?.Exists ?? false ? _messageOfflineTemplate.FullName : null;
+		set {
+			if (value is not null) {
+				_messageOfflineTemplate = new FileInfo(
+					Path.GetFullPath($".profile/MessageOfflineTemplate/{Path.GetFileName(value)}")
+				);
+			}
+		}
 	}
 
 	public string? MessageActions
 	{
-		get => _messageActions.Exists ? _messageActions.FullName : null;
+		get => _messageActions?.Exists ?? false ? _messageActions.FullName : null;
 		set => _messageActions = new FileInfo(
 			Path.GetFullPath($".profile/MessageActions/{Path.GetFileName(value)}")
 		);
@@ -150,13 +163,9 @@ public record struct Arma3ClientProfileConfiguration
 		{
 			messageId = messageId,
 			messageTemplatePath = MessageTemplate,
+			messageOfflinePath = MessageOfflineTemplate,
 			messageActionPath = MessageActions,
 		};
-	}
-	public void ModifyInfoTemplate(ServerInfoTemplate template)
-	{
-		template.messageTemplatePath = MessageTemplate;
-		template.messageActionPath = MessageActions;
 	}
 }
 
