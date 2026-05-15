@@ -1,22 +1,22 @@
 {
   "upload_list": {
-    "ModalTitle": "Upload Mod List (html)",
-    "ComponentTitle": "File Upload",
-    "Description": "Please upload the mod list for the mission. (It only takes one html file)",
+    "ModalTitle": "Upload Mod List (HTML)",
     "SessionMenu": {
-      "title": "遊戲場次"
-    }
+      "title": "Game Sessions"
+    },
+    "ComponentTitle": "File Upload",
+    "Description": "Please upload the mod list for the mission. (Single HTML file only)"
   },
   "print_log": {
-    "ModalTitle": "查看後台日誌 (Logs)",
     "SessionMenu": {
-      "title": "遊戲場次"
-    }
+      "title": "Game Sessions"
+    },
+    "ModalTitle": "View Backend Logs"
   },
   "export_log": {
-    "ModalTitle": "下載完整日誌",
     "SessionMenu": {
-      "title": "遊戲場次"
-    }
+      "title": "Game Sessions"
+    },
+    "ModalTitle": "Download Full Logs"
   }
 }
