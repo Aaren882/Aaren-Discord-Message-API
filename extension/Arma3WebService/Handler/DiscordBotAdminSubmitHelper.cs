@@ -40,7 +40,9 @@ internal static class DiscordBotAdminSubmitHelper
 			.WithTitle("⚡ Admin Console Command Executed")
 			.AddField("Command", $"`{simpleAction.ModalType.ToString()}`", true)
 			.AddField("📨 To", $"`{sessionName}`", true)
-			.AddField("🔶 Message", $"```\n{additionMessage ?? "N/A"}\n```")
+			.AddField("🔶 Message", $"```arm\n{additionMessage ?? "N/A"}\n```")
+			.AddField("Channel", $"https://discord.com/channels/{component.GuildId}/{component.Channel.Id}",true)
+			.AddField("Panel", component.Message.GetJumpUrl(), true)
 			.WithColor(3447003)
 			.WithFooter("System Logger")
 			.WithCurrentTimestamp();
