@@ -120,7 +120,7 @@ namespace Arma3WebService.Models
 			}
 			catch (OperationCanceledException)
 			{
-				// This exception is expected if the token is cancelled
+				// This exception is expected if the token is canceled
 				_logger.LogInformation(
 					"WebSocket '{Identity}'/'{ContextId}' - '{ClientIpAddress}' connection was cancelled. Total connections: {Counts}",
 					connectionIdentity,

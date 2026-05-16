@@ -13,7 +13,8 @@ public enum DiscordBotChannel
 {
 	Monitor,
 	AdminConsole,
-	Logging
+	AdminLogging,
+	Logging,
 }
 
 public interface IDiscordBotService
@@ -35,6 +36,7 @@ public sealed class DiscordBotService(
 	private static readonly DiscordSocketClient Client = new();
 	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel")!);
 	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel")!);
+	private readonly ulong _adminLoggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminLoggingChannel")!);
 	private readonly ulong _loggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("LoggingChannel")!);
 
 	public DiscordSocketClient GetClient() => Client;
@@ -129,6 +131,27 @@ public sealed class DiscordBotService(
 		};
 
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
+		webSocketService.OnConnected += async (entity, connection) =>
+		{
+			try
+			{
+				var id = GetPresetMessageChannelId(DiscordBotChannel.Logging);
+				var channel = await GetMessageChannelAsync(id);
+				
+				var embedBuilder = new EmbedBuilder()
+					.WithTitle("🎮 Session Connected!")
+					.WithDescription("A new Arma 3 session has successfully initialized and is ready for deployment.")
+					.WithColor(3066993)
+					.AddField("🖥️ Server Name", entity.GetIdentity())
+					.WithFooter("System Logger")
+					.WithCurrentTimestamp();
+				await channel.SendMessageAsync(embed: embedBuilder.Build());
+			}
+			catch(Exception e)
+			{
+				logger.LogError("GameSession Connected : {Error}", e.Message);
+			}
+		};
 		webSocketService.OnDisconnected += async (entity, connection) =>
 		{
 			try
@@ -142,6 +165,18 @@ public sealed class DiscordBotService(
 					MsgPayload_JsonContext.Default.DiscordMessageDto
 				);
 				await ModifyMessageAsync(currentTemplate.messageId, deserialize!);
+				
+				var id = GetPresetMessageChannelId(DiscordBotChannel.Logging);
+				var channel = await GetMessageChannelAsync(id);
+				var embedBuilder = new EmbedBuilder()
+					.WithTitle("🛑 Session Disconnected")
+					.WithDescription("The Arma 3 operations session has been terminated or the server has gone offline.")
+					.WithColor(15158332)
+					.AddField("🖥️ Server Name", entity.GetIdentity(), true)
+					.AddField("⏱️ Session Status", "Offline / Hibernating", true)
+					.WithFooter("System Logger")
+					.WithCurrentTimestamp();
+				await channel.SendMessageAsync(embed: embedBuilder.Build());
 			}
 			catch(Exception e)
 			{
@@ -176,6 +211,7 @@ public sealed class DiscordBotService(
 		{
 			DiscordBotChannel.Monitor => _monitorChannel,
 			DiscordBotChannel.AdminConsole => _adminChannel,
+			DiscordBotChannel.AdminLogging => _adminLoggingChannel,
 			DiscordBotChannel.Logging => _loggingChannel,
 			_ => throw new ArgumentOutOfRangeException(nameof(channelType), channelType, null)
 		};
