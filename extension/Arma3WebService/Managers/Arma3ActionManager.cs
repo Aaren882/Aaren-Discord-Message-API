@@ -1,4 +1,5 @@
 using Arma3WebService.Entity;
+using Arma3WebService.Models;
 using Components.Entity;
 
 namespace Arma3WebService.Managers;
@@ -8,28 +9,38 @@ public interface IArma3ActionManager
 	Task GetAction(Arma3Action action);
 }
 
-public sealed class Arma3ActionManager(ServiceActionManager serviceAction) : IArma3ActionManager
+public sealed class Arma3ActionManager(ServiceActionManager serviceAction, IDiscordBotService discordBotService) : IArma3ActionManager
 {
-	public Task GetAction(Arma3Action action)
+	public async Task GetAction(Arma3Action action)
 	{
 		var (connection, payload) = action;
-		
-		return payload.Type switch
+
+		try
 		{
-			Arma3PayLoadType.Text => 
-				serviceAction.TextAction(connection, (Arma3PayloadText) payload),
-			Arma3PayLoadType.Binary =>
-				serviceAction.BinaryAction(connection, (Arma3PayloadBinary) payload),
-			Arma3PayLoadType.Command =>
-				serviceAction.CallBackAction(connection, (Arma3PayloadCallBack) payload),
-			Arma3PayLoadType.ServiceRequest => 
-				serviceAction.ServiceRequestAction(connection, (Arma3PayloadServiceRequest) payload),
-			Arma3PayLoadType.JsonString =>
-				serviceAction.JsonStringAction(connection, (Arma3PayloadJson) payload),
-			Arma3PayLoadType.FlatJsonString => 
-				serviceAction.FlatJsonStringAction(connection, (Arma3PayloadFlatJsonString) payload),
-			
-			_ => throw new ArgumentOutOfRangeException(nameof(payload.Type), payload.Type, null)
-		};
+			var result = payload switch
+			{
+				Arma3PayloadText payloadText => 
+					serviceAction.TextAction(connection, payloadText),
+				Arma3PayloadBinary payloadBinary =>
+					serviceAction.BinaryAction(connection, payloadBinary),
+				Arma3PayloadCallBack payloadCallBack =>
+					serviceAction.CallBackAction(connection, payloadCallBack),
+				Arma3PayloadServiceRequest payloadServiceRequest => 
+					serviceAction.ServiceRequestAction(connection, payloadServiceRequest),
+				Arma3PayloadJson payloadJson =>
+					serviceAction.JsonStringAction(connection, payloadJson),
+				Arma3PayloadFlatJsonString payloadFlatJsonString => 
+					serviceAction.FlatJsonStringAction(connection, payloadFlatJsonString),
+				
+				_ => throw new ArgumentOutOfRangeException(nameof(payload.Type), payload.Type, null)
+			};
+			await result;
+		}
+		catch (Exception e)
+		{
+			var id = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.Logging);
+			var channel = await discordBotService.GetMessageChannelAsync(id);
+			await channel.SendMessageAsync($"```diff\n- {e.Message}\n```");
+		}
 	}
 }

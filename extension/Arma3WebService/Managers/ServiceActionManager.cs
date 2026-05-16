@@ -54,6 +54,7 @@ public sealed class ServiceActionManager(
 		catch (Exception e)
 		{
 			logger.LogError(e, "\"RptLineAction\" threw an exception...");
+			throw;
 		}
 	}
 	
@@ -74,6 +75,7 @@ public sealed class ServiceActionManager(
 		catch (Exception e)
 		{
 			logger.LogError(e, "JsonStringAction threw an exception...");
+			throw;
 		}
 	}
 	

@@ -11,6 +11,7 @@ module.exports = {
       MonitorChannel: "ChannelID",
       AdminChannel: "ChannelID",
       LoggingChannel: "ChannelID",
+      AdminLoggingChannel: "ChannelID", 
       AdminPassword: "in game AdminPassword ", //- (Optional but some remote functions won't be working)
     }
   }]
