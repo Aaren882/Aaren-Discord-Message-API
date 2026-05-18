@@ -33,13 +33,13 @@ namespace Arma3WebService.Models
 		public event Action<WebsocketContextEntity, IConnection> OnConnected = (entity, connection) =>
 		{
 			var profileName = entity.GetIdentity();
-			_ = remoteStateManager.GetServerInfoTemplateAsync(profileName);
-			_ = remoteStateManager.UpdateGameSessionCacheAsync(profileName, connection);
+			_ = remoteStateManager.GetServerInfoTemplateAsync(profileName).ConfigureAwait(false);
+			_ = remoteStateManager.UpdateGameSessionCacheAsync(profileName, connection).ConfigureAwait(false);
 		};
 
 		public event Action<WebsocketContextEntity, IConnection> OnDisconnected = (entity, connection) =>
 		{
-			_ = remoteStateManager.UpdateGameSessionCacheAsync(entity.GetIdentity());
+			_ = remoteStateManager.UpdateGameSessionCacheAsync(entity.GetIdentity()).ConfigureAwait(false);
 		};
 
 		public IConnection GetConnection(string connectionIdentity)
