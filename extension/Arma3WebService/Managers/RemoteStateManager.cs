@@ -48,13 +48,6 @@ public sealed class RemoteStateManager(
 
 		return connection;
 	}
-	
-	internal bool TryUpdateExistingServerInfoTemplateCache(ulong messageId, ServerInfoTemplate serverInfo)
-	{
-		if (!_serverInfoTemplatesCache.TryGetValue(messageId, out _)) return false;
-		_serverInfoTemplatesCache[messageId] = serverInfo;
-		return true;
-	}
 
 	internal async Task<ServerInfoTemplate> GetServerInfoTemplateAsync(ulong messageId)
 	{
@@ -88,6 +81,13 @@ public sealed class RemoteStateManager(
 		_serverInfoProfileNamesCache.TryAdd(profileName, serverIdentity.messageId);
 		
 		return await GetServerInfoTemplateAsync(serverIdentity.messageId);
+	}
+	
+	internal bool TryUpdateExistingServerInfoTemplateCache(ulong messageId, ServerInfoTemplate serverInfo)
+	{
+		if (!_serverInfoTemplatesCache.TryGetValue(messageId, out _)) return false;
+		_serverInfoTemplatesCache[messageId] = serverInfo;
+		return true;
 	}
 
 	internal bool TryUpdateServerInfoMessageId(string profileName, ulong messageId)

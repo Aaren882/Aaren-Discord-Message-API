@@ -99,8 +99,10 @@ public record UpdateServerInfoTemplateExtension
 		await dbContext.SaveChangesAsync();
 		
 		//- Update cache for other services
+		var existIdentity = await dbContext.ServerIdentities.FirstAsync(x => x.messageId == messageId);
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
 		remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, exist!);
+		remoteStateManager.TryUpdateServerInfoMessageId(existIdentity.profileName, messageId);
 	}
 	/*public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
@@ -127,7 +129,7 @@ public record struct Arma3ClientProfileConfiguration
 
 	public string? MessageTemplate
 	{
-		get => _messageTemplate?.Exists ?? false ? _messageTemplate.FullName : null;
+		get => _messageTemplate?.FullName;
 		set {
 			if (value is not null) {
 				_messageTemplate = new FileInfo(
@@ -139,7 +141,7 @@ public record struct Arma3ClientProfileConfiguration
 	
 	public string? MessageOfflineTemplate
 	{
-		get => _messageOfflineTemplate?.Exists ?? false ? _messageOfflineTemplate.FullName : null;
+		get => _messageOfflineTemplate?.FullName;
 		set {
 			if (value is not null) {
 				_messageOfflineTemplate = new FileInfo(
@@ -151,7 +153,7 @@ public record struct Arma3ClientProfileConfiguration
 
 	public string? MessageActions
 	{
-		get => _messageActions?.Exists ?? false ? _messageActions.FullName : null;
+		get => _messageActions?.FullName;
 		set => _messageActions = new FileInfo(
 			Path.GetFullPath($".profile/MessageActions/{Path.GetFileName(value)}")
 		);
