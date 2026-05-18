@@ -64,7 +64,7 @@ public abstract record DiscordBotActionsBase
 
 public record DiscordBotInteractionActions : DiscordBotActionsBase
 {
-	public IEnumerable<DiscordBotSimpleAction> Steps { get; set; }
+	public new IEnumerable<DiscordBotSimpleAction> Steps { get; set; }
 	public override async Task Execute(SocketMessageComponent component)
 	{
 		foreach (var discordBotAction in Steps)
