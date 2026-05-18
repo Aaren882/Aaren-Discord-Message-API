@@ -1,0 +1,48 @@
+{
+  "username": "Server Manager",
+  "avatar_url": "https://i.imgur.com/F1DXjII.png",
+  "content": "",
+  "embeds": [
+    {
+      "title": "🛰️ {SERVER_NAME} | Status Details",
+      "description": "### Mission: `{MISSION_NAME}`\n**Status:** :white_check_mark: Server Online",
+      "color": "3447003",
+      "fields": [
+        {
+          "name": "📍 General Info",
+          "value": "> **Map:** {MAP_NAME}\n> **Version:** {GAME_VERSION}\n> **Players:** {PLAYER_COUNT} / {AVALIABLE_PLAYERS}",
+          "inline": true
+        },
+        {
+          "name": "📊 Performance",
+          "value": "**Server FPS:** `{SERVER_FPS}` (Min: {FPS_MIN})\n**Active Scripts:** `{ACTIVE_SCRIPTS}`",
+          "inline": true
+        },
+        {
+          "name": "🌐 Connection Details",
+          "value": "```fix\narma.server.address:2302\n```",
+          "inline": false
+        },
+        {
+          "name": "👥 Player List",
+          "value": "```\n{PLAYER_LIST}\n```",
+          "inline": true
+        },
+        {
+          "name": "⚡ Network Stats",
+          "value": "```\n{PLAYER_NETWORK}\n```",
+          "inline": true
+        },
+        {
+          "name": "🛠️ Player Status",
+          "value": "```\n{PLAYER_STATE}\n```",
+          "inline": true
+        }
+      ],
+      "footer": {
+        "text": "Last updated: {SYSTEM_DATE} {SYSTEM_TIME}",
+        "icon_url": "https://i.imgur.com/410CmKi.png"
+      }
+    }
+  ]
+}

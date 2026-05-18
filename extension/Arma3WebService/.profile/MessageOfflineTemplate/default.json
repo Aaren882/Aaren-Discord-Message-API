@@ -1,0 +1,21 @@
+{
+  "embeds": [
+    {
+      "title": "⚠️ Mission Stopped",
+      "description": "The system has detected that the service has been interrupted. Administrators, please check the backend status as soon as possible.",
+      "color": "15548997",
+      "fields": [
+        {
+          "name": "Current Status",
+          "value": "🔴 Offline",
+          "inline": true
+        }
+      ],
+      "footer": {
+        "text": "System under automatic monitoring • ⛔ Server OFFLINE",
+        "icon_url": "https://i.imgur.com/410CmKi.png"
+      },
+      "timestamp": "true"
+    }
+  ]
+}
