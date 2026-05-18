@@ -12,7 +12,7 @@ private _profileFileNames = "profiles" call DiscordAPI_fnc_GetPathFiles;
 [
   QGVAR(Profiles), "LIST", 
   [
-    "Profiles"
+    "Service Profile"
   ], 
   ["DiscordMessageAPI Settings", "Service"], 
   [

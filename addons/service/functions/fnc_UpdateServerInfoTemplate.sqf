@@ -30,14 +30,12 @@ params [
 ];
 
 TRACE_1("fnc_UpdateServerInfoTemplate",_this);
-if (
-  _messageId isEqualTo "" /* ||
-  _configuration getOrDefault ["MessageTemplate", ""] isEqualTo "" ||
-  _configuration getOrDefault ["MessageActions", ""] isEqualTo "" */
+/* if (
+  _messageId isEqualTo ""
 ) exitWith {
   ERROR("""fnc_UpdateServerInfoTemplate"" Exception : Missing required parameters (MessageId)");
   false
-};
+}; */
 
 private _map = createHashMap;
 _map set ["MessageId", _messageId];

@@ -126,10 +126,9 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
           if (!_infoTemplateUpdated) exitWith {
             ERROR("""ServiceAccessResult"" Exception : Failed to update server info template.");
           };
-          if (count _configuration == 0) exitWith {
+          /* if (count _configuration == 0) exitWith {
             WARNING("No configuration found in profile. Skipping directory synchronization. (Will be using default configuration)");
-          };
-          
+          }; */
           sleep 1; //- Small delay to ensure profile data is updated
 
           //- Setup directory for backend storage
