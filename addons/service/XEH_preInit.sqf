@@ -22,3 +22,7 @@ private _profileFileNames = "profiles" call DiscordAPI_fnc_GetPathFiles;
   ],
   1
 ] call CBA_fnc_addSetting;
+
+uiNamespace setVariable [QGVAR(profileFileNames), _profileFileNames];
+
+INFO_1("DISCORD_API [PreInit] || Profiles : %1",_profileFileNames);

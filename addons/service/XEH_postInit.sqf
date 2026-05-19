@@ -81,6 +81,32 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   addMissionEventHandler ["HandleDisconnect", {
     [true] call EFUNC(webhook,Update_ServerInfo);
   }];
+  addMissionEventHandler ["OnUserAdminStateChanged", {
+    params ["_networkId", "_loggedIn", "_votedIn"];
+
+    if (!_loggedIn) exitWith {};
+
+    INFO_1("Admin ""%1"" logged in. Syncing profiles...",_networkId);
+    private _profileFileNames = uiNamespace getVariable [QGVAR(profileFileNames), []];
+    TRACE_1("profileFileNames",_profileFileNames);
+    
+    [_profileFileNames, {
+      TRACE_1("profileFileNames",_this);
+      [
+        QGVAR(Profiles), "LIST", 
+        [
+          "Service Profile"
+        ], 
+        ["DiscordMessageAPI Settings", "Service"], 
+        [
+          _this apply { (_x splitString ".") # 0 },
+          _this,
+          0
+        ],
+        1
+      ] call CBA_fnc_addSetting;
+    }] remoteExecCall ["call", _networkId];
+  }];
 }] call CBA_fnc_addEventHandler;
 
 [QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
@@ -126,9 +152,9 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
           if (!_infoTemplateUpdated) exitWith {
             ERROR("""ServiceAccessResult"" Exception : Failed to update server info template.");
           };
-          /* if (count _configuration == 0) exitWith {
-            WARNING("No configuration found in profile. Skipping directory synchronization. (Will be using default configuration)");
-          }; */
+          if (count _configuration == 0) exitWith {
+            WARNING("No ""configuration"" found in profile. Skipping directory synchronization. (Will be using default configuration)");
+          };
           sleep 1; //- Small delay to ensure profile data is updated
 
           //- Setup directory for backend storage

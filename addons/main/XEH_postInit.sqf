@@ -15,9 +15,7 @@ if (isServer) then {
     serverNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook];
     missionNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook,true];
 
-    0 spawn {
-      waitUntil { !isNull findDisplay 46 };
-
+    ["CBA_settingsInitialized", {
       //- Fire postInit Event
       INFO(MSG_INIT);
       [QGVARMAIN(postInit_Server)] call CBA_fnc_LocalEvent;
@@ -42,7 +40,8 @@ if (isServer) then {
         [QGVARMAIN(Mission_Unload_Server)] call CBA_fnc_LocalEvent;
         (this # 0) displayRemoveEventHandler [_thisEvent, _thisEventHandler];
       }];
-    };
+    }] call CBA_fnc_addEventHandler;
+    
 } else {
   //- Init Clients
   0 spawn {
