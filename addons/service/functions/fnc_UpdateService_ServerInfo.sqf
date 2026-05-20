@@ -24,7 +24,7 @@ if (!GVAR(Available)) exitWith {};
 
 params [["_bypass", false]];
 
-TRACE_1("fnc_UpdateService_ServerInfo",_this);
+// TRACE_1("fnc_UpdateService_ServerInfo",_this);
 
 //- Check Refresh time
 if (

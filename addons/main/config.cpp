@@ -29,13 +29,6 @@ class Extended_PostInit_EventHandlers
 		init = QUOTE(call COMPILE_FILE(XEH_postInit));
 	};
 };
-class Extended_PreStart_EventHandlers
-{
-  class ADDON
-	{
-		serverInit = QUOTE(call COMPILE_FILE(XEH_preStart));
-	};
-};
 
 class CfgFunctions
 {
@@ -44,6 +37,11 @@ class CfgFunctions
 		class init
 		{
 			file=QPATHTOF(functions\init);
+			class preStart {
+			  file=QPATHTOF(XEH_preStart.sqf);
+        preStart = 1;
+        headerType = -1;
+      };
 			class init_player {};
 			class refresh_webhooks {};
 		};

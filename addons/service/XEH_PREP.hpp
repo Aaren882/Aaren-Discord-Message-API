@@ -1,3 +1,5 @@
+PREP(AddCBASettings);
+PREP(GetCurrentRptFilePath);
 PREP(GetProfile);
 PREP(GetProfileConfiguration);
 PREP(GetProfileName);
@@ -12,5 +14,6 @@ PREP(SetServiceAvailability);
 PREP(StartConnection);
 PREP(StopConnection);
 PREP(UpdateProfileIdentity);
+PREP(UpdateRptDirectoryFromProfile);
 PREP(UpdateServerInfoTemplate);
 PREP(UpdateService_ServerInfo);

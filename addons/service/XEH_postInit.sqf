@@ -85,27 +85,13 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
     params ["_networkId", "_loggedIn", "_votedIn"];
 
     if (!_loggedIn) exitWith {};
+    private _ownerId = _networkId getUserInfo 1;
 
     INFO_1("Admin ""%1"" logged in. Syncing profiles...",_networkId);
     private _profileFileNames = uiNamespace getVariable [QGVAR(profileFileNames), []];
     TRACE_1("profileFileNames",_profileFileNames);
     
-    [_profileFileNames, {
-      TRACE_1("profileFileNames",_this);
-      [
-        QGVAR(Profiles), "LIST", 
-        [
-          "Service Profile"
-        ], 
-        ["DiscordMessageAPI Settings", "Service"], 
-        [
-          _this apply { (_x splitString ".") # 0 },
-          _this,
-          0
-        ],
-        1
-      ] call CBA_fnc_addSetting;
-    }] remoteExecCall ["call", _networkId];
+    [_profileFileNames] remoteExecCall [QFUNC(AddCBASettings), _ownerId];
   }];
 }] call CBA_fnc_addEventHandler;
 
