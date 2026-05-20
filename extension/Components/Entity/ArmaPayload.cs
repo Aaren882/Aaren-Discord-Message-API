@@ -112,8 +112,8 @@ public record struct ServiceAuthenticationHeader(
 public record Arma3ServiceSecret(
 	string ServiceUri,
 	string WebSocketServiceUri,
-	string RPT_Directory,
-	ServiceAuthenticationHeader Secret
+	ServiceAuthenticationHeader Secret,
+	string? RPT_Directory = null
 );
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options

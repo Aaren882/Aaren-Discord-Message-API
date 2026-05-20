@@ -13,9 +13,10 @@ public static class ServiceStartup
 	public static string? InitTime { get; set; }
 	
 	public static bool ExtensionInit { get; private set; }
+	internal static DateTime ExtensionInitTime = DateTime.Now; //- must be static
 	public static bool ExtensionWebhookInit { get; set; }
 	public static WebhooksStorage? ALLWebhooks { get; set; }
-	public static string? RptFileDirectory { get; private set; }
+	public static string? RptFileDirectory { get; internal set; }
 	
 	public static CallContext ContextInfo { get; set; }
 	public static ExtensionCallback Callback = (name, function, data) => 0;
@@ -41,7 +42,7 @@ public static class ServiceStartup
 			localServices = serviceProvider.GetRequiredService<ILocalServices>();
 			if (serviceInteractions != null)
 			{
-				RptFileDirectory = Util.GetLastestFile(serviceInteractions.RPTDirectory);
+				RptFileDirectory = Util.GetCurrentRpt();
 				Logger(null, "Registered RPT File : " + RptFileDirectory);
 			}
 			Tracer(nameof(localServices), "Local Services Initialized");
