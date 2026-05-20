@@ -184,6 +184,22 @@ public static class EntryDelegates
 	        output.Append($"[\"{string.Join("\",\"", fileInfos)}\"]");
 	        return fileInfos.Count;
         }
+        internal static int UpdateRptDirectory(IOutputBuilder output, string[] args, int argCount)
+        {
+	        var dir = args[0];
+	        serviceInteractions.RPTDirectory = dir;
+	        RptFileDirectory = Util.GetCurrentRpt();
+	        Logger(null, "Update RPT File : " + RptFileDirectory);
+	        
+	        return 1;
+        }
+        #if DEBUG
+        internal static int GetCurrentRpt(IOutputBuilder output, string[] args, int argCount)
+        {
+	        output.Append(Util.GetCurrentRpt());
+	        return 1;
+        }
+        #endif
         
         /// <summary>
         /// Setup Websocket Connection to backend service
@@ -247,16 +263,16 @@ public static class EntryDelegates
 			
             return 1;
         }
-        internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
+        /*internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
         {
-	        var lastestRpt= Util.GetLastestFile(serviceInteractions.RPTDirectory);
+	        var lastestRpt= Util.GetLatestFile(serviceInteractions.RPTDirectory);
 	        output.Append(lastestRpt); //- Return lastest Rpt directory
 	        
 	        var task = serviceInteractions.SendWebSocketBinary(lastestRpt, args[0]);
 			serviceInteractions.WebSocketTrafficWriter(task);
 	        
             return 1;
-        }
+        }*/
         internal static int SendWebSocketBinaries(IOutputBuilder output, string[] args, int argCount)
         {
 	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);

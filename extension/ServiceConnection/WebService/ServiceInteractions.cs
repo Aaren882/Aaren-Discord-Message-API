@@ -10,13 +10,12 @@ using System.Text.Json;
 
 namespace ServiceConnection.WebService;
 
-public class ServiceInteractions
+public sealed class ServiceInteractions
 {
 	private const string Secret = "secret.json"; 
-	private static readonly Arma3ServiceSecret ServiceSecret = GetServiceSecret();
+	private readonly Arma3ServiceSecret ServiceSecret;
 	
 	private string? AccessName;
-	public readonly string RPTDirectory = Path.GetFullPath(GetServiceSecret().RPT_Directory);
 	private readonly ConcurrentQueue<Task> _websocketWorkerQueue = new ();
 	private Task? SocketWorker { get; set; } 
 
@@ -27,10 +26,16 @@ public class ServiceInteractions
 		);
 		Util.CallExtensionCallback(Callback, callBack);
 	};
-	public readonly WebSocketClient WsClient = new (ServiceSecret.WebSocketServiceUri);
+	public readonly WebSocketClient WsClient;
+	public string? RPTDirectory { get; internal set; }
 
 	public ServiceInteractions()
 	{
+		ServiceSecret = GetServiceSecret();
+		WsClient = new WebSocketClient(ServiceSecret.WebSocketServiceUri);
+		if (ServiceSecret.RPT_Directory != null)
+			RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
+		
 		WsClient.Connected += () =>
 		{
 			Logger(null, "INFO: Connected to server");
@@ -242,7 +247,7 @@ public class ServiceInteractions
 			/*if (authTokenPayload is { AuthToken: null })
 				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");*/
 			
-			//- Establish Socket Connection
+			//- Established Socket Connection
 			ServiceAccessResult?.Invoke(authTokenPayload);
 			
 			return authTokenPayload;

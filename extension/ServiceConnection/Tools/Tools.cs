@@ -125,17 +125,38 @@ public class Util
 	public static List<string> GetDirectoryFileNames(string path)
 		=> GetDirectoryFiles(path).Select(x => x.Name).ToList();
 
-	public static string GetLastestFile(string path)
+	public static string GetLatestFile(string path)
 	{
-		var dict = GetDirectoryFiles(path)
-			.ToDictionary(
-				k => k.FullName,
-				v => v.CreationTime
+		var fileInfo = GetDirectoryFiles(path)
+			.Where(x => x.Exists)
+			.MaxBy(x => x.CreationTime);
+
+		return fileInfo?.FullName ?? throw new NullReferenceException($"No file exist in : {path}");
+	}
+	public static string GetClosestDateFile(string path, DateTimeOffset dateTimeOffset)
+	{
+		var fileInfo = GetDirectoryFiles(path)
+			.MinBy(x =>
+				dateTimeOffset - x.CreationTime
 			);
 
-		return dict
-			.MaxBy(x => x.Value)
-			.Key;
+		return fileInfo?.FullName ?? throw new NullReferenceException($"No file exist in : {path}");
+	}
+	public static string GetCurrentRpt()
+	{
+		var path = serviceInteractions?.RPTDirectory;
+		var dateTimeOffset = ExtensionInitTime;
+
+		Tracer(nameof(GetCurrentRpt), $"RPTDirectory : {path}, StartTimeOffset : {dateTimeOffset:F}");
+		
+		var fileInfo = GetDirectoryFiles(path)
+			.Where(
+				x => x.Extension == ".rpt" && ExtensionInitTime > x.CreationTime
+			)
+			.MaxBy(x => x.CreationTime);
+
+		return fileInfo?.FullName ?? throw new NullReferenceException($"No file exist in : {path}");
+		
 	}
 
 	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)

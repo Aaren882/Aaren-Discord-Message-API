@@ -38,7 +38,7 @@ public class LoggerBase: ILogger
 		var files = Directory.GetFiles(LogFilePath);
 
 		//- Check how many logs
-		Trace("CleanLogs", "Check how many logs...");
+		Trace(nameof(CleanLogs), "Checking how many logs...");
 		if (files.Length < limit) return;
 
 		Dictionary<string, DateTime> dict = new();
@@ -55,6 +55,6 @@ public class LoggerBase: ILogger
 			File.Delete(logFile);
 		}
 		
-		Trace("CleanLogs", "Old logs is cleaned out.");
+		Trace(nameof(CleanLogs), "Old logs are cleaned out.");
 	}
 }
