@@ -2,11 +2,12 @@
 
 INFO(MSG_INIT);
 
-//- Functions for Server-Side only
-#include "XEH_PREP.hpp"
-
 //- Variables
 GVAR(Available) = false;
+
+//- #NOTE - Server-Side only
+//- Functions
+#include "XEH_PREP.hpp"
 
 private _profileFileNames = "profiles" call DiscordAPI_fnc_GetPathFiles;
 [
@@ -20,7 +21,8 @@ private _profileFileNames = "profiles" call DiscordAPI_fnc_GetPathFiles;
     _profileFileNames,
     0
   ],
-  1
+  1,
+  FUNC(UpdateRptDirectoryFromProfile)
 ] call CBA_fnc_addSetting;
 
 uiNamespace setVariable [QGVAR(profileFileNames), _profileFileNames];
