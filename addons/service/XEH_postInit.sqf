@@ -51,7 +51,8 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
         private _dta = _props getOrDefault ["Data", "[]"];
 
         private _event = QUOTE(ADDON) + "_" + _eventName;
-        INFO_2("DISCORD_API [CallBack Command] || Event : %1 , Data : %2",_event,_dta);
+        INFO_1("DISCORD_API [CallBack Command] || Event : %1",_event);
+        TRACE_2("DISCORD_API [CallBack Command] || Event : %1 , Data : %2",_event,_dta);
 
         [_event, parseSimpleArray _dta] call CBA_fnc_localEvent;
       };
@@ -102,17 +103,18 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   INFO_1("AdminBroadcast ""%1""",_this);
   [_msg] remoteExec ["BIS_fnc_infoText"];
 }] call CBA_fnc_addEventHandler;
-[QGVAR(AdminRestartMission), {
-  params ["_password","_callerGlobalName","_callerId"];
-  INFO_2("AdminRestartMission by ""%1:%2""",_callerGlobalName,_callerId);
+[QGVAR(AdminMpCommand), {
+  params ["_data","_callerGlobalName","_callerId"];
+  _data params ["_password","_cmd"];
+  INFO_2("Admin MP Command by ""%1 | Discord Id : %2""",_callerGlobalName,_callerId);
 
-  private _passwordWasOK = _password serverCommand "#restart";
+  private _passwordWasOK = _password serverCommand _cmd;
   if (_passwordWasOK) then
   {
-    WARNING_2("Mission Restarted by Admin ""%1:%2""",_callerGlobalName,_callerId);
+    WARNING_2("MP Command by Admin ""%1:%2""",_callerGlobalName,_callerId);
   } else
   {
-    WARNING_2("Failed Mission Restart Attempt by Admin ""%1:%2""",_callerGlobalName,_callerId);
+    WARNING_2("Failed MP Command Attempt by Admin ""%1:%2""",_callerGlobalName,_callerId);
   }
 }] call CBA_fnc_addEventHandler;
 
