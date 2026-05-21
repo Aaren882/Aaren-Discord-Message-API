@@ -8,15 +8,15 @@
     "Description": "Please upload the mod list for the mission. (Single HTML file only)"
   },
   "print_log": {
+    "ModalTitle": "View Backend Logs",
     "SessionMenu": {
       "title": "Game Sessions"
-    },
-    "ModalTitle": "View Backend Logs"
+    }
   },
   "export_log": {
+    "ModalTitle": "Download Full Logs",
     "SessionMenu": {
       "title": "Game Sessions"
-    },
-    "ModalTitle": "Download Full Logs"
+    }
   }
 }
