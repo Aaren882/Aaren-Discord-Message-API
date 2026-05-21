@@ -12,6 +12,7 @@ internal static class DiscordBotAdminModalRespondHelper
 	private static readonly Dictionary<DiscordBotAdminModalType, IEnumerable<string>> ComponentCustomId = new Dictionary<DiscordBotAdminModalType, IEnumerable<string>> 
 	{
 		{ DiscordBotAdminModalType.upload_list, ["file_upload"] },
+		{ DiscordBotAdminModalType.admin_mp_command, ["admin_mp_command"] },
 		{ DiscordBotAdminModalType.admin_broadcast, ["broadcast_inputText"] }
 	};
 	
@@ -25,7 +26,7 @@ internal static class DiscordBotAdminModalRespondHelper
 			DiscordBotAdminModalType.upload_list => UploadList,
 			DiscordBotAdminModalType.print_log => PrintLog,
 			DiscordBotAdminModalType.export_log => ExportLog,
-			DiscordBotAdminModalType.admin_restart_mission => AdminRestartMission,
+			DiscordBotAdminModalType.admin_mp_command => AdminMpCommand,
 			DiscordBotAdminModalType.admin_broadcast => AdminBroadcast,
 			_ => throw new ArgumentOutOfRangeException(nameof(simpleAction), "\"ModalType\" for this ModalRespond does not exist.")
 		};
@@ -39,7 +40,7 @@ internal static class DiscordBotAdminModalRespondHelper
 		var label = new DiscordDto.LabelComponent
 		{
 			label = simpleAction.ComponentTitle ?? "File Upload",
-			description = simpleAction.Description,
+			description = simpleAction.Description ?? "Please upload the mod list for the mission. (Single HTML file only)",
 			component = new DiscordDto.FileUploadComponent(componentCustomId)
 		};
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
@@ -71,12 +72,20 @@ internal static class DiscordBotAdminModalRespondHelper
 		};
 		return modalComponent;
 	}
-	private static DiscordDto.ModalComponent AdminRestartMission(DiscordBotAdminSimpleAction simpleAction)
+	private static DiscordDto.ModalComponent AdminMpCommand(DiscordBotAdminSimpleAction simpleAction)
 	{
+		var customId = simpleAction.ModalType.GetComponentCustomId().First();
+		var label = new DiscordDto.LabelComponent
+		{
+			label = simpleAction.ComponentTitle ?? "MP Command",
+			description = simpleAction.Description ?? "The command will be executed with \"serverCommand\".",
+			component = new DiscordDto.TextInputComponent(customId, "#kick someone", 1, 40, true, null)
+		};
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())
 		{
 			components = [
-				CreateSessionSelectMenuComponent(simpleAction)
+				CreateSessionSelectMenuComponent(simpleAction),
+				label
 			]
 		};
 		return modalComponent;
@@ -87,7 +96,7 @@ internal static class DiscordBotAdminModalRespondHelper
 		var label = new DiscordDto.LabelComponent
 		{
 			label = simpleAction.ComponentTitle ?? "Broadcast Message",
-			description = simpleAction.Description,
+			description = simpleAction.Description ?? "Send Server-Wide Announcement",
 			component = new DiscordDto.TextInputComponent(customId, null, 1, 2000, true, null, TextInputStyle.Paragraph)
 		};
 		var modalComponent = new DiscordDto.ModalComponent(simpleAction.ModalTitle, simpleAction.ModalType.ToString())

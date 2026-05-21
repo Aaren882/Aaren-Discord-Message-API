@@ -23,7 +23,7 @@ internal static class DiscordBotAdminSubmitHelper
 			DiscordBotAdminModalType.upload_list => UploadList,
 			DiscordBotAdminModalType.print_log => PrintLog,
 			DiscordBotAdminModalType.export_log => ExportLog,
-			DiscordBotAdminModalType.admin_restart_mission => AdminRestartMission,
+			DiscordBotAdminModalType.admin_mp_command => AdminMpCommand,
 			DiscordBotAdminModalType.admin_broadcast => AdminBroadcast,
 			_ => throw new ArgumentOutOfRangeException(nameof(simpleAction), "\"ModalType\" does not exist in the options.")
 		};
@@ -145,7 +145,7 @@ internal static class DiscordBotAdminSubmitHelper
 		
 		return (sessionName, null);
 	}
-	private static async Task<(string sessionName, string? additionMessage)> AdminRestartMission(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
+	private static async Task<(string sessionName, string? additionMessage)> AdminMpCommand(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		var password = Environment.GetEnvironmentVariable("AdminPassword");
 		if (password is null) throw new Exception("Missing AdminPassword (make sure password is set in environment variables)");
@@ -153,15 +153,22 @@ internal static class DiscordBotAdminSubmitHelper
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
 		var sessionName = GetSelectedSession(component);
 		
+		var componentCustomId = simpleAction.ModalType.GetComponentCustomId().First();
+		var inputComponent = component.Data.Components.First(x => string.Equals(x.CustomId, componentCustomId, StringComparison.OrdinalIgnoreCase));
+		
 		var remoteCommand = new Arma3RemoteCommand
 		{
 			gameId = sessionName,
-			payload = new Arma3PayloadCallBack(nameof(AdminRestartMission), $"[\"{password}\", \"{component.User.GlobalName}\", \"{component.User.Id}\"]")
+			payload = new Arma3PayloadCallBack(
+				nameof(AdminMpCommand),
+				$"""[["{password}", "{inputComponent.Value}"], "{component.User.GlobalName}", "{component.User.Id}"]"""
+			)
 		};
+		
 		await webSocketService.InvokeArmaCallBack(remoteCommand);
-		await component.RespondAsync($"`\"{nameof(AdminRestartMission)}\" => \"{sessionName}\" Completed !`", ephemeral: true);
+		await component.RespondAsync($"`\"{nameof(AdminMpCommand)}\" => \"{sessionName}\" Completed !`", ephemeral: true);
 	
-		return (sessionName, $"[\"##password##\", \"{component.User.GlobalName}\", \"{component.User.Id}\"]");
+		return (sessionName, $"[[\"##password##\", \"{inputComponent.Value}\"], \"{component.User.GlobalName}\", \"{component.User.Id}\"]");
 	}
 	private static async Task<(string sessionName, string? additionMessage)> AdminBroadcast(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
