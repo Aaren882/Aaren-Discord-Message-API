@@ -12,6 +12,14 @@
         <Version>$(AssemblyVersion)</Version>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="Discord.Net.Core" Version="3.19.1" />
     </ItemGroup>
