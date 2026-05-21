@@ -39,10 +39,10 @@
         {
           "type": 2,
           "style": 3,
-          "label": "Global Broadcast",
-          "custom_id": "admin_broadcast",
+          "label": "MP Command",
+          "custom_id": "admin_mp_command",
           "emoji": {
-            "name": "📢"
+            "name": "🔧"
           }
         }
       ]

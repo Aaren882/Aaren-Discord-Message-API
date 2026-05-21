@@ -1,6 +1,6 @@
 {
-  "admin_restart_mission": {
-    "ModalTitle": "Restart Mission",
+  "admin_mp_command": {
+    "ModalTitle": "MP Command",
     "SessionMenu": {
       "title": "Game Sessions"
     }

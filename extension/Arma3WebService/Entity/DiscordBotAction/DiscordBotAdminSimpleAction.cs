@@ -12,7 +12,7 @@ public enum DiscordBotAdminModalType
 	upload_list,
 	print_log,
 	export_log,
-	admin_restart_mission,
+	admin_mp_command,
 	admin_broadcast,
 }
 
@@ -29,5 +29,5 @@ public record DiscordBotAdminSimpleAction : DiscordBotActionBase
 	public string? ComponentTitle { get; set; }
 	public string? Description { get; set; }
 	public SessionMenuOptions SessionMenu { get; set; } = new("Game Session");
-	public IEnumerable<string>? ConnectionsNames { get; set; } = null;
+	public IEnumerable<string>? ConnectionsNames { get; set; }
 }
