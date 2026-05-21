@@ -34,7 +34,7 @@ if (
 
 localNamespace setVariable ["DiscordAPI_ServerRefresh_Time", time + DiscordMsg_API_Delay];
 
-private _infoList = EFUNC(service,GetServerInfo);
+private _infoList = call EFUNC(service,GetServerInfo);
 
 //- Payload with Message ID
 private _payload =  [
