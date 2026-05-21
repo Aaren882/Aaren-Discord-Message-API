@@ -2,23 +2,31 @@
   "content": "## 🛠️ Server Core Management Console\n> **WARNING:** This panel is for administrative use only. All actions are logged.",
   "embeds": [
     {
-      "Title": "Admin Console",
-      "description": ":green_circle: Node **CPU:** `{PROCESS.CPU.UTILIZATION}%` | **RAM:** `{DOTNET.PROCESS.MEMORY.VIRTUAL.UTILIZATION}%`",
+      "description": "Real-time status and operational controls for the game server environment.",
       "color": "15158332",
       "fields": [
         {
-          "name": "⚙️ Quick Actions",
-          "value": "• **Restart Mission:** Reload the current mission",
-          "inline": false
+          "name": "📊 Service Health",
+          "value": "🟢 **CPU:** `{PROCESS.CPU.UTILIZATION}%` \n🟢 **RAM:** `{DOTNET.PROCESS.MEMORY.VIRTUAL.UTILIZATION}%`",
+          "inline": true
         },
         {
-          "name": "🛜️ Active Game Sessions:",
-          "value": "```{TOTAL_SESSIONS}\n```",
+          "name": "🛜 Active Sessions",
+          "value": "```{TOTAL_SESSIONS}```",
+          "inline": true
+        },
+        {
+          "name": "⚙️ Quick Guide",
+          "value": "• Use the **Buttons** below for instant mission management and broadcasting.\n• Use the **Dropdown Menu** to more advanced commands.",
           "inline": false
         }
       ],
+      "author": {
+        "name": "Admin Console",
+        "icon_url": "https://i.imgur.com/410CmKi.png"
+      },
       "footer": {
-        "text": "Admin Console • System Time:"
+        "text": "System Time:"
       },
       "timeStamp": "true"
     }
@@ -29,11 +37,11 @@
       "components": [
         {
           "type": 2,
-          "style": 4,
-          "label": "Restart Mission",
-          "custom_id": "admin_restart_mission",
+          "style": 1,
+          "label": "Global Broadcast",
+          "custom_id": "admin_broadcast",
           "emoji": {
-            "name": "🔄"
+            "name": "📢"
           }
         },
         {
