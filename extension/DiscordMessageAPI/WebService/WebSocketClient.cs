@@ -4,32 +4,35 @@ using System.Text.Json;
 using Arma3WebService;
 using DiscordMessageAPI.Tools;
 
-namespace DiscordMessageAPI.WebAPI
+namespace DiscordMessageAPI.WebService
 {
-	class WebSocketClient
+	class WebSocketClient(string serverUri)
 	{
 		private ClientWebSocket? _webSocket;
 		private CancellationTokenSource? _cancellationTokenSource;
-		private string _serverUri;
 
 		public event Action<string>? MessageReceived;
 		public event Action? Connected;
 		public event Action? Disconnected;
 
-		public WebSocketClient(string serverUri)
-		{
-			_serverUri = serverUri;
-		}
-
-		public async Task ConnectAsync()
+		public async Task ConnectAsync(string? jwtToken)
 		{
 			try
 			{
 				_webSocket = new ClientWebSocket();
+				if (jwtToken != null)
+				{
+					_webSocket.Options.SetRequestHeader("Authorization", "Bearer " + jwtToken);
+				}
+			
+				Connected += () => Logger.Log(null, $"Event: Connected to server");
+				Disconnected += () => Logger.Log(null, "Event: Disconnected from server");
+				MessageReceived += (message) => Logger.Log(null, $"Event: Message received - {message}");
+				
 				_cancellationTokenSource = new CancellationTokenSource();
 
-				Logger.Log(null ,$"Connecting to {_serverUri}...");
-				await _webSocket.ConnectAsync(new Uri(_serverUri), _cancellationTokenSource.Token);
+				Logger.Log(null ,$"Connecting to {serverUri}...");
+				await _webSocket.ConnectAsync(new Uri(serverUri), _cancellationTokenSource.Token);
 
 				Logger.Log(null ,"Connected successfully!");
 				Connected?.Invoke();
@@ -43,26 +46,19 @@ namespace DiscordMessageAPI.WebAPI
 			}
 		}
 
-		public async Task SendMessageAsync(string message)
+		public async Task SendMessageAsync(string messagePayload)
 		{
 			if (_webSocket?.State == WebSocketState.Open)
 			{
-				Arma3Payload messageObj = new Arma3Payload
-				{
-					Log = message,
-					Timestamp = DateTime.Now
-				};
-
-				var messageJson = JsonSerializer.Serialize(messageObj, Arma3Payload_JsonSerializerContext.Default.Arma3Payload);
-				var bytes = Encoding.UTF8.GetBytes(messageJson);
-
+				var bytes = Encoding.UTF8.GetBytes(messagePayload);
+				
 				await _webSocket.SendAsync(
 					new ArraySegment<byte>(bytes),
 					WebSocketMessageType.Text,
 					true,
 					_cancellationTokenSource?.Token ?? CancellationToken.None);
 
-				Logger.Log(null ,$"Sent: {message}");
+				Logger.Log(null ,$"Sent: {messagePayload}");
 			}
 			else
 			{
@@ -72,7 +68,7 @@ namespace DiscordMessageAPI.WebAPI
 
 		private async Task ReceiveMessages()
 		{
-			var buffer = new byte[1024 * 4];
+			var buffer = new byte[1024 * 2];
 
 			try
 			{

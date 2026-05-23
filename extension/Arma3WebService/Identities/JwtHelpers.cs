@@ -29,8 +29,8 @@ namespace Arma3WebService.Identities
 		
 		public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
 		{
-			var roleName = GetIdentityRole(payload.Role);
-			var userClaimsIdentity = CreateClaimsIdentity(payload);
+			var roleName = GetIdentityRole(payload.Identity);
+			var userClaimsIdentity = CreateClaimsIdentity(payload.Identity);
 
 			// Symmetric Key for Credential
 			var secret = GenerateHashSecret(signKey);
@@ -59,6 +59,7 @@ namespace Arma3WebService.Identities
 			var serializeToken = tokenHandler.WriteToken(securityToken);
 
 			return new IdentityRolesReturnPayload {
+				Identity = payload.Identity,
 				RoleName = roleName,
 				AuthToken = serializeToken
 			};
@@ -66,25 +67,11 @@ namespace Arma3WebService.Identities
 
 		public Task<TokenValidationResult> VaildateToken(IdentityRolesPayload payload)
 		{
-			var roleName = GetIdentityRole(payload.Role);
-
-			var secret = GenerateHashSecret(signKey);
-			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
-
 			var tokenHandler = new JsonWebTokenHandler();
-
 			return tokenHandler.ValidateTokenAsync(payload.AuthToken, GetValidationParameters());
 		}
-
 		
-		private static string GenerateHashSecret(string input)
-		{
-			var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-			return Convert.ToBase64String(hash);
-		}
-		internal TokenValidationParameters GetValidationParameters(
-			//Role role
-		)
+		internal TokenValidationParameters GetValidationParameters()
 		{
 			// Symmetric Key for Credential
 			var secret = GenerateHashSecret(signKey);
@@ -109,35 +96,41 @@ namespace Arma3WebService.Identities
 				IssuerSigningKey = securityKey
 			};
 		}
-		private static ClaimsIdentity CreateClaimsIdentity(IdentityRolesPayload payload)
+		private static string GenerateHashSecret(string input)
 		{
-			var roleName = GetIdentityRole(payload.Role);
-			var roleGuid = GetIdentityRoleGuid(payload.Role);
+			var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+			return Convert.ToBase64String(hash);
+		}
+		private static ClaimsIdentity CreateClaimsIdentity(IdentityInfo payload)
+		{
+			var roleName = GetIdentityRole(payload);
+			var roleGuid = GetIdentityRoleGuid(payload);
 
 			var claims = new List<Claim>{
-				new Claim(JwtRegisteredClaimNames.Sub, payload.Name), // Subject Name
+				new Claim(JwtRegisteredClaimNames.Sub, payload.AccessName), // Subject Name
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), // JWT ID
+				new Claim(ClaimTypes.Name, payload.AccessName),
 				new Claim(ClaimTypes.Role, roleName),
 				new Claim(ClaimTypes.NameIdentifier, roleGuid),
 			};
 
 			return new ClaimsIdentity(claims);
 		}
-		private static string GetIdentityRole(Role role)
+		private static string GetIdentityRole(IdentityInfo identity)
 		{
-			return role switch
+			return identity switch
 			{
-				Role.Admin => IdentityRoles.Admin,
-				Role.GameServer => IdentityRoles.GameServer,
+				{ Role: Role.Admin } => IdentityRoles.Admin,
+				{ Role: Role.GameServer } => IdentityRoles.GameServer,
 				_ => throw new ArgumentOutOfRangeException("Request Role is not supported.")
 			};
 		}
-		private static string GetIdentityRoleGuid(Role role)
+		private static string GetIdentityRoleGuid(IdentityInfo identity)
 		{
-			return role switch
+			return identity switch
 			{
-				Role.Admin => IdentityRoles.AdminGuid.ToString(),
-				Role.GameServer => IdentityRoles.GameServerGuid.ToString(),
+				{ Role: Role.Admin } => IdentityRoles.AdminGuid.ToString(),
+				{ Role: Role.GameServer } => IdentityRoles.GameServerGuid.ToString(),
 				_ => throw new ArgumentOutOfRangeException("Request Role is not supported.")
 			};
 		}

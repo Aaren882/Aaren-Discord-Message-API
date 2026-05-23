@@ -1,22 +1,34 @@
 using System.Text.Json.Serialization;
 
-namespace Arma3WebService
+namespace Arma3WebService;
+
+public enum Arma3PayLoadType
 {
-	public class Arma3Payload
-	{
-		public string? Log { get; set; }
-		public DateTime Timestamp { get; set; }
-	}
-
-	public class ServiceReturnPayload
-	{
-		public DateTime Date { get { return DateTime.Now; } }
-	}
-
-	[JsonSourceGenerationOptions(WriteIndented = true)] // Optional: Add desired options
-	[JsonSerializable(typeof(Arma3Payload))]
-	[JsonSerializable(typeof(List<Arma3Payload>))] // Add all root types used
-	internal sealed partial class Arma3Payload_JsonSerializerContext : JsonSerializerContext
-	{
-	}
+	Logging = 1,
+	PlayerConnectionChanged = 2, 
 }
+public record struct Arma3Payload
+{
+	public required Arma3PayLoadType MessageType { get; set; }
+	public string? Message { get; set; }
+	public DateTime Timestamp => DateTime.Now;
+}
+
+public record struct ServiceAuthenticationHeader
+{
+	public string Username { get; set; }
+	public string Password { get; set; }
+}
+
+public record struct Arma3ServiceSecret
+{
+	public required string ServiceUri { get; set; }
+	public required string WebSocketServiceUri { get; set; }
+	public ServiceAuthenticationHeader Secret { get; set; }
+}
+
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
+[JsonSerializable(typeof(Arma3Payload))]
+[JsonSerializable(typeof(List<Arma3Payload>))] // Add all root types used
+[JsonSerializable(typeof(Arma3ServiceSecret))]
+internal sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;
