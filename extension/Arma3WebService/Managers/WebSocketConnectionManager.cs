@@ -8,11 +8,11 @@ namespace Arma3WebService.Managers
 			Task HandleConnection(IConnection connection);
 		}
 
-
 		public class ConnectionManager : IConnectionManager
 		{
 			public async Task HandleConnection(IConnection connection)
 			{
+				await connection.StartAsync();
 				await connection.KeepReceiving();
 				await connection.Close();
 			}

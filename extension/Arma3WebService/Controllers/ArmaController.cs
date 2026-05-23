@@ -1,45 +1,44 @@
 using System.Runtime.CompilerServices;
+using Arma3WebService.Entity;
+using Arma3WebService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers
 {
-	[Authorize(
+	/*[Authorize(
 		Policy = "GameRequest",
 		AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)
-	]
+	]*/
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ArmaController : ControllerBase
+	public class ArmaController(
+		ILogger<ArmaController> logger,
+		IWebSocketService webSocketService,
+		ServiceActionManager serviceAction
+	) : ControllerBase
 	{
-		private readonly ILogger<ArmaController> _logger;
-
-		public ArmaController(ILogger<ArmaController> logger)
+		[HttpPost("RemoteCommand")]
+		public async Task<IActionResult> RemoteCommand(Arma3RemoteCommand command)
 		{
-			_logger = logger;
-		}
-
-		[HttpPost(Name = "ArmaController")]
-		public IActionResult PostLog(Arma3Payload payload)
-		{
-			_logger.LogInformation($"Restful Received Log: {payload.Message}");
-			return Ok(new { hello = "" });
-		}
-
-		[HttpGet("GetLogs")]
-		public async IAsyncEnumerable<WeatherForecast> Get()
-		{
-			for (int index = 1; index <= 5; index++)
+			try
 			{
-				await Task.Delay(500);
-				yield return new WeatherForecast
-				{
-					Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-					TemperatureC = Random.Shared.Next(-20, 55),
-					Summary = "None"
-				};
+				await webSocketService.InvokeArmaCallBack(command);
+				
+				return Ok();
 			}
+			catch (Exception e)
+			{
+				return BadRequest(e.Message);
+			}
+		}
+
+		[HttpGet("GetLogs/{sessionIdentity}")]
+		public async Task Get(string sessionIdentity)
+		{
+			var ctx = ControllerContext.HttpContext;
+			await serviceAction.SSE_Logging(ctx, sessionIdentity);
 		}
 
 		// Returns data one item at a time asynchronously
@@ -51,16 +50,6 @@ namespace Arma3WebService.Controllers
 				await Task.Delay(1000, ct); // Simulate asynchronous work (e.g., db call)
 				yield return $"Data item {i} at {DateTime.Now}";
 			}
-		}
-		[HttpPost("stream")]
-		public IActionResult PostStreamingData(string item)
-		{
-			Console.WriteLine($"POST '/stream' Hit !! data = {item}");
-			/*await foreach (var item in data)
-			{
-				Console.WriteLine(item);
-			}*/
-			return Ok();
 		}
 	}
 }

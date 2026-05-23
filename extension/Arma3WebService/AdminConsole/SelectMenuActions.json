@@ -1,0 +1,22 @@
+{
+  "upload_list": {
+    "ModalTitle": "Upload Mod List (HTML)",
+    "SessionMenu": {
+      "title": "Game Sessions"
+    },
+    "ComponentTitle": "File Upload",
+    "Description": "Please upload the mod list for the mission. (Single HTML file only)"
+  },
+  "print_log": {
+    "ModalTitle": "View Backend Logs",
+    "SessionMenu": {
+      "title": "Game Sessions"
+    }
+  },
+  "export_log": {
+    "ModalTitle": "Download Full Logs",
+    "SessionMenu": {
+      "title": "Game Sessions"
+    }
+  }
+}

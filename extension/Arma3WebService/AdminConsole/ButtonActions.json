@@ -1,0 +1,18 @@
+{
+  "admin_mp_command": {
+    "ModalTitle": "MP Command",
+    "SessionMenu": {
+      "title": "Game Sessions"
+    },
+    "ComponentTitle": "MP Command",
+    "Description": "Please upload the mod list for the mission. (Single HTML file only)"
+  },
+  "admin_broadcast": {
+    "ModalTitle": "Send Server-Wide Announcement",
+    "SessionMenu": {
+      "title": "Game Sessions"
+    },
+    "ComponentTitle": "Broadcast Message",
+    "Description": "Send Server-Wide Announcement"
+  }
+}

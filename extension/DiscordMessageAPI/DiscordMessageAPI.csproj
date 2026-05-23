@@ -8,22 +8,26 @@
     <NativeLib>Shared</NativeLib>
     <Platforms>x64</Platforms>
     <AssemblyName>$(MSBuildProjectName)_x64</AssemblyName>
-    <PublishAot>true</PublishAot>
     <AssemblyVersion>26.2.0</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Version>$(AssemblyVersion)</Version>
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <StripSymbols>true</StripSymbols>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DefineConstants>TRACE</DefineConstants>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\Arma3WebService\ArmaPayload.cs" Link="ArmaPayload.cs" />
-    <Compile Include="..\Arma3WebService\Identities\IdentityPayload.cs">
-      <Link>IdentityPayload.cs</Link>
-    </Compile>
+    <ProjectReference Include="..\Components\Components.csproj" />
+    <ProjectReference Include="..\ServiceConnection\ServiceConnection.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
   </ItemGroup>
 </Project>

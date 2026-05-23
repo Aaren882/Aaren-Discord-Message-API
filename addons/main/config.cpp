@@ -12,6 +12,7 @@ class CfgPatches
 		weapons[] = {};
 		VERSION_CONFIG;
 	};
+  class ADDON: DiscordMessageAPI {};
 };
 
 class Extended_PreInit_EventHandlers 
@@ -36,19 +37,30 @@ class CfgFunctions
 		class init
 		{
 			file=QPATHTOF(functions\init);
-			class init_player;
-			class refresh_webhooks;
+			class preStart {
+			  file=QPATHTOF(XEH_preStart.sqf);
+        preStart = 1;
+        headerType = -1;
+      };
+			class init_player {};
+			class refresh_webhooks {};
 		};
 		class functions
 		{
 			file=QPATHTOF(functions);
-			class sendMessage;
-			class sendJson;
-			class sendJsonFormat;
-			class ServerInfo_Loop;
-
-			class Update_ServerInfo;
-			class Deserialize_ExtensionOutput;
+			class FormatJson {};
+			class GetPathFiles {};
+			class Deserialize_ExtensionOutput {};
+		};
+    //#TODO - Deprecate these
+		class Deprecation
+		{
+			class sendMessage
+      {
+        file=QPATHTOEF(webhook,functions\fnc_sendMessage.sqf);
+      };
 		};
 	};
 };
+
+#include "CfgSettings.hpp"

@@ -1,20 +1,20 @@
 using System.Net.WebSockets;
+using Arma3WebService.Entity;
 
-namespace Arma3WebService.Factory
+namespace Arma3WebService.Factory;
+
+public class WebSocketConnectionFactory
 {
-	public class WebSocketConnectionFactory
+	public interface IConnectionFactory
 	{
-		public interface IConnectionFactory
-		{
-			IConnection CreateConnection(WebSocket webSocket);
-		}
+		IConnection CreateConnection(WebsocketContextEntity contextEntity);
+	}
 
-		public class ConnectionFactory : IConnectionFactory
+	public class ConnectionFactory : IConnectionFactory
+	{
+		public IConnection CreateConnection(WebsocketContextEntity contextEntity)
 		{
-			public IConnection CreateConnection(WebSocket webSocket)
-			{
-				return new WebSocketConnection(webSocket);
-			}
+			return new WebSocketConnection(contextEntity);
 		}
 	}
 }

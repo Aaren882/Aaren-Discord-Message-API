@@ -1,13 +1,16 @@
-namespace Arma3WebService
+using Components.Entity;
+
+namespace Arma3WebService;
+
+public record WeatherForecast
 {
-	public class WeatherForecast
-	{
-		public DateOnly Date { get; set; }
+	public DateOnly Date { get; set; }
 
-		public int TemperatureC { get; set; }
+	public int TemperatureC { get; set; }
 
-		public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+	public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 
-		public string? Summary { get; set; }
-	}
+	public string? Summary { get; set; }
 }
+
+public record struct Arma3RemoteCommand(string gameId, Arma3PayloadCallBack payload);
