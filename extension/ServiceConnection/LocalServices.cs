@@ -11,7 +11,11 @@ public class LocalServices: ILocalServices
 		var buffer = new byte[outputSize];
 
 		//- Empty buffer (clean up previous output)
-		Marshal.Copy(buffer, 0, destination, outputSize);
+		// Marshal.Copy(buffer, 0, destination, outputSize); //- OLD
+		unsafe //- less overhead
+		{
+			NativeMemory.Clear((void*)destination, (nuint)outputSize);
+		}
 
 		//- Write data into buffer
 		var bytes = Encoding.UTF8.GetBytes(data, buffer);
