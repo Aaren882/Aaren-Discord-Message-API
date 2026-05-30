@@ -11,8 +11,8 @@ public interface IConnection
 {
 	public WebsocketContextEntity websocketContext { get; init; }
 	Task<WebSocketCloseStatus?> KeepReceiving();
-	Task<WebSocketReceiveResult> ReceiveMessage(Stream memoryStream);
-	Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream);
+	Task<WebSocketReceiveResult> ReceiveMessage(Stream stream);
+	Task<WebSocketReceiveResult> ReceiveBinary(Stream stream);
 	IAsyncEnumerable<string> ReceiveAndReadBinary();
 	Task SendArmaCallBackMessage(Arma3Payload callBack);
 	Task Send(string message);
@@ -74,7 +74,7 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 
 		return result;
 	}
-	public async Task<WebSocketReceiveResult> ReceiveBinary(Stream fileStream)
+	public async Task<WebSocketReceiveResult> ReceiveBinary(Stream stream)
 	{
 		var readBuffer = new ArraySegment<byte>(new byte[64 * 1024]);
 
@@ -82,7 +82,7 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 		do
 		{
 			result = await _webSocket.ReceiveAsync(readBuffer, _cts);
-			await fileStream.WriteAsync(readBuffer.Array!, readBuffer.Offset, result.Count,
+			await stream.WriteAsync(readBuffer.Array!, readBuffer.Offset, result.Count,
 				_cts);
 		} while (!result.EndOfMessage);
 
@@ -104,7 +104,7 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 			}
 
 			// Append chunk to string
-			yield return Encoding.UTF8.GetString(readBuffer.Array!,  0, result.Count);
+			yield return Encoding.UTF8.GetString(readBuffer.Array!, 0, result.Count);
 			
 		} while (!result.EndOfMessage);
 	}
