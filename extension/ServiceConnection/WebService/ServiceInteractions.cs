@@ -16,8 +16,6 @@ public sealed class ServiceInteractions
 	private readonly Arma3ServiceSecret ServiceSecret;
 	
 	private string? AccessName;
-	private readonly ConcurrentQueue<Task> _websocketWorkerQueue = new ();
-	private Task? SocketWorker { get; set; } 
 
 	public event Action<IdentityRolesReturnPayload>? ServiceAccessResult = (authTokenPayload) => {
 		var callBack = new Arma3PayloadCallBack(
@@ -27,19 +25,20 @@ public sealed class ServiceInteractions
 		Util.CallExtensionCallback(Callback, callBack);
 	};
 	public readonly WebSocketClient WsClient;
+	public readonly WebSocketLocalWorker SocketLocalWorker = new ();
+	
 	public string? RPTDirectory { get; internal set; }
 
 	public ServiceInteractions()
 	{
 		ServiceSecret = GetServiceSecret();
-		WsClient = new WebSocketClient(ServiceSecret.WebSocketServiceUri);
 		if (ServiceSecret.RPT_Directory != null)
 			RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
 		
+		WsClient = new WebSocketClient(ServiceSecret.WebSocketServiceUri);
 		WsClient.Connected += () =>
 		{
 			Logger(null, "INFO: Connected to server");
-			SocketWorker ??= WebSocketTrafficReader();
 			
 			var callBack = new Arma3PayloadCallBack(
 				Data : "[true]",
@@ -66,7 +65,7 @@ public sealed class ServiceInteractions
 	
 	public async Task EstablishWebSocketConnection(string accessName, string profilePayload)
 	{
-		if (WsClient.Status() == WebSocketState.Open)
+		if (WsClient.Status == WebSocketState.Open)
 		{
 			Logger(null, "WebSocket connection already established.");
 			return;
@@ -87,36 +86,31 @@ public sealed class ServiceInteractions
 	public Task SendWebSocketMessage(string messageJson)
 		=> WsClient.SendMessageAsync(messageJson);
 
-	public async Task SendWebSocketBinaries(Dictionary<string,string> binaryDict, int chunkSize = 64 * 1024)
+	public void SendWebSocketBinaries(Dictionary<string,string> binaryDict, int chunkSize = 64 * 1024)
 	{
 		Logger(null, "INFO: Sending binaries");
 		foreach (var path in binaryDict)
-			await SendWebSocketBinary(path, chunkSize);
+			SendWebSocketBinary(path, chunkSize);
 	}
 	
-	public async Task SendWebSocketRptLines(string filePath, int linesCount)
+	public void SendWebSocketRptLines(string filePath, int linesCount)
 	{
-		Logger(null, "INFO: Sending RPT lines");
+		Logger(null, $"INFO: Sending RPT \"{linesCount}\" lines");
 		var fileInfo = new FileInfo(filePath);
 		var metadata = new Arma3PayloadRptLine
 		(
 			fileInfo.Name,
 			fileInfo.CreationTime
 		);
-		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		// var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 		
-		try
-		{
-			await SendWebSocketMessage(metaJson);
-			await WsClient.SendRptLinesAsync(filePath, linesCount);
-		}
-		catch (Exception e)
-		{
-			Logger(e, "");
-		}
+		SocketLocalWorker.WebSocketTrafficWriter(
+			metadata,
+			WsClient.SendRptLinesAsync(filePath, linesCount)
+		);
 	}
 
-	public async Task SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
+	public void SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
     {
 	    var fileInfo = new FileInfo(filePath);
 	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
@@ -130,22 +124,17 @@ public sealed class ServiceInteractions
 		    totalChunks,
 		    directoryPrefix
 	    );
-	    var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-
-	    try
-	    {
-		    await SendWebSocketMessage(metaJson);
-		    await WsClient.SendBinaryAsync(filePath, metadata, chunkSize);
-	    }
-	    catch (Exception e)
-	    {
-		    Logger(e, "");
-	    }
+	    // var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		
+	    SocketLocalWorker.WebSocketTrafficWriter(
+		    metadata,
+		    WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
+	    );
     }
-	public async Task SendWebSocketBinary(KeyValuePair<string,string> fileValuePair, int chunkSize = 64 * 1024)
+	public void SendWebSocketBinary(KeyValuePair<string,string> fileValuePair, int chunkSize = 64 * 1024)
 	{
-		var directoryPrefix = fileValuePair.Key;
-		var filePath = fileValuePair.Value;
+		var (directoryPrefix, filePath) = fileValuePair;
+		
 	    var fileInfo = new FileInfo(filePath);
 	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
 
@@ -159,40 +148,14 @@ public sealed class ServiceInteractions
 		    totalChunks,
 		    directoryPrefix
 	    );
-		var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-
-		try
-		{
-			await SendWebSocketMessage(metaJson);
-			await WsClient.SendBinaryAsync(filePath, metadata, chunkSize);
-		}
-		catch (Exception e)
-		{
-			Logger(e, "");
-		}
+		// var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		
+		SocketLocalWorker.WebSocketTrafficWriter(
+			metadata,
+			WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
+		);
     }
 
-	public void WebSocketTrafficWriter(Task webSocketTask)
-	{
-		_websocketWorkerQueue.Enqueue(webSocketTask);
-	}
-	private async Task WebSocketTrafficReader()
-	{
-		Logger(null, "New WebSocketTrafficReader created.");
-		while (true)
-		{
-			await Task.Delay(500);
-			try
-			{
-				if (_websocketWorkerQueue.TryDequeue(out var task))
-					await task;
-			}
-			catch (Exception e)
-			{
-				Logger(e, "");
-			}
-		}
-	}
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
 	/// </summary>

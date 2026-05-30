@@ -15,16 +15,13 @@ public class WebSocketClient(string serverUri)
 	public event Action? Connected;
 	public event Action? Disconnected;
 
-	public WebSocketState? Status()
-	{
-		return _webSocket?.State;
-	}
+	public WebSocketState? Status => _webSocket?.State;
 
 	public async Task ConnectAsync(string? jwtToken)
 	{
 		try
 		{
-			if (Status() == WebSocketState.Open)
+			if (Status == WebSocketState.Open)
 				throw new Exception("WebSocket already connected."); 
 			
 			_webSocket = new ClientWebSocket();
@@ -51,7 +48,7 @@ public class WebSocketClient(string serverUri)
 	{
 		Logger(null, "INFO: Sending Binary");
 		
-		if (Status() == WebSocketState.Open)
+		if (Status == WebSocketState.Open)
 		{
 			await Task.Delay(500); //- # Wait for the RPT get written first.   
 			
@@ -81,11 +78,9 @@ public class WebSocketClient(string serverUri)
 	public async Task SendRptLinesAsync(string filePath, int linesCount)
 	{
 		Logger(null, $"INFO: Sending RPT : {linesCount} lines");
-		
-		if (Status() == WebSocketState.Open)
+		throw new Exception("Test");
+		if (Status == WebSocketState.Open)
 		{
-			// var readLines = File.ReadLinesAsync(filePath, encoding);
-			var encoding = Encoding.UTF8;
 			await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 			var readLines = ReadLinesAsyncEnumerable(fileStream).TakeLast(linesCount).Reverse();
 
@@ -96,10 +91,10 @@ public class WebSocketClient(string serverUri)
 				charCount += wLine.Length;
 				if  (charCount > 1980)
 				{
-					Logger(null ,$"SendRptLines has reached limit: {line}");
+					Logger(null ,$"SendRptLines has reached limit: \"{line}\".");
 					break;
 				}
-				var bytes = encoding.GetBytes(wLine);
+				var bytes = Encoding.UTF8.GetBytes(wLine);
 				await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, false, CancellationToken.None);
 			}
 			await _webSocket.SendAsync(new ArraySegment<byte>([]), WebSocketMessageType.Binary, true, CancellationToken.None);
@@ -116,7 +111,7 @@ public class WebSocketClient(string serverUri)
 		//- Local function
 		async IAsyncEnumerable<string> ReadLinesAsyncEnumerable(Stream stream)
 		{
-			using var reader = new StreamReader(stream);
+			using var reader = new StreamReader(stream, Encoding.UTF8);
 			while (!reader.EndOfStream)
 			{
 				var line = await reader.ReadLineAsync();
@@ -128,7 +123,7 @@ public class WebSocketClient(string serverUri)
 
 	public async Task SendMessageAsync(string messagePayload)
 	{
-		if (Status() == WebSocketState.Open)
+		if (Status == WebSocketState.Open)
 		{
 			var bytes = Encoding.UTF8.GetBytes(messagePayload);
 			
@@ -152,7 +147,7 @@ public class WebSocketClient(string serverUri)
 
 		try
 		{
-			while (Status() == WebSocketState.Open)
+			while (Status == WebSocketState.Open)
 			{
 				var result = await _webSocket.ReceiveAsync(
 					new ArraySegment<byte>(buffer),
@@ -202,7 +197,7 @@ public class WebSocketClient(string serverUri)
 	{
 		try
 		{
-			if (Status() == WebSocketState.Open)
+			if (Status == WebSocketState.Open)
 			{
 				await _webSocket!.CloseAsync(
 					WebSocketCloseStatus.NormalClosure,

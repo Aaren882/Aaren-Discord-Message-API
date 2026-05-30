@@ -12,18 +12,14 @@ public sealed class ServiceRequestHandler
 		var serviceInteractions = ServiceStartup.serviceInteractions;
 		if (serviceInteractions is null) return;
 		
-		serviceInteractions.WebSocketTrafficWriter(
-			GetRespond(request, handShakePayload)
-		);
+		GetRespond(request, handShakePayload);
 	}
 
-	private static async Task GetRespond(Arma3PayloadServiceRequest request, string handShakePayload)
+	private static Task? GetRespond(Arma3PayloadServiceRequest request, string handShakePayload)
 	{
-		var type = request.ActionType;
-		
 		//- which action should do
-		Task task = null;
-		switch (type)
+		Task? task = null;
+		switch (request.ActionType)
 		{
 			case 1: //- Send Rpt lines
 				task = RespondWebSocketPrintRpt(RptFileDirectory, 50);
@@ -39,7 +35,7 @@ public sealed class ServiceRequestHandler
 					fileInfo.Length,
 					fileInfo.CreationTime,
 					totalChunks,
-					".temp"
+					null
 				);
 				
 				handShakePayload = JsonSerializer.Serialize(
@@ -52,23 +48,20 @@ public sealed class ServiceRequestHandler
 		}
 		
 		//- Put respond into websocket queue first
-		await serviceInteractions.SendWebSocketMessage(handShakePayload);
-		await task;
+		serviceInteractions?.SocketLocalWorker.WebSocketTrafficWriter(
+			handShakePayload,
+			task!
+		);
+		
+		return task;
 	}
 
 	private static async Task RespondWebSocketPrintRpt(string filePath, int linesCount)
 	{
-		await serviceInteractions!.WsClient.SendRptLinesAsync(filePath, linesCount);
+		await serviceInteractions?.WsClient.SendRptLinesAsync(filePath, linesCount)!;
 	}
 	private static async Task RespondWebSocketExportRpt(string filePath, Arma3PayloadBinary metadata)
 	{
-		try
-		{
-			await serviceInteractions.WsClient.SendBinaryAsync(filePath, metadata);
-		}
-		catch (Exception e)
-		{
-			Logger(e, "");
-		}
+		await serviceInteractions?.WsClient.SendBinaryAsync(filePath, metadata)!;
 	}
 }
