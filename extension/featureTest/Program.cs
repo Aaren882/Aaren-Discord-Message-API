@@ -101,7 +101,7 @@ namespace DiscordMessageAPI
 						v => $".profile/{v.Key}",
 						v => v.Value
 					);
-				await serviceInteractions.SendWebSocketBinaries(config);
+				serviceInteractions.SendWebSocketBinaries(config);
 					
 				//- Update DB
 				var jsonString = new JObject
@@ -135,8 +135,9 @@ namespace DiscordMessageAPI
 			{
 				["type"] = 2,
 				["MessageId"] = profile["MessageId"]?.ToString(),
-				["ProfileDateOffsets"] = JArray.FromObject(profileDateOffsets),
+				["RPT_Directory"] = profile["RPT_Directory"],
 				["Configuration"] = profile["Configuration"],
+				["ProfileDateOffsets"] = JArray.FromObject(profileDateOffsets),
 			}.ToString();
 			
 			
