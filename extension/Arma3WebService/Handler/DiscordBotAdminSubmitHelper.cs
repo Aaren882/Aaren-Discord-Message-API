@@ -99,8 +99,7 @@ internal static class DiscordBotAdminSubmitHelper
 				embed: embedBuilder.Build()
 			);
 
-			var sentAttachment = message.Attachments.First();
-			serverIdentity.modListUrl = sentAttachment.Url;
+			serverIdentity.modListMessageId = message.Id;
 		}
 		
 		await dbContext.SaveChangesAsync();
