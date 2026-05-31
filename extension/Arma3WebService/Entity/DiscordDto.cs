@@ -338,17 +338,17 @@ public record DiscordMessageDto : DiscordMessage
 					Description = x.description,
 					Author = new EmbedAuthorBuilder
 					{
-						IconUrl = x.author.icon_url,
-						Name = x.author.name,
-						Url = x.author.url
+						IconUrl = x.author?.icon_url,
+						Name = x.author?.name,
+						Url = x.author?.url
 					},
-					ThumbnailUrl = x.thumbnail.url,
-					ImageUrl = x.image.url,
+					ThumbnailUrl = x.thumbnail?.url,
+					ImageUrl = x.image?.url,
 					Fields = fields,
 					Footer = new EmbedFooterBuilder
 					{
-						IconUrl = x.footer.icon_url,
-						Text = x.footer.text
+						IconUrl = x.footer?.icon_url,
+						Text = x.footer?.text
 					},
 					Timestamp = timeStamp,
 					Color = string.IsNullOrEmpty(x.color) ? null : uint.Parse(x.color)

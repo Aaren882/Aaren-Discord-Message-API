@@ -87,8 +87,8 @@ public record struct EmbedData
 	public string title { get; init; }
     public string description { get; init; }
     
-    private string _color;
-    public string color { 
+    private string? _color;
+    public string? color { 
 	    get => _color; 
 	    set => _color = string.IsNullOrEmpty(value) ?
 		    RandomColor() : 
@@ -107,10 +107,10 @@ public record struct EmbedData
 		    DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ") : 
 		    value;
     }
-    public Types.AuthorEmbed author { get; init; }
-    public Types.Image image { get; init; }
-    public Types.Thumbnail thumbnail { get; init; }
-    public Types.Footer footer { get; init; }
+    public Types.AuthorEmbed? author { get; init; }
+    public Types.Image? image { get; init; }
+    public Types.Thumbnail? thumbnail { get; init; }
+    public Types.Footer? footer { get; init; }
     public List<Types.FieldEmbed>? fields { get; init; }
 
     public EmbedData(List<string> data, List<List<string>> fieldsData)
