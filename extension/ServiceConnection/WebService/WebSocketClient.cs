@@ -78,7 +78,6 @@ public class WebSocketClient(string serverUri)
 	public async Task SendRptLinesAsync(string filePath, int linesCount)
 	{
 		Logger(null, $"INFO: Sending RPT : {linesCount} lines");
-		throw new Exception("Test");
 		if (Status == WebSocketState.Open)
 		{
 			await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
