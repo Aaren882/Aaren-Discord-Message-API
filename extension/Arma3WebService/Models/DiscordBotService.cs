@@ -6,6 +6,7 @@ using Arma3WebService.Managers;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Models;
 
@@ -21,6 +22,7 @@ public interface IDiscordBotService
 {
 	public ulong GetPresetMessageChannelId(DiscordBotChannel channelType);
 	public Task<IMessageChannel> GetMessageChannelAsync(ulong channelID);
+	public Task<string?> GetPermanentUrlAsync(ulong channelId, ulong messageId);
 	public DiscordSocketClient GetClient();
 	public Task<byte[]> SendLocalFile(string text);
 	public Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message);
@@ -30,7 +32,8 @@ public interface IDiscordBotService
 public sealed class DiscordBotService(
 	ILogger<DiscordBotService> logger,
 	IServiceProvider serviceProvider,
-	RemoteStateManager remoteStateManager
+	RemoteStateManager remoteStateManager,
+	IServiceScopeFactory serviceScopeFactory
 ) : BackgroundService, IDiscordBotService
 {
 	private static readonly DiscordSocketClient Client = new();
@@ -131,25 +134,26 @@ public sealed class DiscordBotService(
 		};
 
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
-		webSocketService.OnConnected += async (entity, connection) =>
+		webSocketService.OnConnected += async (websocketContextEntity, connection) =>
 		{
+			var sessionIdentity = websocketContextEntity.GetIdentity();
 			try
 			{
-				var id = GetPresetMessageChannelId(DiscordBotChannel.Logging);
-				var channel = await GetMessageChannelAsync(id);
+				//- Logging
+				var channel = await GetMessageChannelAsync(_loggingChannel);
 				
 				var embedBuilder = new EmbedBuilder()
 					.WithTitle("🎮 Session Connected!")
 					.WithDescription("A new Arma 3 session has successfully initialized and is ready for deployment.")
 					.WithColor(3066993)
-					.AddField("🖥️ Server Name", entity.GetIdentity())
+					.AddField("🖥️ Server Name", sessionIdentity)
 					.WithFooter("System Logger")
 					.WithCurrentTimestamp();
 				await channel.SendMessageAsync(embed: embedBuilder.Build());
 			}
 			catch(Exception e)
 			{
-				logger.LogError("GameSession Connected : {Error}", e.Message);
+				logger.LogError("GameSession Connected (Bot Logging) : {Error}", e.Message);
 			}
 		};
 		webSocketService.OnDisconnected += async (entity, connection) =>
@@ -198,6 +202,18 @@ public sealed class DiscordBotService(
 		});
 		
 		return modifyResult;
+	}
+	public async Task<string?> GetPermanentUrlAsync(ulong channelId, ulong messageId)
+	{
+		var channel = await GetMessageChannelAsync(channelId);
+		var message = await channel.GetMessageAsync(messageId);
+    
+		if (message != null && message.Attachments.Count != 0)
+		{
+			return message.Attachments.First().Url;
+		}
+
+		return null;
 	}
 
 	public async Task<IMessageChannel> GetMessageChannelAsync(ulong channelID)

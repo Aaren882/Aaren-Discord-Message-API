@@ -10,7 +10,7 @@ public class ServerIdentity
 	public string profileName { get; set; }
 	public ulong messageId { get; set; }
 	public long profileStateStamp { get; set; }
-	public string? modListUrl { get; set; }
+	public ulong? modListMessageId { get; set; }
 	public DateTime lastUpdate { get; set; } = DateTime.Now;
 }
 [PrimaryKey(nameof(messageId))]

@@ -135,14 +135,16 @@ public sealed class ServiceActionManager(
 		);
 		
 		//- Inject components
-		var components = messageDto.Components ?? [];
-		if (serverIdentity.modListUrl is not null)
+		var components = messageDto?.Components ?? [];
+		if (serverIdentity.modListMessageId is not null)
 		{
+			var adminLoggingChannelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminLogging);
+			var url = await discordBotService.GetPermanentUrlAsync(adminLoggingChannelId, (ulong)serverIdentity.modListMessageId);
 			List<DiscordDto.ComponentBase> additionalComponents =
 			[
 				new DiscordDto.ButtonComponent(
 					label: "MOD",
-					url: serverIdentity.modListUrl,
+					url: url,
 					emoji: new Emote(0, "📦"),
 					style: ButtonStyle.Link
 				)
