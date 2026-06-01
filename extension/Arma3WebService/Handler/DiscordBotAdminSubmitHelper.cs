@@ -107,7 +107,7 @@ internal static class DiscordBotAdminSubmitHelper
 		return (sessionName, null);
 	}
 	
-	internal static ConcurrentDictionary<string, SocketModal> SubmittedPrintLogModalSockets = new();
+	internal static ConcurrentDictionary<string, SocketModal> SubmittedModalSockets = new();
 	private static async Task<(string sessionName, string? additionMessage)> PrintLog(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
@@ -121,14 +121,13 @@ internal static class DiscordBotAdminSubmitHelper
 			await component.RespondAsync("Your request is already submitted (Still waiting for a response).");
 			return;
 		}*/
-		SubmittedPrintLogModalSockets[guildId] = component;
+		SubmittedModalSockets[guildId] = component;
 		var command = new Arma3PayloadServiceRequest(1, guildId);
 		await connection.SendArmaCallBackMessage(command);
 		
 		return (sessionName, null);
 	}
 
-	internal static ConcurrentDictionary<string, SocketModal> SubmittedExportLogModalSockets = new();
 	private static async Task<(string sessionName, string? additionMessage)> ExportLog(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
@@ -137,7 +136,7 @@ internal static class DiscordBotAdminSubmitHelper
 
 		//component.GuildId
 		var guildId = $"{component.GuildId}";
-		SubmittedExportLogModalSockets[guildId] = component;
+		SubmittedModalSockets[guildId] = component;
 
 		var command = new Arma3PayloadServiceRequest(2, guildId);
 		await connection.SendArmaCallBackMessage(command);
