@@ -292,11 +292,13 @@ public static class EntryDelegates
         {
 	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
 	        
-	        serviceInteractions.SendWebSocketBinaries(
-		        binaryDict!.Select(x => 
-			        new KeyValuePair<string, string>(x.Key, Path.Combine(Util.AssemblyPath, x.Value))
-		        ).ToDictionary()
-		    );
+	        if (binaryDict is null)
+		        throw new Exception("INVALID ARGUMENT. (Dictionary for binaries is null)");
+	        
+	        foreach (var (key, value) in binaryDict)
+		        binaryDict[key] = Path.Combine(Util.AssemblyPath, value);
+	        
+	        serviceInteractions.SendWebSocketBinaries(binaryDict);
 	        
             return 1;
         }
