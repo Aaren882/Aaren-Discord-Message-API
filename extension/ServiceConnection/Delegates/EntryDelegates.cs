@@ -288,7 +288,7 @@ public static class EntryDelegates
 	        
 	        return 1;
         }
-        internal static int SendWebSocketAssemblyDirectoryBinaries(IOutputBuilder output, string[] args, int argCount)
+        internal static int SendWebSocketFromAssemblyDirectoryBinaries(IOutputBuilder output, string[] args, int argCount)
         {
 	        var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
 	        
