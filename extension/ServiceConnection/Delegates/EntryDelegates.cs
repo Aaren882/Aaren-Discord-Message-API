@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Components.Entity;
 using ServiceConnection.Discord;
 using ServiceConnection.Entity;
 using ServiceConnection.Tools;
@@ -87,7 +86,7 @@ public static class EntryDelegates
             //- Exit if there's no Webhook
             if (webhooksCount == 0)
             {
-                throw new Exception("No Webhook Exist.");
+                throw new Exception("NO WEBHOOK EXIST.");
             }
 
             output.Append(webhookSel < 0 // output can be like ["ww", "ww"]
@@ -214,7 +213,7 @@ public static class EntryDelegates
 	        var accessName = args[0];
 	        var profilePayload = args[1];
 	        if (string.IsNullOrEmpty(accessName)) 
-		        throw new Exception("No access name provided.");
+		        throw new Exception("NO ACCESS NAME PROVIDED.");
 	        
 	        _ = InitializeAsync(accessName, profilePayload);
 	        
