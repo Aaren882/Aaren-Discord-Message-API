@@ -89,8 +89,8 @@ public sealed class ServiceInteractions
 	public void SendWebSocketBinaries(Dictionary<string,string> binaryDict, int chunkSize = 64 * 1024)
 	{
 		Logger(null, "INFO: Sending binaries");
-		foreach (var path in binaryDict)
-			SendWebSocketBinary(path, chunkSize);
+		foreach (var (directoryPrefix, filePath) in binaryDict)
+			SendWebSocketBinary(filePath, directoryPrefix, chunkSize);
 	}
 	
 	public void SendWebSocketRptLines(string filePath, int linesCount)
@@ -102,18 +102,17 @@ public sealed class ServiceInteractions
 			fileInfo.Name,
 			fileInfo.CreationTime
 		);
-		// var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 		
 		SocketLocalWorker.WebSocketTrafficWriter(
 			metadata,
 			WsClient.SendRptLinesAsync(filePath, linesCount)
 		);
 	}
-
 	public void SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
     {
 	    var fileInfo = new FileInfo(filePath);
 	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+		Logger(null, $"INFO: Sending binary file \"{fileInfo.Name}\"");
 
 	    // Send Metadata (as text message)
 	    var metadata = new Arma3PayloadBinary
@@ -124,36 +123,11 @@ public sealed class ServiceInteractions
 		    totalChunks,
 		    directoryPrefix
 	    );
-	    // var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 		
 	    SocketLocalWorker.WebSocketTrafficWriter(
 		    metadata,
 		    WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
 	    );
-    }
-	public void SendWebSocketBinary(KeyValuePair<string,string> fileValuePair, int chunkSize = 64 * 1024)
-	{
-		var (directoryPrefix, filePath) = fileValuePair;
-		
-	    var fileInfo = new FileInfo(filePath);
-	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
-
-	    Logger(null, $"INFO: Sending binary file \"{fileInfo.Name}\"");
-	    // Send Metadata (as text message)
-	    var metadata = new Arma3PayloadBinary
-	    (
-		    fileInfo.Name,
-		    fileInfo.Length,
-		    fileInfo.CreationTime,
-		    totalChunks,
-		    directoryPrefix
-	    );
-		// var metaJson = JsonSerializer.Serialize(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-		
-		SocketLocalWorker.WebSocketTrafficWriter(
-			metadata,
-			WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
-		);
     }
 
 	/// <summary>
