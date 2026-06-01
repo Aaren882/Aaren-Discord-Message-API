@@ -29,7 +29,7 @@ public sealed class DiscordBotRequestHandler(
 		logger.LogInformation("Receiving for Rpt Line '{TotalLength}'", content.Length);
 		
 		if (!DiscordBotAdminSubmitHelper.
-			    SubmittedPrintLogModalSockets.
+			    SubmittedModalSockets.
 			    TryRemove(payload.RequestGuildId,
 				    out var modalSocket)
 		   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
@@ -47,7 +47,7 @@ public sealed class DiscordBotRequestHandler(
 			await connection.ReceiveBinary(memoryStream);
 			
 			if (!DiscordBotAdminSubmitHelper.
-				    SubmittedExportLogModalSockets.
+				    SubmittedModalSockets.
 				    TryRemove(payload.RequestGuildId,
 					    out var modalSocket)
 			   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
