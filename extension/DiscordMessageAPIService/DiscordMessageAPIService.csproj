@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+      <TargetFramework>net9.0</TargetFramework>
+      <ImplicitUsings>enable</ImplicitUsings>
+      <Nullable>enable</Nullable>
+      <PublishAot>true</PublishAot>
+      <IsAotCompatible>true</IsAotCompatible>
+      <NativeLib>Shared</NativeLib>
+      <Platforms>x64</Platforms>
+      <AssemblyName>$(MSBuildProjectName)_x64</AssemblyName>
+      <AssemblyVersion>26.2.0</AssemblyVersion>
+      <FileVersion>$(AssemblyVersion)</FileVersion>
+      <Version>$(AssemblyVersion)</Version>
+      <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
+      <EmbedUntrackedSources>false</EmbedUntrackedSources>
+      <StripSymbols>true</StripSymbols>
+      <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    </PropertyGroup>
+  
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+      <DefineConstants>TRACE</DefineConstants>
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+      <DebugType>embedded</DebugType>
+    </PropertyGroup>
+  
+    <ItemGroup>
+      <ProjectReference Include="..\Components\Components.csproj" />
+      <ProjectReference Include="..\ExtensionComponents\ExtensionComponents.csproj" />
+      <ProjectReference Include="..\ServiceConnection\ServiceConnection.csproj" />
+    </ItemGroup>
+
+</Project>

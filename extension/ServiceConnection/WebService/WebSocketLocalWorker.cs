@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Components.Entity;
+using ExtensionComponents;
 using static ServiceConnection.ServiceStartup;
 
 namespace ServiceConnection.WebService;
@@ -17,7 +18,7 @@ public readonly record struct WebSocketWorkingTask(Task? headerTask, Task webSoc
 		}
 		catch (Exception e)
 		{
-			Logger(e, "[WebSocketWorkingTask]");
+			ExtensionStartup.Logger(e, "[WebSocketWorkingTask]");
 			
 			//- If Header exist and exception is thrown
 			if (!hasHeader) return;
@@ -61,7 +62,7 @@ public sealed class WebSocketLocalWorker
 	}
 	private async Task WebSocketTrafficReader()
 	{
-		Logger(null, "New WebSocketTrafficReader created.");
+		ExtensionStartup.Logger(null, "New WebSocketTrafficReader created.");
 		while (true)
 		{
 			await Task.Delay(500);
@@ -72,7 +73,7 @@ public sealed class WebSocketLocalWorker
 			}
 			catch (Exception e)
 			{
-				Logger(e, "");
+				ExtensionStartup.Logger(e, "");
 			}
 		}
 	}

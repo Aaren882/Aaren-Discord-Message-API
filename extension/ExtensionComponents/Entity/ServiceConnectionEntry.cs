@@ -1,11 +1,8 @@
-using ServiceConnection.Discord;
-using ServiceConnection.Tools;
-using ServiceConnection.WebService;
-
-namespace ServiceConnection.Entity;
+namespace ExtensionComponents.Entity;
 
 public interface ILocalServices
 {
+	void SetActionsMap(Type actionType);
 	void Output(nint destination, int outputSize, string data);
 	int ExecuteArgsAction(IArgsAction argsAction);
 }

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ServiceConnection.Entity;
+namespace ExtensionComponents.Entity;
 
 public record struct CallContext(
 	UInt64 steamId,

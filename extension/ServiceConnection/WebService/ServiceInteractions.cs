@@ -1,12 +1,11 @@
-using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
-using ServiceConnection.Tools;
-using static ServiceConnection.ServiceStartup;
 using System.Text.Json;
+using ExtensionComponents.Tools;
+using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
 
