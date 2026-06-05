@@ -1,6 +1,4 @@
-using static ServiceConnection.LocalServices;
-
-namespace ServiceConnection.Entity;
+namespace ExtensionComponents.Entity;
 
 public interface IOutputBuilder
 {
@@ -18,6 +16,6 @@ public record struct OutputBuilder(nint Destination, int OutputSize): IOutputBui
 	/// <param name="data">String data that will be output</param>
 	public void Append(string data)
 	{
-		ServiceStartup.localServices.Output(Destination, OutputSize, data);
+		ExtensionStartup.localServices.Output(Destination, OutputSize, data);
 	}
 }

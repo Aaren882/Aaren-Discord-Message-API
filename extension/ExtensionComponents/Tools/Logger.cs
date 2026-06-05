@@ -1,6 +1,6 @@
-using ServiceConnection.Entity;
+using ExtensionComponents.Entity;
 
-namespace ServiceConnection.Tools;
+namespace ExtensionComponents.Tools;
 
 public class LoggerBase: ILogger
 {

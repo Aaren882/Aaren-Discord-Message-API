@@ -14,10 +14,11 @@ using ServiceConnection.WebService;
 using Components.Entity;
 using Discord.Interactions;
 using Discord.Interactions.Builders;
+using ExtensionComponents;
+using ExtensionComponents.Entity;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using ServiceConnection.Entity;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DiscordMessageAPI
@@ -36,7 +37,8 @@ namespace DiscordMessageAPI
 			ServiceStartup.InitConfiguration(
 				(a, b) => Console.WriteLine($"\"{a}\" : {b}"),
 				(a, b) => Console.WriteLine($"\"{a?.Message}\" \n\n:- ADDITIONAL -: {b}"),
-				serviceProvider
+				serviceProvider,
+				typeof(EntryDelegates)
 			);
 
 			const string jsonProfile = "Discord_Message_API/profiles/default.json";
