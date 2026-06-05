@@ -42,6 +42,7 @@ public class DllEntry
 		
 		var services = new ServiceCollection();
 		services.AddSingleton<ILocalServices,LocalServices>();
+		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 
 		var serviceProvider = services.BuildServiceProvider();
 		
@@ -49,8 +50,7 @@ public class DllEntry
 		ExtensionStartup.InitConfiguration(
 			LoggerBase.Trace,
 			LoggerBase.Log,
-			serviceProvider,
-			typeof(EntryDelegates)
+			serviceProvider
 		);
 		
 		var version = typeof(DllEntry).GetTypeInfo().Assembly 

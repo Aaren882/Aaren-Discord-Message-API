@@ -31,14 +31,14 @@ namespace DiscordMessageAPI
 			services.AddSingleton<ServiceInteractions>();
 			services.AddSingleton<ServiceRequestHandler>();
 			services.AddSingleton<ILocalServices, LocalServices>();
+			services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 
 			var serviceProvider = services.BuildServiceProvider();
 
 			ServiceStartup.InitConfiguration(
 				(a, b) => Console.WriteLine($"\"{a}\" : {b}"),
 				(a, b) => Console.WriteLine($"\"{a?.Message}\" \n\n:- ADDITIONAL -: {b}"),
-				serviceProvider,
-				typeof(EntryDelegates)
+				serviceProvider
 			);
 
 			const string jsonProfile = "Discord_Message_API/profiles/default.json";
