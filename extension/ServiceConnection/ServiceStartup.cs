@@ -11,22 +11,21 @@ public static class ServiceStartup
     public static bool ExtensionInit { get; private set; }
     internal static DateTime ExtensionInitTime = DateTime.Now; //- must be static
 	
-	public static string? RptFileDirectory { get; internal set; }
+	public static string? RptFileDirectory { get; set; }
 
 	public static ServiceInteractions? serviceInteractions { get; private set; }
 
 	public static void InitConfiguration(
 		Action<string, string> tracer, 
 		Action<Exception?, string> logger,
-		IServiceProvider serviceProvider,
-		Type DelegateActions
+		IServiceProvider serviceProvider
 	)
 	{
+		ExtensionStartup.InitConfiguration(tracer, logger, serviceProvider); //- Init Extension Configuration
 		serviceInteractions = serviceProvider.GetService<ServiceInteractions>();
 
 		try
 		{
-			ExtensionStartup.InitConfiguration(tracer, logger, serviceProvider, DelegateActions); //- Init Extension Configuration
 			if (serviceInteractions != null)
 			{
 				RptFileDirectory = Util.GetCurrentRpt();

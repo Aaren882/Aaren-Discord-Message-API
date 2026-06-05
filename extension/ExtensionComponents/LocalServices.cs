@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using ExtensionComponents.Entity;
@@ -11,26 +9,13 @@ public class LocalServices: ILocalServices
 {
 	public delegate int InitAction(IOutputBuilder output, string[] args, int argCount);
 	public Dictionary<string, InitAction> ActionsDict { get; private set; }
-	// public delegate Task<int> InitTaskActions(IOutputBuilder output, string[] args, int argCount);
 	
-	public void SetActionsMap(
-		[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicMethods)] Type actionType
-	)
+	public void SetActionsMap(EntryDelegatesBase entryDelegates)
 	{
-		ActionsDict = actionType
-			.GetMethods(
-				BindingFlags.Static | BindingFlags.NonPublic
-			)
-			.ToDictionary(
-				prop => prop.Name, 
-				prop => (InitAction)Delegate.CreateDelegate(
-					typeof(InitAction),
-					null,
-					prop
-				)!
-			);
+		var actionType = entryDelegates.GetType();
 		
-        Logger(null, $"({nameof(SetActionsMap)}) => {actionType.FullName}");
+		ActionsDict = entryDelegates.ActionsDict;
+        Logger(null, $"({nameof(SetActionsMap)}) => {actionType.FullName} registered {ActionsDict.Count} key(s).");
 	}
 	
 	public void Output(nint destination, int outputSize, string data)

@@ -5,8 +5,8 @@ namespace ExtensionComponents;
 
 public static class ExtensionStartup
 {
-    public static Action<string, string> Tracer { get; set; }
-    public static Action<Exception?, string> Logger { get; set; }
+    public static Action<string, string> Tracer { get; private set; }
+    public static Action<Exception?, string> Logger { get; private set; }
     
     public static string? InitTime { get; set; }
 
@@ -17,13 +17,13 @@ public static class ExtensionStartup
     public static ExtensionCallback Callback = (name, function, data) => 0;
 
     public static IServiceProvider ServiceProvider { get; private set; }
+    public static EntryDelegatesBase entryDelegates { get; private set; } 
     public static ILocalServices localServices { get; private set; }
 
     public static void InitConfiguration(
         Action<string, string> tracer,
         Action<Exception?, string> logger,
-        IServiceProvider serviceProvider,
-        Type delegateActions
+        IServiceProvider serviceProvider
     )
     {
         Tracer = tracer;
@@ -33,7 +33,8 @@ public static class ExtensionStartup
         try
         {
             localServices = serviceProvider.GetRequiredService<ILocalServices>();
-            localServices.SetActionsMap(delegateActions);
+            entryDelegates = serviceProvider.GetRequiredService<EntryDelegatesBase>();
+            localServices.SetActionsMap(entryDelegates);
             Logger(null, $"({nameof(ExtensionStartup)}) Local Services Initialized");
         }
         catch (Exception e)
