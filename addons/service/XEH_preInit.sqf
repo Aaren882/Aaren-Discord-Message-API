@@ -9,7 +9,7 @@ GVAR(Available) = false;
 //- Functions
 #include "XEH_PREP.hpp"
 
-private _profileFileNames = "profiles" call DiscordAPI_fnc_GetPathFiles;
+private _profileFileNames = "profiles" call FUNC(GetPathFiles);
 [
   QGVAR(Profiles), "LIST", 
   [
