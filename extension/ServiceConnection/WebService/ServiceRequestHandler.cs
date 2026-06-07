@@ -38,10 +38,7 @@ public sealed class ServiceRequestHandler
 					null
 				);
 				
-				handShakePayload = JsonSerializer.Serialize(
-					request with { Payload = metadata },
-					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-				);
+				request = request with { Payload = metadata };
 				
 				task = RespondWebSocketExportRpt(RptFileDirectory, metadata);
 				break;
@@ -49,8 +46,8 @@ public sealed class ServiceRequestHandler
 		
 		//- Put respond into websocket queue first
 		serviceInteractions?.SocketLocalWorker.WebSocketTrafficWriter(
-			handShakePayload,
-			task!
+			request,
+			() => task!
 		);
 		
 		return task;

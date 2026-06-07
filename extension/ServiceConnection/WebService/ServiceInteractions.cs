@@ -1,12 +1,11 @@
-using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
-using ServiceConnection.Tools;
-using static ServiceConnection.ServiceStartup;
 using System.Text.Json;
+using ExtensionComponents.Tools;
+using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
 
@@ -83,7 +82,10 @@ public sealed class ServiceInteractions
 		await DisconnectWebSocket("Client Reconnecting");
 		await EstablishWebSocketConnection(AccessName, profilePayload);
 	}
-	public Task SendWebSocketMessage(string messageJson)
+	public void SendWebSocketMessage(string messageJson)
+		=> SocketLocalWorker.WebSocketTrafficWriter(() => WsClient.SendMessageAsync(messageJson));
+	
+	internal Task SendWebSocketMessageAsync(string messageJson)
 		=> WsClient.SendMessageAsync(messageJson);
 
 	public void SendWebSocketBinaries(Dictionary<string,string> binaryDict, int chunkSize = 64 * 1024)
@@ -105,7 +107,7 @@ public sealed class ServiceInteractions
 		
 		SocketLocalWorker.WebSocketTrafficWriter(
 			metadata,
-			WsClient.SendRptLinesAsync(filePath, linesCount)
+			() => WsClient.SendRptLinesAsync(filePath, linesCount)
 		);
 	}
 	public void SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
@@ -126,7 +128,7 @@ public sealed class ServiceInteractions
 		
 	    SocketLocalWorker.WebSocketTrafficWriter(
 		    metadata,
-		    WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
+		    () => WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
 	    );
     }
 

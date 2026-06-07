@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using ServiceConnection.Tools;
+using ExtensionComponents.Tools;
 
-namespace ServiceConnection.Entity;
+namespace ExtensionComponents.Entity;
 
 public record struct WebhooksStorage
 {

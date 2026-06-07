@@ -1,9 +1,9 @@
 #include "script_component.hpp"
 /* ----------------------------------------------------------------------------
-Function: Discord_fnc_GetPathFiles
+Function: Discord_service_fnc_GetPathFiles
 Description:
-    Retrieves a list of file names within a specific directory using the DiscordMessageAPI extension.
-    This is primarily used to fetch available profile configurations from the 'profiles' folder.
+    Retrieves a list of file names from a specified directory path relative to the server root.
+    The function calls an extension to access the file system and returns an array of file names found in the specified directory.
 
 Parameters:
     _path - The directory path relative to the server root to scan for files <STRING>
@@ -16,7 +16,7 @@ Returns:
 
 Examples
     (begin example)
-        ["profiles"] call Discord_fnc_GetPathFiles
+        ["profiles"] call Discord_service_fnc_GetPathFiles
     (end)
 
 Author:
@@ -27,9 +27,8 @@ params [
   ["_path","",[""]]
 ];
 
-TRACE_1("fn_GetPathFiles",_this);
+private _paths = "DiscordMessageAPIService" callExtension ["GetDirectoryFileNames",[_path]];
+TRACE_1("fnc_GetPathFiles",_paths # 0);
 
-_paths = "DiscordMessageAPI" callExtension ["GetDirectoryFileNames",[_path]];
-
-//_paths
+// Return
 parseSimpleArray (_paths # 0);

@@ -14,10 +14,11 @@ using ServiceConnection.WebService;
 using Components.Entity;
 using Discord.Interactions;
 using Discord.Interactions.Builders;
+using ExtensionComponents;
+using ExtensionComponents.Entity;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using ServiceConnection.Entity;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DiscordMessageAPI
@@ -30,6 +31,7 @@ namespace DiscordMessageAPI
 			services.AddSingleton<ServiceInteractions>();
 			services.AddSingleton<ServiceRequestHandler>();
 			services.AddSingleton<ILocalServices, LocalServices>();
+			services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 
 			var serviceProvider = services.BuildServiceProvider();
 
@@ -115,7 +117,7 @@ namespace DiscordMessageAPI
 				var message = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 
 				Console.WriteLine("DB data Updated !!");
-				await ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);
+				ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);
 			};
 			
 			

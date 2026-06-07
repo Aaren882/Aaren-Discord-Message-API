@@ -2,7 +2,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Components.Entity;
-using static ServiceConnection.ServiceStartup;
+using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
 
@@ -37,14 +37,14 @@ public class WebSocketClient(string serverUri)
 			Connected?.Invoke();
 
 			// Start listening for messages
-			_ = Task.Run(ReceiveMessages);
+			_ = ReceiveMessages();
 		}
 		catch (Exception ex)
 		{
 			Logger(null ,$"Connection failed: {ex.Message}");
 		}
 	}
-	public async Task SendBinaryAsync(string filePath, Arma3PayloadBinary payloadRpt, int chunkSize = 64 * 1024)
+	public async Task SendBinaryAsync(string filePath, Arma3PayloadBinary payloadBinary, int chunkSize = 64 * 1024)
 	{
 		Logger(null, "INFO: Sending Binary");
 		
@@ -55,17 +55,17 @@ public class WebSocketClient(string serverUri)
 			// Send Chunks (as binary messages)
 			await using (FileStream fs = new (filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
-				for (var i = 1; i < payloadRpt.TotalChunks + 1; i++)
+				for (var i = 1; i < payloadBinary.TotalChunks + 1; i++)
 				{
 					var buffer = new byte[chunkSize];			
-					Tracer("SendBinaryAsync (Progress)", $"{i}/{payloadRpt.TotalChunks}");
+					Tracer("SendBinaryAsync (Progress)", $"{i}/{payloadBinary.TotalChunks}");
 					var bytesRead = await fs.ReadAsync(buffer, _cancellationTokenSource?.Token ?? CancellationToken.None);
 					
 					// If the last chunk is smaller than the buffer size
 					var chunkBytes = new byte[bytesRead];
 					Buffer.BlockCopy(buffer, 0, chunkBytes, 0, bytesRead);
 
-					await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == payloadRpt.TotalChunks), CancellationToken.None);
+					await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == payloadBinary.TotalChunks), CancellationToken.None);
 				}
 			}
 			Logger(null ,$"Sent Binary: {filePath}");

@@ -1,15 +1,18 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.InteropServices;
 using ExtensionComponents;
 using ExtensionComponents.Entity;
 using ExtensionComponents.Tools;
 using Microsoft.Extensions.DependencyInjection;
+using ServiceConnection;
+using ServiceConnection.WebService;
+using static ExtensionComponents.ExtensionStartup;
 
-namespace DiscordMessageAPI;
+namespace DiscordMessageAPIService;
 
 public class DllEntry
 {
-	/// <summary>
+    /// <summary>
 	/// Register callback for Arma
 	/// </summary>
 	/// <param name="functionPtr"></param>
@@ -18,7 +21,7 @@ public class DllEntry
 	{
 		try
 		{
-			ExtensionStartup.Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
+			Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
 			LoggerBase.Trace("RVExtensionRegisterCallback", "CallBack Initiated");
 		}
 		catch (Exception e)
@@ -41,13 +44,14 @@ public class DllEntry
 		LoggerBase.CleanLogs();
 		
 		var services = new ServiceCollection();
+		services.AddSingleton<ServiceInteractions>();
 		services.AddSingleton<ILocalServices,LocalServices>();
 		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 
 		var serviceProvider = services.BuildServiceProvider();
 		
-		//- Setup Service Configuration
-		ExtensionStartup.InitConfiguration(
+		//- Setup Service Configuration (including Extension Configuration)
+		ServiceStartup.InitConfiguration(
 			LoggerBase.Trace,
 			LoggerBase.Log,
 			serviceProvider
@@ -61,7 +65,7 @@ public class DllEntry
 			.Substring(0, version.LastIndexOf('+') + 9);
 
 		LoggerBase.Log(null, $"Extension Version : [{version}]");
-		ExtensionStartup.localServices.Output(outputPrt, outputSize, version);
+		localServices.Output(outputPrt, outputSize, version);
 	}
 	
 	/// <summary>
@@ -80,14 +84,14 @@ public class DllEntry
 			args[i] = str;
 		}
 
-		ExtensionStartup.ContextInfo = new CallContext(
+		ContextInfo = new CallContext(
 			Convert.ToUInt64(args[0]),
 			args[1]!,
 			args[2]!,
 			args[3]!,
 			Convert.ToInt16(args[4])
 		);
-		LoggerBase.Trace(nameof(ExtensionStartup.ContextInfo),ExtensionStartup.ContextInfo.ToString());
+		LoggerBase.Trace(nameof(ContextInfo),ContextInfo.ToString());
 	}
 
 	/// <summary>
@@ -135,6 +139,6 @@ public class DllEntry
 		var output = new OutputBuilder(outputPrt, outputSize);
 		var argsAction = new ArgsAction(output, args, functionName);
 
-		return ExtensionStartup.localServices.ExecuteArgsAction(argsAction);
+		return localServices.ExecuteArgsAction(argsAction);
 	}
 }

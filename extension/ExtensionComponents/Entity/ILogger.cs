@@ -1,4 +1,4 @@
-namespace ServiceConnection.Entity;
+namespace ExtensionComponents.Entity;
 
 public interface ILogger
 {
