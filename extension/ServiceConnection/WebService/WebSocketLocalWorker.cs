@@ -1,29 +1,33 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using Components.Entity;
-using ExtensionComponents;
+using static ExtensionComponents.ExtensionStartup;
 using static ServiceConnection.ServiceStartup;
 
 namespace ServiceConnection.WebService;
 
-public readonly record struct WebSocketWorkingTask(Task? headerTask, Task webSocketTask)
+public record WebSocketWorkingTask(Arma3Payload? headerObj, Func<Task> webSocketTask)
 {
 	public async Task Run()
 	{
-		var hasHeader = headerTask is not null;
+		var hasHeader = headerObj is not null;
 		try
 		{
-			if (hasHeader) await headerTask!;
-			await webSocketTask;
+			if (hasHeader)
+			{
+				var json = JsonSerializer.Serialize(headerObj, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+				await serviceInteractions!.SendWebSocketMessageAsync(json);
+			}
+			await webSocketTask.Invoke();
 		}
 		catch (Exception e)
 		{
-			ExtensionStartup.Logger(e, "[WebSocketWorkingTask]");
+			Logger(e, "[WebSocketWorkingTask]");
 			
 			//- If Header exist and exception is thrown
 			if (!hasHeader) return;
 			
-			await serviceInteractions?.SendWebSocketMessage(e.ToString())!;
+			await serviceInteractions?.SendWebSocketMessageAsync(e.ToString())!;
 		}
 	}
 }
@@ -38,23 +42,21 @@ public sealed class WebSocketLocalWorker
 		_socketWorker = WebSocketTrafficReader();
 	}
 	
-	public void WebSocketTrafficWriter(Task webSocketTask)
-		=> WebSocketTrafficWriter((Task?)null, webSocketTask);
+	public void WebSocketTrafficWriter(Func<Task> webSocketTask)
+		=> WebSocketTrafficWriter(null, webSocketTask);
 	
-	public void WebSocketTrafficWriter(Arma3Payload header, Task webSocketTask)
+	/*public async Task WebSocketTrafficWriter(Arma3Payload header, Task webSocketTask)
 	{
-		var json = JsonSerializer.Serialize(header, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-		WebSocketTrafficWriter(json, webSocketTask);
+		await WebSocketTrafficWriter(json, webSocketTask);
 	}
-	public void WebSocketTrafficWriter(string header, Task webSocketTask)
-	{
-		WebSocketTrafficWriter(serviceInteractions.SendWebSocketMessage(header), webSocketTask);
-	}
+	public Task WebSocketTrafficWriter(string header, Task webSocketTask)
+		=> WebSocketTrafficWriter(
+			serviceInteractions.SendWebSocketMessage(header),
+			webSocketTask
+		);*/
 	
-	public void WebSocketTrafficWriter(Task? headerTask, Task webSocketTask)
-	{
-		EnqueueTask(new WebSocketWorkingTask(headerTask, webSocketTask));
-	}
+	public void WebSocketTrafficWriter(Arma3Payload? headerObj, Func<Task> webSocketTask)
+		=> EnqueueTask(new WebSocketWorkingTask(headerObj, webSocketTask));
 	
 	private void EnqueueTask(WebSocketWorkingTask webSocketTask)
 	{
@@ -62,7 +64,7 @@ public sealed class WebSocketLocalWorker
 	}
 	private async Task WebSocketTrafficReader()
 	{
-		ExtensionStartup.Logger(null, "New WebSocketTrafficReader created.");
+		Logger(null, "New WebSocketTrafficReader created.");
 		while (true)
 		{
 			await Task.Delay(500);
@@ -73,7 +75,7 @@ public sealed class WebSocketLocalWorker
 			}
 			catch (Exception e)
 			{
-				ExtensionStartup.Logger(e, "");
+				Logger(e, nameof(WebSocketTrafficReader));
 			}
 		}
 	}
