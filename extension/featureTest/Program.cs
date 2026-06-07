@@ -117,7 +117,7 @@ namespace DiscordMessageAPI
 				var message = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 
 				Console.WriteLine("DB data Updated !!");
-				await ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);
+				ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);
 			};
 			
 			

@@ -1,5 +1,5 @@
-using ServiceConnection.Entity;
-using static ServiceConnection.Delegates.EntryDelegates;
+using ExtensionComponents.Entity;
+using static ServiceConnection.EntryDelegates;
 
 namespace featureTest;
 
@@ -14,7 +14,7 @@ public record struct TestOutputBuilder(nint Destination, int OutputSize): IOutpu
 	}
 }
 
-public readonly record struct TestArgsAction(IOutputBuilder Output, string[] Args, string FunctionName) : IArgsAction
+/*public readonly record struct TestArgsAction(IOutputBuilder Output, string[] Args, string FunctionName) : IArgsAction
 {
 	public InitActions GetAction()
 	{
@@ -28,4 +28,4 @@ public readonly record struct TestArgsAction(IOutputBuilder Output, string[] Arg
 		var action = GetAction();
 		return action(Output, Args, Args.Length);
 	}
-};
+};*/
