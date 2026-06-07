@@ -32,7 +32,7 @@ _map set ["MessageId", _messageId];
 
 //- Get timeStamp from the "profile.Configuration"
 if (count _configuration > 0) then {
-  private _dateTimes = "DiscordMessageAPI" callExtension [
+  private _dateTimes = "DiscordMessageAPIService" callExtension [
     "GetDirectoryFilesDateTime",
     values _configuration
   ];
@@ -46,4 +46,4 @@ if (count _configuration > 0) then {
 
 TRACE_1("fnc_StartConnection",_map);
 
-"DiscordMessageAPI" callExtension ["ConnectWebSocket", [call FUNC(GetProfileName), toJSON _map]];
+"DiscordMessageAPIService" callExtension ["ConnectWebSocket", [call FUNC(GetProfileName), toJSON _map]];
