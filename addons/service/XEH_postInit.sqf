@@ -150,7 +150,7 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
           private _prefixDirectories = (_toArray # 0) apply {".profile/" + _x};
 
           private _payload = _prefixDirectories createHashMapFromArray (_toArray # 1);
-          "DiscordMessageAPI" callExtension ["SendWebSocketBinariesFromAssemblyDirectory", [toJSON _payload]];
+          "DiscordMessageAPIService" callExtension ["SendWebSocketBinariesFromAssemblyDirectory", [toJSON _payload]];
 
           INFO("ServiceAccessResult callback executed successfully.");
         };

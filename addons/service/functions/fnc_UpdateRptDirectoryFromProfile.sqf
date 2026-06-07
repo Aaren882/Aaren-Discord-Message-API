@@ -29,7 +29,7 @@ if (_RPT_Directory isEqualTo "") exitWith {
   nil
 };
 
-private _result = "DiscordMessageAPI" callExtension ["UpdateRptDirectory", [_RPT_Directory]];
+private _result = "DiscordMessageAPIService" callExtension ["UpdateRptDirectory", [_RPT_Directory]];
 _result params ["_return", "_returnCode"];
 INFO_1("fnc_UpdateRptDirectoryFromProfile || Result : %1",_return);
 
