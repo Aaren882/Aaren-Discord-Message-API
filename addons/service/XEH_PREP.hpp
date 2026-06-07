@@ -1,5 +1,6 @@
 PREP(AddCBASettings);
 PREP(GetCurrentRptFilePath);
+PREP(GetPathFiles);
 PREP(GetProfile);
 PREP(GetProfileConfiguration);
 PREP(GetProfileName);

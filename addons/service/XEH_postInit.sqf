@@ -130,7 +130,7 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
       if (_isNewIdentity || _isDifferent) then {
         INFO("It seems [ServiceAccessResult] ""_isNewIdentity/_isDifferent"" is changed. Updating backend profile config/data");
         _messageId spawn {
-          sleep 1; //- Make sure stack can be released properly
+          // sleep 1; //- Make sure stack can be released properly
 
           private _messageId = _this;
           private _profileConfiguration = call FUNC(GetProfileConfiguration);
@@ -143,7 +143,7 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
           if (count _configuration == 0) exitWith {
             WARNING("No ""configuration"" found in profile. Skipping directory synchronization. (Will be using default configuration)");
           };
-          sleep 1; //- Small delay to ensure profile data is updated
+          // sleep 1; //- Small delay to ensure profile data is updated
 
           //- Setup directory for backend storage
           private _toArray = _configuration toArray true;
