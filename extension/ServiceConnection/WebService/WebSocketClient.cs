@@ -2,8 +2,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Components.Entity;
-using ExtensionComponents;
-using static ServiceConnection.ServiceStartup;
+using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
 
@@ -31,23 +30,23 @@ public class WebSocketClient(string serverUri)
 			
 			_cancellationTokenSource = new CancellationTokenSource();
 
-			ExtensionStartup.Logger(null ,$"Connecting to {serverUri}...");
+			Logger(null ,$"Connecting to {serverUri}...");
 			await _webSocket.ConnectAsync(new Uri(serverUri), _cancellationTokenSource.Token);
 
-			ExtensionStartup.Logger(null ,"Connected successfully!");
+			Logger(null ,"Connected successfully!");
 			Connected?.Invoke();
 
 			// Start listening for messages
-			_ = Task.Run(ReceiveMessages);
+			_ = ReceiveMessages();
 		}
 		catch (Exception ex)
 		{
-			ExtensionStartup.Logger(null ,$"Connection failed: {ex.Message}");
+			Logger(null ,$"Connection failed: {ex.Message}");
 		}
 	}
-	public async Task SendBinaryAsync(string filePath, Arma3PayloadBinary payloadRpt, int chunkSize = 64 * 1024)
+	public async Task SendBinaryAsync(string filePath, Arma3PayloadBinary payloadBinary, int chunkSize = 64 * 1024)
 	{
-		ExtensionStartup.Logger(null, "INFO: Sending Binary");
+		Logger(null, "INFO: Sending Binary");
 		
 		if (Status == WebSocketState.Open)
 		{
@@ -56,29 +55,29 @@ public class WebSocketClient(string serverUri)
 			// Send Chunks (as binary messages)
 			await using (FileStream fs = new (filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
-				for (var i = 1; i < payloadRpt.TotalChunks + 1; i++)
+				for (var i = 1; i < payloadBinary.TotalChunks + 1; i++)
 				{
 					var buffer = new byte[chunkSize];			
-					ExtensionStartup.Tracer("SendBinaryAsync (Progress)", $"{i}/{payloadRpt.TotalChunks}");
+					Tracer("SendBinaryAsync (Progress)", $"{i}/{payloadBinary.TotalChunks}");
 					var bytesRead = await fs.ReadAsync(buffer, _cancellationTokenSource?.Token ?? CancellationToken.None);
 					
 					// If the last chunk is smaller than the buffer size
 					var chunkBytes = new byte[bytesRead];
 					Buffer.BlockCopy(buffer, 0, chunkBytes, 0, bytesRead);
 
-					await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == payloadRpt.TotalChunks), CancellationToken.None);
+					await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == payloadBinary.TotalChunks), CancellationToken.None);
 				}
 			}
-			ExtensionStartup.Logger(null ,$"Sent Binary: {filePath}");
+			Logger(null ,$"Sent Binary: {filePath}");
 		}
 		else
 		{
-			ExtensionStartup.Logger(null ,"WebSocket is not connected. Cannot send message.");
+			Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
 	}
 	public async Task SendRptLinesAsync(string filePath, int linesCount)
 	{
-		ExtensionStartup.Logger(null, $"INFO: Sending RPT : {linesCount} lines");
+		Logger(null, $"INFO: Sending RPT : {linesCount} lines");
 		if (Status == WebSocketState.Open)
 		{
 			await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -91,7 +90,7 @@ public class WebSocketClient(string serverUri)
 				charCount += wLine.Length;
 				if  (charCount > 1980)
 				{
-					ExtensionStartup.Logger(null ,$"SendRptLines has reached limit: \"{line}\".");
+					Logger(null ,$"SendRptLines has reached limit: \"{line}\".");
 					break;
 				}
 				var bytes = Encoding.UTF8.GetBytes(wLine);
@@ -99,11 +98,11 @@ public class WebSocketClient(string serverUri)
 			}
 			await _webSocket.SendAsync(new ArraySegment<byte>([]), WebSocketMessageType.Binary, true, CancellationToken.None);
 			
-			ExtensionStartup.Logger(null ,$"SendRptLines: {filePath}");
+			Logger(null ,$"SendRptLines: {filePath}");
 		}
 		else
 		{
-			ExtensionStartup.Logger(null ,"WebSocket is not connected. Cannot send message.");
+			Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
 
 		return;
@@ -133,11 +132,11 @@ public class WebSocketClient(string serverUri)
 				true,
 				_cancellationTokenSource?.Token ?? CancellationToken.None);
 
-			ExtensionStartup.Logger(null ,$"Sent: {messagePayload}");
+			Logger(null ,$"Sent: {messagePayload}");
 		}
 		else
 		{
-			ExtensionStartup.Logger(null ,"WebSocket is not connected. Cannot send message.");
+			Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
 	}
 
@@ -156,7 +155,7 @@ public class WebSocketClient(string serverUri)
 				if (result.MessageType == WebSocketMessageType.Text)
 				{
 					var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-					ExtensionStartup.Logger(null ,$"Received: {message}");
+					Logger(null ,$"Received: {message}");
 					
 					var payload = JsonSerializer.Deserialize(
 						message, 
@@ -174,18 +173,18 @@ public class WebSocketClient(string serverUri)
 				}
 				else if (result.MessageType == WebSocketMessageType.Close)
 				{
-					ExtensionStartup.Logger(null ,"Server closed the connection.");
+					Logger(null ,"Server closed the connection.");
 					break;
 				}
 			}
 		}
 		catch (OperationCanceledException)
 		{
-			ExtensionStartup.Logger(null ,"Connection cancelled.");
+			Logger(null ,"Connection cancelled.");
 		}
 		catch (Exception ex)
 		{
-			ExtensionStartup.Logger(null ,$"Error receiving message: \"{ex.Message}\"");
+			Logger(null ,$"Error receiving message: \"{ex.Message}\"");
 		}
 		finally
 		{
@@ -210,11 +209,11 @@ public class WebSocketClient(string serverUri)
 			_cancellationTokenSource?.Dispose();
 			Disconnected?.Invoke();
 
-			ExtensionStartup.Logger(null ,"Disconnected successfully.");
+			Logger(null ,"Disconnected successfully.");
 		}
 		catch (Exception ex)
 		{
-			ExtensionStartup.Logger(null ,$"Error during disconnect: {ex.Message}");
+			Logger(null ,$"Error during disconnect: {ex.Message}");
 		}
 	}
 }
