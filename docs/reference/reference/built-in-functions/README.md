@@ -14,7 +14,7 @@ A simple Message Sending Function.
 [send-message.md](send-message.md)
 {% endcontent-ref %}
 
-<figure><img src="../../../.gitbook/assets/image (9).png" alt="" width="323"><figcaption><p>Working Reference</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (12).png" alt="" width="323"><figcaption><p>Working Reference</p></figcaption></figure>
 
 ***
 
@@ -26,6 +26,6 @@ Easy JSON payload.
 [send-json-payload.md](send-json-payload.md)
 {% endcontent-ref %}
 
-<figure><img src="../../../.gitbook/assets/image (10).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (14).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>
 
 ***

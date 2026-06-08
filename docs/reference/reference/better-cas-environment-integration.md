@@ -14,4 +14,4 @@ Go to <mark style="color:yellow;">"</mark><mark style="color:yellow;">**Better C
 2. Select the Webhook _**Index.**_
 3. Take some pictures [_**Take Picture with ATAK**_](https://aarens-base.gitbook.io/aarens-base-docs/descriptions/ctab-compatibility/take-pictures-with-atak) _**.**_
 
-<figure><img src="../../.gitbook/assets/image (6).png" alt=""><figcaption><p>CBA Settings</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (7).png" alt=""><figcaption><p>CBA Settings</p></figcaption></figure>

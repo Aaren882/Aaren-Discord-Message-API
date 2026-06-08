@@ -10,7 +10,9 @@ Server must under **MP** mode.
 and it only works <mark style="color:yellow;">**AFTER**</mark> Mission Started.
 {% endhint %}
 
-## Step 1 - Select Webhook
+{% stepper %}
+{% step %}
+## Select Webhook
 
 You can find the options in 👇
 
@@ -18,11 +20,13 @@ You can find the options in 👇
 
 Select Webhook with Index.
 
-<figure><img src="../../../.gitbook/assets/image.png" alt=""><figcaption><p>CBA Setting</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption><p>CBA Setting</p></figcaption></figure>
 
 ***
+{% endstep %}
 
-## Step 2 - Send Message via API
+{% step %}
+## Send Message via API
 
 So we can get the **`Message ID`**
 
@@ -44,22 +48,30 @@ So the Webhook can edit the messge.
 {% endhint %}
 
 ***
+{% endstep %}
 
-## Step 3 - **`Message ID`**
+{% step %}
+## **`Message ID`**
 
 Paste the **`Message ID`** that just sent.
 
-<figure><img src="../../../.gitbook/assets/image (1).png" alt=""><figcaption><p>Settings for Server INFO</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>Settings for Server INFO</p></figcaption></figure>
 
 {% hint style="info" %}
 If the server have **Persistent** checked, the game will keep updating **Server-Status** even there's zero player in the server.
 {% endhint %}
 
 ***
+{% endstep %}
 
-## Step 4 - Press _**"OK"**_&#x20;
+{% step %}
+## _**Press "OK"**_
 
-<figure><img src="../../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Press "OK" to Save</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Press "OK" to Save</p></figcaption></figure>
+
+***
+{% endstep %}
+{% endstepper %}
 
 {% hint style="info" %}
 The basic setup is done !!
@@ -67,6 +79,6 @@ The basic setup is done !!
 Make sure everything is on the rail ,then you can go down :arrow\_down:
 {% endhint %}
 
-{% content-ref url="customize-server-info.md" %}
-[customize-server-info.md](customize-server-info.md)
+{% content-ref url="../customize-server-info.md" %}
+[customize-server-info.md](../customize-server-info.md)
 {% endcontent-ref %}

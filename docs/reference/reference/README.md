@@ -2,14 +2,14 @@
 description: Dive into the specifics of each functionalities.
 ---
 
-# 👇 Reference
+# 🪝 Discord Webhook
 
 ## Monit Server Status
 
 Current Server status via **Discord Embed.**
 
-{% content-ref url="setup-server-monit/" %}
-[setup-server-monit](setup-server-monit/)
+{% content-ref url="setup-server-monit.md" %}
+[setup-server-monit.md](setup-server-monit.md)
 {% endcontent-ref %}
 
 <figure><img src="https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2Fk6VdgLKFcMzEH0Pdebgd%2Fuploads%2FrXeJGpHw83bFRk9Hb5GL%2Fimage.png?alt=media&#x26;token=8bab3a1d-eecd-4e25-91e3-29f036143704" alt="" width="375"><figcaption><p>Working Reference</p></figcaption></figure>
@@ -26,4 +26,4 @@ You can [_Send Pictures_](https://aarens-base.gitbook.io/better-cas-environment-
 [better-cas-environment-integration.md](better-cas-environment-integration.md)
 {% endcontent-ref %}
 
-<figure><img src="../../.gitbook/assets/image (4).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (5).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>

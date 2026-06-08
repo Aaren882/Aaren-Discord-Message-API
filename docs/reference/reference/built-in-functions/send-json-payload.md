@@ -1,6 +1,8 @@
 # 📦 Send JSON Payload
 
-```sqf
+## SQF script Syntax:
+
+```
 [
     _file, //- String
     _Sel //- Index of Webhook
