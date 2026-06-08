@@ -1,0 +1,75 @@
+name: Build Extensions
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New version for the project"
+        required: true 
+        type: string
+  push:
+    tags:
+      - 'v*.*.*' # Push events to matching v*, i.e. v20.15.10
+
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [
+          ubuntu-latest
+          # ,windows-latest
+        ]
+        RID: [
+          linux-x64
+          # ,win-x64
+        ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: version info
+      id: get_version
+      uses: devops-actions/action-get-tag@v1.0.4
+      with:
+        strip_v: true # Optional: Remove 'v' character from version
+        default: v0.0.0
+
+    - name: Checkout Source Code
+      uses: actions/checkout@v6.0.3
+
+    - name: Set project versions
+      id: update
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      with:
+        file: |
+          "extension/DiscordMessageAPI*/*.csproj"
+        version: ${{ steps.get_version.outputs.tag }}
+
+    - run: |
+        echo "Update project versions to \"${{ steps.update.outputs.newVersion }}\""
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v5.3.0
+      with:
+        dotnet-version: '9.0.x'
+
+    # Ubuntu runners already have clang and zlib, but this ensures they exist
+    - name: Install Prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang zlib1g-dev
+
+    - name: Publish Native AOT Binary
+      run: |
+        dotnet publish extension/DiscordMessageAPI/DiscordMessageAPI.csproj -c Release -r ${{ matrix.RID }} -o ./dist --self-contained
+        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist --self-contained
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ matrix.RID }}
+        path: dist
