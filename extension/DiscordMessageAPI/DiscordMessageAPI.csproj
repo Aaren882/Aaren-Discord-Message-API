@@ -8,9 +8,9 @@
     <NativeLib>Shared</NativeLib>
     <Platforms>x64</Platforms>
     <AssemblyName>$(MSBuildProjectName)_x64</AssemblyName>
-    <AssemblyVersion>26.2.0</AssemblyVersion>
-    <FileVersion>$(AssemblyVersion)</FileVersion>
-    <Version>$(AssemblyVersion)</Version>
+    <Version>26.2.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
     <EmbedUntrackedSources>false</EmbedUntrackedSources>
     <StripSymbols>true</StripSymbols>
