@@ -16,7 +16,7 @@ Server must under **MP** mode.
 and it only works <mark style="color:yellow;">**AFTER**</mark> Mission Started.
 {% endhint %}
 
-<figure><img src=".gitbook/assets/image (11).png" alt=""><figcaption><p>Initial State</p></figcaption></figure>
+<figure><img src=".gitbook/assets/image (8).png" alt=""><figcaption><p>Initial State</p></figcaption></figure>
 
 ***
 
@@ -48,7 +48,7 @@ _**Example :**_
 ```
 
 {% hint style="danger" %}
-The format \[_<mark style="color:yellow;">**`Channel-ID/Webhook-ID`**</mark>_].&#x20;
+The format \[_<mark style="color:yellow;">**`Channel-ID/Webhook-ID`**</mark>_].
 
-[~~https://discord.com/api/webhooks/~~](https://discord.com/api/webhooks/1278359253660340345/LjQUTr-KWH359tGmfiC5lCzLT0YqmH1trqYMOntkQqzMRgoff7EeIn9CRBNtxtqC0Kvr)  :x:
+[~~https://discord.com/api/webhooks/~~](https://discord.com/api/webhooks/1278359253660340345/LjQUTr-KWH359tGmfiC5lCzLT0YqmH1trqYMOntkQqzMRgoff7EeIn9CRBNtxtqC0Kvr) :x:
 {% endhint %}

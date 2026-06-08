@@ -26,4 +26,4 @@ You can [_Send Pictures_](https://aarens-base.gitbook.io/better-cas-environment-
 [better-cas-environment-integration.md](better-cas-environment-integration.md)
 {% endcontent-ref %}
 
-<figure><img src="../../.gitbook/assets/image (8).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (4).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>
