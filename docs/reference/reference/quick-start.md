@@ -1,4 +1,4 @@
-# 🔰 Quick Start
+# 🔰 Webhook Quick Start
 
 {% hint style="info" %}
 **Good to know:** A quick start guide can be good to help folks get up and running in a few steps. So you can quickly understand how to use it !
@@ -16,7 +16,7 @@ Server must under **MP** mode.
 and it only works <mark style="color:yellow;">**AFTER**</mark> Mission Started.
 {% endhint %}
 
-<figure><img src=".gitbook/assets/image (8).png" alt=""><figcaption><p>Initial State</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (11).png" alt=""><figcaption><p>Initial State</p></figcaption></figure>
 
 ***
 
@@ -24,7 +24,7 @@ and it only works <mark style="color:yellow;">**AFTER**</mark> Mission Started.
 They should end up like below 👇
 {% endhint %}
 
-<figure><img src=".gitbook/assets/Untitled.png" alt=""><figcaption><p>Correct Result</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Untitled.png" alt=""><figcaption><p>Correct Result</p></figcaption></figure>
 
 ***
 

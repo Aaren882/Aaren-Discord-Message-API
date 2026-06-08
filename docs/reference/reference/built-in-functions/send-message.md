@@ -1,5 +1,7 @@
 # 📨 Send Message
 
+## SQF script Syntax:
+
 ```sqf
 [
     _webhook_Sel, //- Index of Webhook (0,1,2 etc)
