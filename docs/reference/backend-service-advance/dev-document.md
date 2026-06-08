@@ -31,7 +31,7 @@ Its core methods are in `extension/ServiceConnection`.&#x20;
 * **Language**: C#.
 * **Platform**: _Windows **DLL**_ / _Linux **SO**_.
 * **Key Functionalities**:
-  * **Arma 3 ↔ Backend Bridge**: Enables Arma 3 to send data to and receive data from the `Arma3WebService`.
+  * **Arma 3 ↔ Backend Bridge**: Enables Arma 3 to send data to and receive data from `Arma3WebService`.
   * **Data Serialization**: Responsible for converting data between Arma 3's SQF format and the format expected by the C# backend.
 
 ***
@@ -48,10 +48,9 @@ The `addons` component refers to the client-side SQF scripts that run within Arm
   * **Message Formatting**: Scripts prepare messages, often using JSON templates, before sending them to `DiscordMessageAPIService.dll`.
   * **Server Status Monitoring**: SQF functions can be called to periodically update server status messages on Discord, including player count, mission name, and server status.
   * **Sending Messages**: Provides functions for sending various types of messages:
-    * `fnc_SendBotMessage`: For sending formatted Discord messages using templates.
-    * `fnc_SendWebSocketJSON`: For sending raw JSON payloads.
-    * `fnc_SendMessage`: For simple text messages.
-    * `fnc_UpdateServerInfo`: For updating server status messages.
+    * `DiscordAPI_service_fnc_SendWebSocketJSON`: For sending raw JSON payloads.
+    * `..fnc_SendMessage`: For simple text messages.
+    * `..fnc_UpdateServerInfo`: For updating server status messages.
   * **Initialization**: The `service/XEH_preInit.sqf` and `XEH_postInit.sqf` scripts handle the initial setup, including defining variables, registering CBA settings, and establishing the WebSocket connection to the backend.
   * **Callback Handling**: `service/XEH_postInit.sqf` sets up an `ExtensionCallback` mission event handler to process responses from the `./extension/ServiceConnection`, categorizing them into text, RPT data, commands, or JSON strings.
   * **Webhook Configuration**: SQF scripts interact with `Webhooks.json` files, which store Discord webhook URLs, allowing messages to be directed to specific Discord channels.
