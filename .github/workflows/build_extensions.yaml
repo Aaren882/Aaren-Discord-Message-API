@@ -59,6 +59,7 @@ jobs:
 
     # Ubuntu runners already have clang and zlib, but this ensures they exist
     - name: Install Prerequisites
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
       run: |
         sudo apt-get update
         sudo apt-get install -y clang zlib1g-dev
