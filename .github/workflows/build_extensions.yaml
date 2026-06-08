@@ -56,9 +56,6 @@ jobs:
           "extension/DiscordMessageAPI*/*.csproj"
         version: ${{ steps.get_version.outputs.tag }}
 
-    - run: |
-        echo "Update project versions to \"${{ steps.update.outputs.newVersion }}\""
-
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v5.3.0
       with:
