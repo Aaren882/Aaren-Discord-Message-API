@@ -1,5 +1,5 @@
 ---
-description: List of Key explains
+description: List of Keys explains
 ---
 
 # 🪄 Customize Server-INFO
@@ -9,7 +9,7 @@ description: List of Key explains
 
 You can choose desire _**json**_ file for current Server Profile.
 
-_(so as the setting for <mark style="color:orange;">**Mission Closed**</mark>)_
+_(same as the setting for <mark style="color:orange;">**Mission Closed**</mark>)_
 
 <img src="../.gitbook/assets/image (3).png" alt="" data-size="original">
 {% endhint %}
