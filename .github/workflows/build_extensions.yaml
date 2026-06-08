@@ -27,6 +27,13 @@ jobs:
           linux-x64
           ,win-x64
         ]
+        exclude:
+          # Skip production environment on Windows
+          - os: windows-latest
+            RID: linux-x64
+            
+          - os: ubuntu-latest
+            RID: win-x64
 
     runs-on: ${{ matrix.os }}
 
