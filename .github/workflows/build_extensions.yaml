@@ -10,6 +10,7 @@ on:
   push:
     tags:
       - 'v*.*.*' # Push events to matching v*, i.e. v20.15.10
+      - '!v*.*.*-service*'
 
 
 permissions:
@@ -19,21 +20,11 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [
-          ubuntu-latest
-          ,windows-latest
-        ]
-        RID: [
-          linux-x64
-          ,win-x64
-        ]
-        exclude:
-          # Skip production environment on Windows
-          - os: windows-latest
-            RID: linux-x64
-            
-          - os: ubuntu-latest
-            RID: win-x64
+        include:
+          - RID: linux-x64
+            os: ubuntu-latest
+          - RID: win-x64
+            os: windows-latest
 
     runs-on: ${{ matrix.os }}
 
@@ -71,7 +62,6 @@ jobs:
     - name: Publish Native AOT Binary
       run: |
         dotnet publish extension/DiscordMessageAPI/DiscordMessageAPI.csproj -c Release -r ${{ matrix.RID }} -o ./dist --self-contained
-        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist --self-contained
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v7
