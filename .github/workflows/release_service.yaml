@@ -1,0 +1,115 @@
+name: Build Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New version for the project"
+        required: true 
+        type: string
+  push:
+    tags:
+      - 'v*.*.*-service*' # Push events to matching v*, i.e. v20.15.10
+
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  CLEAN_VERSION: '0.0.0'
+  TAG_SUFFIX: 'latest'
+      
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - RID: linux-x64
+            os: ubuntu-latest
+          - RID: win-x64
+            os: windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+    - name: Strip prefix 'v' and suffix '-service'
+      shell: bash
+      run: |
+        TAG="${{ github.ref_name }}"
+        WITHOUT_PREFIX=${TAG#v}
+        VERSION=${WITHOUT_PREFIX%%-service*}
+
+        # Check if '-service-' exists in the tag
+        if [[ "$TAG" == *"-service-"* ]]; then
+          # ${TAG##*-service-} removes everything up to the last '-service-'
+          SUFFIX="${TAG##*-service-}"
+          echo "TAG_SUFFIX=$SUFFIX" >> $GITHUB_ENV
+        fi
+        
+        echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Checkout Source Code
+      uses: actions/checkout@v6.0.3
+
+    - name: Set project versions
+      id: update
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      with:
+        file: |
+          "extension/Arma3WebService/Arma3WebService.csproj", "extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj"
+        version: ${{ env.CLEAN_VERSION }}
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v5.3.0
+      with:
+        dotnet-version: '9.0.x'
+
+    # Ubuntu runners already have clang and zlib, but this ensures they exist
+    - name: Install Prerequisites
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang zlib1g-dev
+
+    - name: Publish with Crossgen2
+      shell: bash
+      run: |
+        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension --self-contained
+        dotnet publish extension/Arma3WebService/Arma3WebService.csproj --self-contained \
+        -c Release \
+        -o ./dist/backend \
+        -r ${{ matrix.RID }} \
+        -p:PublishReadyToRun=true \
+        -p:PublishReadyToRunComposite=false \
+        -p:PublishSingleFile=true \
+        -p:TieredCompilation=true
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: Arma3WebService.${{ matrix.RID }}
+        path: dist
+    
+    # Push image to github registry
+    - name: Login to GitHub Container Registry
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      uses: docker/login-action@v4
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build docker image
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      shell: bash
+      run: |
+        dotnet publish extension/Arma3WebService/Arma3WebService.csproj \
+            -c Release \
+            /t:PublishContainer \
+            -p:ContainerRegistry=${{ env.REGISTRY }} \
+            -p:ContainerImageName=${{ env.IMAGE_NAME }} \
+            -p:ContainerImageTags='"${{ env.CLEAN_VERSION }};${{ env.TAG_SUFFIX }}"'
