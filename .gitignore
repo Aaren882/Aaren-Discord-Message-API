@@ -13,3 +13,6 @@ releases
 *.env
 
 extension/featureTest/Discord_Message_API/*
+
+# Github Local Actions
+.act/
