@@ -1,4 +1,4 @@
-name: Build Service
+name: Release Service and Extensions
 
 on:
   workflow_dispatch:
@@ -13,13 +13,13 @@ on:
 
 
 permissions:
-  contents: read
+  contents: write 
   packages: write
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  CLEAN_VERSION: '0.0.0'
+  CLEAN_VERSION: 'v0.0.0'
   TAG_SUFFIX: 'latest'
       
 jobs:
@@ -35,7 +35,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-
+    # Initial setups
     - name: Strip prefix 'v' and suffix '-service'
       shell: bash
       run: |
@@ -74,26 +74,22 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y clang zlib1g-dev
-
+    
+    # Building binaries
     - name: Publish with Crossgen2
       shell: bash
       run: |
-        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension --self-contained
+        dotnet publish extension/DiscordMessageAPI/DiscordMessageAPI.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
+        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
         dotnet publish extension/Arma3WebService/Arma3WebService.csproj --self-contained \
         -c Release \
-        -o ./dist/backend \
+        -o ./dist/service/${{ matrix.RID }} \
         -r ${{ matrix.RID }} \
         -p:PublishReadyToRun=true \
         -p:PublishReadyToRunComposite=false \
         -p:PublishSingleFile=true \
         -p:TieredCompilation=true
 
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: Arma3WebService.${{ matrix.RID }}
-        path: dist
-    
     # Push image to github registry
     - name: Login to GitHub Container Registry
       if: ${{ matrix.os == 'ubuntu-latest' }} 
@@ -108,8 +104,94 @@ jobs:
       shell: bash
       run: |
         dotnet publish extension/Arma3WebService/Arma3WebService.csproj \
-            -c Release \
-            /t:PublishContainer \
-            -p:ContainerRegistry=${{ env.REGISTRY }} \
-            -p:ContainerImageName=${{ env.IMAGE_NAME }} \
-            -p:ContainerImageTags='"${{ env.CLEAN_VERSION }};${{ env.TAG_SUFFIX }}"'
+        -c Release \
+        /t:PublishContainer \
+        -p:ContainerRegistry=${{ env.REGISTRY }} \
+        -p:ContainerImageName=${{ env.IMAGE_NAME }} \
+        -p:ContainerImageTags='"${{ env.CLEAN_VERSION }};${{ env.TAG_SUFFIX }}"'
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: artifact.${{ matrix.RID }}
+        path: dist
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Strip prefix 'v' and suffix '-service'
+      shell: bash
+      run: |
+        TAG="${{ github.ref_name }}"
+        WITHOUT_PREFIX=${TAG#v}
+        VERSION=${WITHOUT_PREFIX%%-service*}
+
+        # Check if '-service-' exists in the tag
+        if [[ "$TAG" == *"-service-"* ]]; then
+          # ${TAG##*-service-} removes everything up to the last '-service-'
+          SUFFIX="${TAG##*-service-}"
+          echo "TAG_SUFFIX=$SUFFIX" >> $GITHUB_ENV
+        fi
+        
+        echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v7
+      with:
+        path: dist
+        pattern: artifact.*
+        merge-multiple: true
+
+    - run: ls -R dist
+
+    - name: Zip extension by RID
+      run: |
+        cd dist/extension
+        
+        # Loop through every directory (RID) inside
+        for rid_dir in */; do
+          # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
+          rid="${rid_dir%/}"
+          
+          echo "Compressing RID: $rid"
+          
+          # Zip the directory. Output will be "linux-x64.zip"
+          zip -r "extensions.${rid}.zip" "$rid"
+        done
+      
+    - name: Zip service by RID
+      run: |
+        cd dist/service
+        
+        # Loop through every directory (RID) inside
+        for rid_dir in */; do
+          # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
+          rid="${rid_dir%/}"
+          
+          echo "Compressing RID: $rid"
+          
+          # Zip the directory. Output will be "linux-x64.zip"
+          zip -r "webService.${rid}.zip" "$rid"
+        done
+
+    - name: Publish GitHub Release
+      uses: softprops/action-gh-release@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        name: Release ${{ env.CLEAN_VERSION }} ${{ env.TAG_SUFFIX }}
+        tag_name: ${{ github.ref_name }}
+        target_commitish: ${{ github.sha }}
+        files: |
+          dist/extension/*.zip
+          dist/service/*.zip
+        prerelease: ${{ env.TAG_SUFFIX != 'latest' }}
+        generate_release_notes: true
+        draft: true
+
+    - name: Delete Original Downloaded Artifacts
+      uses: geekyeggo/delete-artifact@v6
+      with:
+        name: artifact.* 
+        failOnError: false
