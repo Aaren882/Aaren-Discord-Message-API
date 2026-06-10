@@ -119,8 +119,14 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+
+    outputs:
+      get-version: ${{ steps.get-version.outputs }}
+      do-release: ${{ steps.do-release.outputs }}
+
     steps:
     - name: Strip prefix 'v' and suffix '-service'
+      id: get-version
       shell: bash
       run: |
         TAG="${{ github.ref_name }}"
@@ -132,9 +138,11 @@ jobs:
           # ${TAG##*-service-} removes everything up to the last '-service-'
           SUFFIX="${TAG##*-service-}"
           echo "TAG_SUFFIX=$SUFFIX" >> $GITHUB_ENV
+          echo "TAG_SUFFIX=$SUFFIX" >> $GITHUB_OUTPUT
         fi
         
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
+        echo "CLEAN_VERSION=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Download All Artifacts
       uses: actions/download-artifact@v7
@@ -176,6 +184,7 @@ jobs:
         done
 
     - name: Publish GitHub Release
+      id: do-release
       uses: softprops/action-gh-release@v3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -195,3 +204,43 @@ jobs:
       with:
         name: artifact.* 
         failOnError: false
+  
+  Addons:
+    needs: release
+    runs-on: windows-latest
+
+    env:
+      UPLOAD_URL: ""
+
+    steps:
+    - name: Setup Variables
+      run: |
+        echo "UPLOAD_URL=$${{ needs.release.outputs.do-release.outputs.upload_url }}" >> $GITHUB_ENV
+        echo "TAG_SUFFIX=$${{ needs.release.outputs.get-version.outputs.TAG_SUFFIX }}" >> $GITHUB_ENV
+        echo "CLEAN_VERSION=$${{ needs.release.outputs.get-version.outputs.CLEAN_VERSION }}" >> $GITHUB_ENV
+
+    - name: Checkout Source Code
+      uses: actions/checkout@v6.0.3
+    
+    - name: Install Arma 3 Tools
+      uses: arma-actions/arma3-tools@master
+      with:
+        toolsUrl: ${{ secrets.A3TOOLS_URL }}
+
+    - name: Setup HEMTT
+      uses: arma-actions/hemtt@v1
+      with:
+        version: 1.19.1
+    
+    - name: Build Addon with HEMTT
+      run: hemtt release
+      
+    - name: Upload Release Asset
+      uses: tanyagray/action-upload-release-asset@v1.1.3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ env.UPLOAD_URL }}
+        asset_path: releases\DiscordAPI-latest.zip
+        asset_name: 'DiscordAPI-${{ env.CLEAN_VERSION }}${{ env.TAG_SUFFIX }}.zip'
+        asset_content_type: application/zip
