@@ -121,8 +121,9 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      get-version: ${{ steps.get-version.outputs }}
-      do-release: ${{ steps.do-release.outputs }}
+      CLEAN_VERSION: ${{ steps.get-version.outputs.CLEAN_VERSION }}
+      TAG_SUFFIX: ${{ steps.get-version.outputs.TAG_SUFFIX }}
+      UPLOAD_URL: ${{ steps.do-release.outputs.upload_url }}
 
     steps:
     - name: Strip prefix 'v' and suffix '-service'
@@ -207,18 +208,14 @@ jobs:
   
   Addons:
     needs: release
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     env:
-      UPLOAD_URL: ""
+      UPLOAD_URL: ${{ needs.release.outputs.UPLOAD_URL }}
+      TAG_SUFFIX: ${{ needs.release.outputs.TAG_SUFFIX }}
+      CLEAN_VERSION: ${{ needs.release.outputs.CLEAN_VERSION }}
 
     steps:
-    - name: Setup Variables
-      run: |
-        echo "UPLOAD_URL=$${{ needs.release.outputs.do-release.outputs.upload_url }}" >> $GITHUB_ENV
-        echo "TAG_SUFFIX=$${{ needs.release.outputs.get-version.outputs.TAG_SUFFIX }}" >> $GITHUB_ENV
-        echo "CLEAN_VERSION=$${{ needs.release.outputs.get-version.outputs.CLEAN_VERSION }}" >> $GITHUB_ENV
-
     - name: Checkout Source Code
       uses: actions/checkout@v6.0.3
     
@@ -229,10 +226,8 @@ jobs:
 
     - name: Setup HEMTT
       uses: arma-actions/hemtt@v1
-      with:
-        version: 1.19.1
     
-    - name: Build Addon with HEMTT
+    - name: Run HEMTT release
       run: hemtt release
       
     - name: Upload Release Asset
