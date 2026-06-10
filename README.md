@@ -33,7 +33,6 @@ A powerful and lightweight Arma 3 Extension to bridge your game server with Disc
 # 🛠 Requirements
 - Arma 3 Server must be running in **MP Mode**.
 - The extension works **AFTER** the mission has started.
-- Ensure `Webhooks.json` is configured correctly in the mod folder.
 
 # Also Check out
 - This project is a fork of [SQFDiscordEmbedBuilder](https://github.com/ConnorAU/SQFDiscordEmbedBuilder) by  [ConnorAU <img src="https://avatars.githubusercontent.com/u/15099385?v=4" width="16"/>](https://github.com/ConnorAU) 
