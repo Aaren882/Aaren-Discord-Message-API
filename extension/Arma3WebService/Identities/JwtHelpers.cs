@@ -20,7 +20,7 @@ public sealed class JwtHelpers(
 {
 	private readonly string issuer = configuration["Jwt:Issuer"]!;
 	private readonly string audience = configuration["Jwt:Audience"]!;
-	private readonly string signKey = configuration["Jwt:Key"]!;
+	private readonly string signKey = configuration["Jwt:Secret"]!;
 	
 	public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
 	{
