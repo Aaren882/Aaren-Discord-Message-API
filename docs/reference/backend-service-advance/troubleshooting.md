@@ -15,3 +15,8 @@ If memory climbs significantly:
 
 * Reduce the frequency of status updates in the Arma 3 CBA settings (default is usually 300s).
 * Check the `LOG_LEVEL`; setting it to `Debug` or `Trace` in production can create massive log files and overhead.
+
+#### 4. Where to find the error messages
+
+Please check out `.rpt` and `./Discord_Message_API/logs` for in-game errors.\
+For the backend, simply check the monitor logging.
