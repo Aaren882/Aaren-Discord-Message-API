@@ -15,11 +15,12 @@ namespace Arma3WebService.Handler
 		public BasicAuthenticationHandler(
 			IOptionsMonitor<AuthenticationSchemeOptions> options,
 			ILoggerFactory logger,
-			UrlEncoder encoder
+			UrlEncoder encoder,
+			IConfiguration configuration
 		) : base(options, logger, encoder)
 		{
-			var username = Environment.GetEnvironmentVariable("tokenManagerName") ?? "admin";
-            var password = Environment.GetEnvironmentVariable("tokenManagerPassword") ?? "password";
+			var username = Environment.GetEnvironmentVariable("TokenManagerName")  ?? configuration["TokenManagerName"]!;
+            var password = Environment.GetEnvironmentVariable("TokenManagerPassword")  ?? configuration["TokenManagerPassword"]!;
 
             _header = new ServiceAuthenticationHeader(username, password);
 			_HashedKey = _header.ToString();

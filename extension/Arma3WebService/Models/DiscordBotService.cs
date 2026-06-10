@@ -33,21 +33,21 @@ public sealed class DiscordBotService(
 	ILogger<DiscordBotService> logger,
 	IServiceProvider serviceProvider,
 	RemoteStateManager remoteStateManager,
-	IServiceScopeFactory serviceScopeFactory
+	IConfiguration configuration
 ) : BackgroundService, IDiscordBotService
 {
 	private static readonly DiscordSocketClient Client = new();
-	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel")!);
-	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel")!);
-	private readonly ulong _adminLoggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminLoggingChannel")!);
-	private readonly ulong _loggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("LoggingChannel")!);
+	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel") ?? configuration["MonitorChannel"]!);
+	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel") ?? configuration["AdminChannel"]!);
+	private readonly ulong _adminLoggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminLoggingChannel") ?? configuration["AdminLoggingChannel"]!);
+	private readonly ulong _loggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("LoggingChannel") ?? configuration["LoggingChannel"]!);
 
 	public DiscordSocketClient GetClient() => Client;
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		await Client.LoginAsync(
 			TokenType.Bot, 
-			Environment.GetEnvironmentVariable("BotToken")
+			Environment.GetEnvironmentVariable("BotToken") ?? configuration["BotToken"]
 		);
 		await Client.StartAsync();
 		
