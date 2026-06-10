@@ -1,17 +1,17 @@
 # 📤 Server-Side Extension
 
-{% hint style="info" %}
-First navigate to the directory of `arma3server_x64.exe`
-{% endhint %}
-
 {% hint style="warning" %}
-This is a **server-side** extension. Make sure the mod is load via `-servermod` instead of `-mod`.\
-So `DiscordMessageAPIService.dll` can bypass BattEye whitelist.
+`DiscordMessageAPISerivce.dll` is a **server-side** extension.
+
+Make sure the mod is load via `-servermod` instead of `-mod` to **bypass BattEye whitelist**.
 {% endhint %}
 
-## Configuration
+First, navigate to the directory of `arma3server_x64.exe`.\
+There should be `Discord_Message_API` folder (if no, create a new one), that's where the configs are.
 
-There should be `Discord_Message_API` folder, that's where the configs are.
+<figure><img src="../../.gitbook/assets/image (8).png" alt=""><figcaption><p>Setup Example</p></figcaption></figure>
+
+## 🎮Configure `secret.json`
 
 {% code title="./Discord_Message_API/secret.json" %}
 ```json
@@ -19,7 +19,7 @@ There should be `Discord_Message_API` folder, that's where the configs are.
   "ServiceUri" : "http://localhost:5048", //- `https://` for SSL/TLS
   "WebSocketServiceUri" : "ws://localhost:5048/api/ws/ingame", //-  `wss://` for SSL/TLS
   "RPT_Directory": "C:/Users/MyUser/AppData/Local/Arma 3", //- Default RPT Directory
-  "Secret" : { //- Backend Auth
+  "Secret" : { //- API Endpoint Auth
     "UserName" : "admin",
     "Password" : "password"
   }
@@ -29,16 +29,17 @@ There should be `Discord_Message_API` folder, that's where the configs are.
 
 ***
 
-### Profile Configuration (Optional)
+### 👥Configure Profile (Optional)
 
-This must be in `profiles` folder that can be changed in `Addons Settings`.
+This must be in `./profiles` folder that can be changed in `Addons Settings`.
 
 {% code title="./Discord_Message_API/profiles/default.json" %}
 ```json
 {
+  //- "Configuration" can be emply e.g. "Configuration": {}
   "Configuration": {
-    "MessageTemplate": "Server_Info_msg_old.json", //- (OPTIONAL)
-    "MessageOfflineTemplate": "Offline_msg.json"   //- (OPTIONAL)
+    "MessageTemplate": "Bot/Server_Info_msg_old.json", //- (OPTIONAL) Directory to the json file
+    "MessageOfflineTemplate": "Offline_msg.json"       //- (OPTIONAL)
   },
   "RPT_Directory": "C:/Users/MyUser/AppData/Local/Arma 3" //- (OPTIONAL) will fallback to `secret.json`
 }
