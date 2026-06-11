@@ -237,5 +237,5 @@ jobs:
       with:
         upload_url: ${{ env.UPLOAD_URL }}
         asset_path: releases\DiscordAPI-latest.zip
-        asset_name: 'DiscordAPI-${{ env.CLEAN_VERSION }}${{ env.TAG_SUFFIX }}.zip'
+        asset_name: 'DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip'
         asset_content_type: application/zip
