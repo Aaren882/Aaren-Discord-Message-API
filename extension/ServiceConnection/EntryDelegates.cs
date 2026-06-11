@@ -43,13 +43,11 @@ public sealed class EntryDelegates: EntryDelegatesBase
             
             return 1;
         }
-        #if DEBUG
         internal static int GetCurrentRpt(IOutputBuilder output, string[] args, int argCount)
         {
             output.Append(ServiceConnectionUtil.GetCurrentRpt());
             return 1;
         }
-        #endif
         
         /// <summary>
         /// Setup Websocket Connection to backend service
