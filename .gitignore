@@ -8,6 +8,10 @@ releases
 
 # Extension
 *.dll
+!DiscordMessageAPI_x64.dll
+*.so
+!DiscordMessageAPI_x64.so
+
 *.dll.*
 *.pdb
 *.env
