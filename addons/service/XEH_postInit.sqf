@@ -8,6 +8,10 @@ _ServerName = [
 
 localNamespace setVariable [QGVAR(serverName), _ServerName];
 
+//- Register interactive events
+[QGVAR(StartConnection), FUNC(StartConnection)] call CBA_fnc_addEventHandler;
+[QGVAR(StopConnection), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
+
 [QGVARMAIN(postInit_Server), {
 
   INFO("DISCORD_API [CallBack Init]");
@@ -85,9 +89,15 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   addMissionEventHandler ["OnUserAdminStateChanged", {
     params ["_networkId", "_loggedIn", "_votedIn"];
 
+    //- Setup Admin panel (on diary)
+    [
+      _networkId, 
+      ["logout", "login"] select _loggedIn
+    ] call FUNC(AdminPanel);
+
+    //- Add CBA Addon Option
     if (!_loggedIn) exitWith {};
     private _ownerId = _networkId getUserInfo 1;
-
     INFO_1("Admin ""%1"" logged in. Syncing profiles...",_networkId);
     private _profileFileNames = uiNamespace getVariable [QGVAR(profileFileNames), []];
     TRACE_1("profileFileNames",_profileFileNames);
