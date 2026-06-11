@@ -1,4 +1,5 @@
 PREP(AddCBASettings);
+PREP(AdminPanel);
 PREP(GetCurrentRptFilePath);
 PREP(GetPathFiles);
 PREP(GetProfile);
