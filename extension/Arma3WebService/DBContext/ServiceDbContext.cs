@@ -1,4 +1,3 @@
-using Arma3WebService.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.DBContext;
@@ -6,13 +5,18 @@ namespace Arma3WebService.DBContext;
 
 public sealed class ServiceDbContext: DbContext
 {
-	private ILogger<ServiceDbContext> logger;
-
+	private ILogger<ServiceDbContext> _logger;
+	private readonly IWebHostEnvironment _env;
+	private readonly IConfiguration _configuration;
+	
 	public ServiceDbContext(
+		DbContextOptions<ServiceDbContext> options,
+		IConfiguration configuration,
 		ILogger<ServiceDbContext> logger,IWebHostEnvironment env
-	)
+	): base(options)
 	{
-		this.logger = logger;
+		_logger = logger;
+		_configuration = configuration;
 		Database.EnsureCreated();
 	}
 	
@@ -32,7 +36,7 @@ public sealed class ServiceDbContext: DbContext
 			messageId = ulong.Parse(messageId),
 		});
 		await SaveChangesAsync();
-		logger.LogInformation("Create \"{profileName}\" ServerIdentity.", profileName);
+		_logger.LogInformation("Create \"{profileName}\" ServerIdentity.", profileName);
 		return true;
 	}
 
@@ -44,7 +48,7 @@ public sealed class ServiceDbContext: DbContext
 
 		if (exist == null)
 		{
-			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
+			_logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
 			return;
 		}
 
@@ -78,7 +82,7 @@ public sealed class ServiceDbContext: DbContext
 		);
 
 		if (exist is null)
-			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
+			_logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
 		
 		return exist;
 	}
@@ -89,13 +93,10 @@ public sealed class ServiceDbContext: DbContext
 		);
 
 		if (exist is null)
-			logger.LogError("\"{messageId}\" ServerIdentity  is not found !!", messageId);
+			_logger.LogError("\"{messageId}\" ServerIdentity  is not found !!", messageId);
 		
 		return exist;
 	}
 
-	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-	{
-		optionsBuilder.UseSqlite("Data Source=Test.db");
-	}
+	
 }

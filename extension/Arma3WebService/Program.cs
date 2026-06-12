@@ -12,6 +12,7 @@ using Components.Entity;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService
@@ -23,7 +24,26 @@ namespace Arma3WebService
 			Env.Load();
 			var builder = WebApplication.CreateBuilder(args);
 			
-			builder.Services.AddDbContext<ServiceDbContext>();
+			var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? builder.Configuration["DB_PROVIDER"] ?? "SQLite";
+			builder.Services.AddDbContextFactory<ServiceDbContext>(options =>
+			{
+				var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration["DB_CONNECTION_STRING"] ?? "Data Source=data.db";
+
+				switch (provider)
+				{
+					case "MySQL":
+						options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+						break;
+					case "NpgSQL":
+						options.UseNpgsql(connectionString);
+						break;
+					// Default to SQLite
+					default:
+						options.UseSqlite(connectionString);
+						break;
+				}
+			});
+
 			
 			// Add services to the container.
 			builder.Services.AddHostedService<DiscordBotService>();
@@ -116,8 +136,8 @@ namespace Arma3WebService
 					.AddConsole())
 			)
 			{
-				var factory = app.Services.GetRequiredService<IServiceScopeFactory>();
 				var logger = loggerFactory.CreateLogger<Arma3PayloadExtended>();
+				var factory = app.Services.GetRequiredService<IDbContextFactory<ServiceDbContext>>();
 					
 				Arma3PayLoadExtension.Options(logger, factory); //- Setup Extension Methods
 			}

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Arma3WebService.Managers;
 
 public sealed class RemoteStateManager(
-	IServiceScopeFactory ServiceScopeFactory,
+	IDbContextFactory<ServiceDbContext> dbContextFactory,
 	IServiceProvider ServiceProvider
 )
 {
@@ -16,8 +16,7 @@ public sealed class RemoteStateManager(
 
 	internal async Task UpdateGameSessionCacheAsync(string profileName, IConnection? connection = null)
 	{
-		using var scope = ServiceScopeFactory.CreateScope();
-		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 		
 		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(profileName);
 		if (serverIdentity == null)
@@ -35,8 +34,7 @@ public sealed class RemoteStateManager(
 		if (_gameSessionsCache.TryGetValue(messageId, out var session))
 			return session;
 
-		using var scope = ServiceScopeFactory.CreateScope();
-		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 		
 		var serverIdentity = await dbContext.GetServerIdentityFromMessageIdAsync(messageId);
 		if (serverIdentity == null)
@@ -54,8 +52,7 @@ public sealed class RemoteStateManager(
 		if (_serverInfoTemplatesCache.TryGetValue(messageId, out var template))
 			return template;
 		
-		using var scope = ServiceScopeFactory.CreateScope();
-		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 		
 		var infoTemplate = await dbContext.ServerInfoList
 			.FirstOrDefaultAsync(o => o.messageId == messageId);
@@ -71,8 +68,7 @@ public sealed class RemoteStateManager(
 		if (_serverInfoProfileNamesCache.TryGetValue(profileName, out var messageId))
 			return await GetServerInfoTemplateAsync(messageId);
 		
-		using var scope = ServiceScopeFactory.CreateScope();
-		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 
 		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(profileName);
 		if (serverIdentity is null)

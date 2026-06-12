@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Net.Mime;
 using Arma3WebService.DBContext;
-using Arma3WebService.Entity;
 using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Models;
 using Components.Entity;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Handler;
 
@@ -57,9 +57,8 @@ internal static class DiscordBotAdminSubmitHelper
 		if (!attachment.ContentType.Contains(MediaTypeNames.Text.Html)) throw new Exception("Invalid content type.");
 
 		//- Saving Url
-		var serviceScopeFactory= serviceProvider.GetRequiredService<IServiceScopeFactory>();
-		await using var scoped = serviceScopeFactory.CreateAsyncScope();
-		await using var dbContext = scoped.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<ServiceDbContext>>();
+		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 		//- Get correct server info
 		var sessionName = GetSelectedSession(component);
 		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(sessionName);

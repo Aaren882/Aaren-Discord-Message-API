@@ -4,6 +4,7 @@ using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Arma3WebService.Entity.DiscordBotAction;
 using Discord;
+using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Models;
 
@@ -11,7 +12,7 @@ public sealed class AdminConsoleManager(
 	ILogger<AdminConsoleManager> logger,
 	IDiscordBotService discordBotService,
 	IServiceProvider serviceProvider,
-	IServiceScopeFactory serviceScopeFactory
+	IDbContextFactory<ServiceDbContext> dbContextFactory
 )
 {
 	internal ulong AdminMessageId;
@@ -87,8 +88,7 @@ public sealed class AdminConsoleManager(
 
 		List<string> DbProfileNames()
 		{
-			using var scope = serviceScopeFactory.CreateScope();
-			using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+			using var dbContext = dbContextFactory.CreateDbContext();
 			var queryable = dbContext.ServerIdentities.Select(x => x.profileName);
 			return queryable.ToList();
 		}
@@ -100,8 +100,7 @@ public sealed class AdminConsoleManager(
     	var channel = await discordBotService.GetMessageChannelAsync(channelId);
     	try
     	{
-    		using var scope = serviceScopeFactory.CreateScope();
-    		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+    		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
     		var exist = dbContext.InternalManagement.FirstOrDefault(
     			o => 
     				o.managementType == InternalManagementType.AdminConsole
