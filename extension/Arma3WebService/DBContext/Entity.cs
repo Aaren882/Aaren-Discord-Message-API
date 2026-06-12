@@ -11,7 +11,7 @@ public class ServerIdentity
 	public ulong messageId { get; set; }
 	public long profileStateStamp { get; set; }
 	public ulong? modListMessageId { get; set; }
-	public DateTime lastUpdate { get; set; } = DateTime.Now;
+	public DateTimeOffset lastUpdate { get; set; } = DateTime.Now;
 }
 [PrimaryKey(nameof(messageId))]
 public class ServerInfoTemplate
@@ -30,7 +30,7 @@ public class ServerInfoTemplate
 		set => _messageOfflinePath = value ?? _messageOfflinePath;
 	}
 	public string? messageActionPath { get; set; }
-	public DateTime lastUpdate { get; set; } = DateTime.Now;
+	public DateTimeOffset lastUpdate { get; set; } = DateTime.Now;
 }
 
 public enum InternalManagementType
