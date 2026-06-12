@@ -17,7 +17,7 @@ public sealed class ServiceActionManager(
 	IServiceProvider serviceProvider,
 	IDiscordBotService discordBotService,
 	DiscordBotRequestHandler requestHandler,
-	IServiceScopeFactory ServiceScopeFactory
+	IDbContextFactory<ServiceDbContext> dbContextFactory
 )
 {
 	public async Task CallBackAction(IConnection session, Arma3PayloadCallBack command)
@@ -107,8 +107,7 @@ public sealed class ServiceActionManager(
 	}
 	private async Task UpdateDiscordServerInfoMessageAsync(string sessionIdentity, Dictionary<string, string> logItem)
 	{
-		using var scope = ServiceScopeFactory.CreateScope();
-		await using var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 		
 		var serverIdentity = await dbContext.ServerIdentities.FirstOrDefaultAsync(o => o.profileName == sessionIdentity);
 		
