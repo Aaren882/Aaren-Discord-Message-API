@@ -17,7 +17,6 @@ public sealed class ServiceDbContext: DbContext
 	{
 		_logger = logger;
 		_configuration = configuration;
-		Database.EnsureCreated();
 	}
 	
 	public DbSet<ServerIdentity> ServerIdentities { get; set; }
