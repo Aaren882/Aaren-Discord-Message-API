@@ -45,21 +45,21 @@ public record ProfileIdentityCheck(
 		var monitorMessage = messageId is 0
 			? null
 			: await channel.GetMessageAsync(messageId);
+		
+		//- Get message template from DB
+		var serverInfoTemplate = await dbContext.ServerInfoList.FirstOrDefaultAsync(
+			x => x.messageId == messageId
+		);
 
-		if (monitorMessage is null) //- Create a new message
+		if (monitorMessage is null || serverInfoTemplate is null) //- validate discord message
 		{
-			var serverInfoTemplate = await dbContext.ServerInfoList.FirstOrDefaultAsync(
-				x => x.messageId == messageId
-			);
-
+			//- Create a new message (if message for server info is not exist)
 			if (serverInfoTemplate != null)
 			{
 				dbContext.ServerInfoList.Remove(serverInfoTemplate);
+				var message = await channel.SendMessageAsync("PLACEHOLDER");
+				messageId = message.Id;
 			}
-			
-			//- New message
-			var message = await channel.SendMessageAsync("PLACEHOLDER");
-			messageId = message.Id;
 			
 			var infoTemplate = Configuration.CreateInfoTemplate(messageId);
 			await dbContext.ServerInfoList.AddAsync(infoTemplate);
@@ -74,7 +74,8 @@ public record ProfileIdentityCheck(
 		var profileLastUpdate = ProfileDateOffsets?.Sum(long.Parse) ?? 0;
 		var isDifferent = profileLastUpdate != exist?.profileStateStamp
 		                  || exist.messageId != messageId
-		                  || monitorMessage is null;
+		                  || monitorMessage is null
+		                  || serverInfoTemplate is null;
 		if (isNewIdentity)
 		{
 			//- create new identity
