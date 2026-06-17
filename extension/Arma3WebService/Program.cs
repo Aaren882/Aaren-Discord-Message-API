@@ -107,6 +107,15 @@ namespace Arma3WebService
 			builder.Services.AddResourceMonitoring();
 
 			var app = builder.Build();
+			
+			// Create a scope to resolve your DbContext safely
+			using (var scope = app.Services.CreateScope())
+			{
+				var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+    
+				// This applies any pending migrations and creates the database if it doesn't exist
+				dbContext.Database.Migrate();
+			}
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
