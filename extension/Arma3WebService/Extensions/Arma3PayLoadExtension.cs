@@ -9,7 +9,6 @@ namespace Arma3WebService.Extensions;
 public static class Arma3PayLoadExtension
 {
 	private static ILogger logger;
-    private static IDbContextFactory<ServiceDbContext> dbContextFactory;
     
     public static async Task Invoke(
         this Arma3PayloadExtended action,
@@ -29,10 +28,10 @@ public static class Arma3PayLoadExtension
         await connection.SendArmaCallBackMessage(msg);
     }
     
-    public static void Options(ILogger logger, IDbContextFactory<ServiceDbContext> dbContextFactory)
+    public static void Options()
     {
-	    logger = logger;
-	    dbContextFactory = dbContextFactory;
+	    var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConsole());
+	    logger = loggerFactory.CreateLogger<Arma3PayloadExtended>();
     }
 
     public static string ToJsonString(this Arma3Payload payload)

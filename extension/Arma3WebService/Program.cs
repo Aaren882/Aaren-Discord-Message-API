@@ -23,6 +23,7 @@ namespace Arma3WebService
 		{
 			Env.Load();
 			var builder = WebApplication.CreateBuilder(args);
+			Arma3PayLoadExtension.Options();
 			
 			var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? builder.Configuration["DB_PROVIDER"] ?? "SQLite";
 			builder.Services.AddDbContextFactory<ServiceDbContext>(options =>
@@ -139,17 +140,6 @@ namespace Arma3WebService
 			app.UseAuthorization();
 
 			app.MapControllers();
-
-			using (
-				var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder
-					.AddConsole())
-			)
-			{
-				var logger = loggerFactory.CreateLogger<Arma3PayloadExtended>();
-				var factory = app.Services.GetRequiredService<IDbContextFactory<ServiceDbContext>>();
-					
-				Arma3PayLoadExtension.Options(logger, factory); //- Setup Extension Methods
-			}
 
 			app.Run();
 		}
