@@ -70,7 +70,7 @@ public sealed class ServiceActionManager(
 			);
 			
 			if (deserialize == null) throw new NullReferenceException("JsonStringAction is Null.");
-			await deserialize.Invoke(connection, serviceProvider);
+			await deserialize.Invoke(connection, serviceProvider, dbContextFactory);
 		}
 		catch (Exception e)
 		{

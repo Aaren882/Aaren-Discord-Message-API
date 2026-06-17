@@ -13,7 +13,8 @@ public static class Arma3PayLoadExtension
     public static async Task Invoke(
         this Arma3PayloadExtended action,
         IConnection connection,
-        IServiceProvider serviceProvider
+        IServiceProvider serviceProvider,
+        IDbContextFactory<ServiceDbContext> dbContextFactory
     )
     {
 	    await using (var dbContext = await dbContextFactory.CreateDbContextAsync())
