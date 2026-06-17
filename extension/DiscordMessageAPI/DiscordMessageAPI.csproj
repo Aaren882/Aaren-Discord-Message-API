@@ -24,7 +24,6 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Components\Components.csproj" />
     <ProjectReference Include="..\ExtensionComponents\ExtensionComponents.csproj" />
   </ItemGroup>
 </Project>
