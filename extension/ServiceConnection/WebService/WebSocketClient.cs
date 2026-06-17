@@ -2,6 +2,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Components.Entity;
+using System.Linq;
 using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
@@ -81,10 +82,12 @@ public class WebSocketClient(string serverUri)
 		if (Status == WebSocketState.Open)
 		{
 			await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-			var readLines = ReadLinesAsyncEnumerable(fileStream).TakeLast(linesCount).Reverse();
-
+			var stream = ReadLinesAsyncEnumerable(fileStream);
+			var readLines = await TakeLastAsync(stream, linesCount);
+			readLines.Reverse();
+			
 			var charCount = 0;
-			await foreach (var line in readLines)
+			foreach (var line in readLines)
 			{
 				var wLine = line + "\n";
 				charCount += wLine.Length;
@@ -106,8 +109,25 @@ public class WebSocketClient(string serverUri)
 		}
 
 		return;
-			
+		
 		//- Local function
+		async Task<List<string>> TakeLastAsync(IAsyncEnumerable<string> source, int count)
+		{
+			if (count <= 0) return [];
+        
+			var queue = new Queue<string>(count);
+
+			await foreach (var item in source)
+			{
+				if (queue.Count == count)
+				{
+					queue.Dequeue();
+				}
+				queue.Enqueue(item);
+			}
+
+			return queue.ToList();
+		}
 		async IAsyncEnumerable<string> ReadLinesAsyncEnumerable(Stream stream)
 		{
 			using var reader = new StreamReader(stream, Encoding.UTF8);
