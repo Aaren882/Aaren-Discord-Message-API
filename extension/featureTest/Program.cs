@@ -12,8 +12,6 @@ using ServiceConnection.Discord;
 using ServiceConnection.Tools;
 using ServiceConnection.WebService;
 using Components.Entity;
-using Discord.Interactions;
-using Discord.Interactions.Builders;
 using ExtensionComponents;
 using ExtensionComponents.Entity;
 using Microsoft.Extensions.DependencyInjection;
