@@ -1,24 +1,25 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Arma3WebService.DBContext;
 
-
-public sealed class ServiceDbContext: DbContext
+public class ServiceDbContext: DbContext
 {
-	private ILogger<ServiceDbContext> _logger;
-	private readonly IWebHostEnvironment _env;
+	private readonly ILogger<ServiceDbContext> _logger;
 	private readonly IConfiguration _configuration;
 	
 	public ServiceDbContext(
 		DbContextOptions<ServiceDbContext> options,
 		IConfiguration configuration,
-		ILogger<ServiceDbContext> logger,IWebHostEnvironment env
+		ILogger<ServiceDbContext> logger
 	): base(options)
 	{
 		_logger = logger;
-		_configuration = configuration;
 	}
-	
+
 	public DbSet<ServerIdentity> ServerIdentities { get; set; }
 	public DbSet<ServerInfoTemplate> ServerInfoList { get; set; }
 	public DbSet<InternalManagement> InternalManagement { get; set; }
@@ -97,5 +98,22 @@ public sealed class ServiceDbContext: DbContext
 		return exist;
 	}
 
-	
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	{
+		base.OnModelCreating(modelBuilder);
+		
+		//- Postgres work around
+		var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? _configuration["DB_PROVIDER"] ?? "SQLite";
+		if (provider == "NpgSQL")
+		{
+			//- it cannot take ulong :(
+			modelBuilder.Entity<InternalManagement>()
+				.Property(e => e.messageId)
+				.HasConversion(
+					v => (decimal)v,	// To database
+					v => (ulong)v	// From database
+				)
+				.HasColumnType("numeric(20, 0)"); //- type in Postgres 
+		}
+	}
 }
