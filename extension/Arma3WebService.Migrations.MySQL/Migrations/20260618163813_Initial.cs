@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Arma3WebService.Migrations
+namespace Arma3WebService.Migrations.MySQL.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -39,7 +39,7 @@ namespace Arma3WebService.Migrations
                     messageId = table.Column<ulong>(type: "bigint unsigned", nullable: false),
                     profileStateStamp = table.Column<long>(type: "bigint", nullable: false),
                     modListMessageId = table.Column<ulong>(type: "bigint unsigned", nullable: true),
-                    lastUpdate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                    lastUpdate = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,7 +59,7 @@ namespace Arma3WebService.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     messageActionPath = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    lastUpdate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                    lastUpdate = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
                 {
