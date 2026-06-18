@@ -208,7 +208,8 @@ jobs:
   
   Addons:
     needs: release
-    runs-on: windows-2022
+    # runs-on: windows-2022
+    runs-on: ubuntu-latest
 
     env:
       UPLOAD_URL: ${{ needs.release.outputs.UPLOAD_URL }}
@@ -226,6 +227,8 @@ jobs:
 
     - name: Setup HEMTT
       uses: arma-actions/hemtt@v1
+      with:
+        version: 'latest'
     
     - name: Run HEMTT release
       run: hemtt release
