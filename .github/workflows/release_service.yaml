@@ -228,7 +228,7 @@ jobs:
     - name: Setup HEMTT
       uses: arma-actions/hemtt@v1
       with:
-        version: 'latest'
+        version: "v1.18.3"
     
     - name: Run HEMTT release
       run: hemtt release
