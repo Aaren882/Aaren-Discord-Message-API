@@ -4,16 +4,19 @@ using Arma3WebService.DBContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Arma3WebService.Migrations
+namespace Arma3WebService.Migrations.MySQL.Migrations
 {
     [DbContext(typeof(ServiceDbContext))]
-    partial class ServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618163813_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,7 +48,7 @@ namespace Arma3WebService.Migrations
                     b.Property<string>("profileName")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<DateTime>("lastUpdate")
+                    b.Property<DateTimeOffset>("lastUpdate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<ulong>("messageId")
@@ -70,7 +73,7 @@ namespace Arma3WebService.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("messageId"));
 
-                    b.Property<DateTime>("lastUpdate")
+                    b.Property<DateTimeOffset>("lastUpdate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("messageActionPath")
