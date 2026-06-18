@@ -13,6 +13,7 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService
@@ -30,19 +31,19 @@ namespace Arma3WebService
 			{
 				var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration["DB_CONNECTION_STRING"] ?? "Data Source=data.db";
 
-				switch (provider)
+				var migrationAssembly = $"Arma3WebService.Migrations.{provider}";
+				var optionsBuilder = (provider) switch 
 				{
-					case "MySQL":
-						options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-						break;
-					case "NpgSQL":
-						options.UseNpgsql(connectionString);
-						break;
+					"MySQL" => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), x => x.MigrationsAssembly(migrationAssembly)),
+					"NpgSQL" => options.UseNpgsql(connectionString, x => x.MigrationsAssembly(migrationAssembly)),
 					// Default to SQLite
-					default:
-						options.UseSqlite(connectionString);
-						break;
-				}
+					_ => options.UseSqlite(connectionString, x => x.MigrationsAssembly(migrationAssembly)) 
+				};
+				
+				//- ignore last db setting warning (e.g. migrate from MySQL to Postgres)
+				optionsBuilder.ConfigureWarnings(w => 
+					w.Ignore(RelationalEventId.PendingModelChangesWarning)
+				);
 			});
 
 			
