@@ -219,30 +219,13 @@ jobs:
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v6.0.3
-    
-    # - name: Install Arma 3 Tools
-    #   uses: arma-actions/arma3-tools@master
-    #   with:
-    #     toolsUrl: ${{ secrets.A3TOOLS_URL }}
 
     - name: Setup HEMTT
       uses: arma-actions/hemtt@v1
-      with:
-        version: "v1.18.3"
     
     - name: Run HEMTT release
       run: hemtt release
-      
-    # - name: Upload Release Asset
-    #   uses: tanyagray/action-upload-release-asset@v1.1.3
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ env.UPLOAD_URL }}
-    #     asset_path: releases/DiscordAPI-latest.zip
-    #     asset_name: 'DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip'
-    #     asset_content_type: application/zip
-    
+
     - run: |
         cd releases
         mv -v DiscordAPI-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
@@ -254,4 +237,4 @@ jobs:
       with:
         working_directory: releases
         files: |
-          DiscordAPI-latest.zip
+          DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
