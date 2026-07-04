@@ -208,7 +208,6 @@ jobs:
   
   Addons:
     needs: release
-    # runs-on: windows-2022
     runs-on: ubuntu-latest
 
     env:
@@ -236,5 +235,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         working_directory: releases
+        draft: true
         files: |
           DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
