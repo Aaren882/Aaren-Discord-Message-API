@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Threading.Tasks.Dataflow;
 using Components.Entity;
 using static ExtensionComponents.ExtensionStartup;
 using static ServiceConnection.ServiceStartup;
@@ -34,12 +34,26 @@ public record WebSocketWorkingTask(Arma3Payload? headerObj, Func<Task> webSocket
 
 public sealed class WebSocketLocalWorker
 {
-	private readonly ConcurrentQueue<WebSocketWorkingTask> _websocketWorkerQueue = new ();
 	private readonly Task _socketWorker;
+	private readonly ActionBlock<WebSocketWorkingTask> _websocketWorker;
 
 	public WebSocketLocalWorker()
 	{
-		_socketWorker = WebSocketTrafficReader();
+		_websocketWorker = new ActionBlock<WebSocketWorkingTask>(async task =>
+		{
+			try
+			{
+				Logger(null, $"{nameof(WebSocketLocalWorker)} Run => {task.headerObj}");
+				await task.Run(); // 執行您的任務
+			}
+			catch (Exception e)
+			{
+				Logger(e, nameof(WebSocketLocalWorker));
+			}
+		}, new ExecutionDataflowBlockOptions
+		{
+			MaxDegreeOfParallelism = 1 
+		});
 	}
 	
 	public void WebSocketTrafficWriter(Func<Task> webSocketTask)
@@ -60,23 +74,6 @@ public sealed class WebSocketLocalWorker
 	
 	private void EnqueueTask(WebSocketWorkingTask webSocketTask)
 	{
-		_websocketWorkerQueue.Enqueue(webSocketTask);
-	}
-	private async Task WebSocketTrafficReader()
-	{
-		Logger(null, "New WebSocketTrafficReader created.");
-		while (true)
-		{
-			await Task.Delay(500);
-			try
-			{
-				if (_websocketWorkerQueue.TryDequeue(out var task))
-					await task.Run();
-			}
-			catch (Exception e)
-			{
-				Logger(e, nameof(WebSocketTrafficReader));
-			}
-		}
+		_websocketWorker.Post(webSocketTask);
 	}
 }
