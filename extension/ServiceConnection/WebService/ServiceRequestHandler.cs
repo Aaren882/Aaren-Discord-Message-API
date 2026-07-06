@@ -1,21 +1,21 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 using Components.Entity;
 using static ServiceConnection.ServiceStartup;
+using static ExtensionComponents.ExtensionStartup;
 namespace ServiceConnection.WebService;
 
 public sealed class ServiceRequestHandler
 {
 	private ConcurrentDictionary<Arma3PayloadServiceRequest, Task> _requestHandler = new(); 
-	internal static void RespondRequest(Arma3PayloadServiceRequest request, string handShakePayload)
+	internal static void RespondRequest(Arma3PayloadServiceRequest request)
 	{
 		var serviceInteractions = ServiceStartup.serviceInteractions;
 		if (serviceInteractions is null) return;
 		
-		GetRespond(request, handShakePayload);
+		GetRespond(request);
 	}
 
-	private static Task? GetRespond(Arma3PayloadServiceRequest request, string handShakePayload)
+	private static void GetRespond(Arma3PayloadServiceRequest request)
 	{
 		//- which action should do
 		Task? task = null;
@@ -45,12 +45,11 @@ public sealed class ServiceRequestHandler
 		}
 		
 		//- Put respond into websocket queue first
+		Logger(null, $"{nameof(ServiceRequestHandler)}.{nameof(GetRespond)} : \nrequest = {request}");
 		serviceInteractions?.SocketLocalWorker.WebSocketTrafficWriter(
 			request,
 			() => task!
 		);
-		
-		return task;
 	}
 
 	private static async Task RespondWebSocketPrintRpt(string filePath, int linesCount)
