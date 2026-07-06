@@ -182,7 +182,7 @@ public class WebSocketClient(string serverUri)
 					//- Respond request to the service 
 					if (payload is Arma3PayloadServiceRequest request)
 					{
-						ServiceRequestHandler.RespondRequest(request, message);
+						ServiceRequestHandler.RespondRequest(request);
 					}
 				}
 				else if (result.MessageType == WebSocketMessageType.Close)
