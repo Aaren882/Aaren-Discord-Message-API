@@ -69,6 +69,9 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
+    - name: Restore dependencies
+      run: dotnet restore
+
     # Ubuntu runners already have clang and zlib, but this ensures they exist
     - name: Install Prerequisites
       if: ${{ matrix.os == 'ubuntu-latest' }} 
