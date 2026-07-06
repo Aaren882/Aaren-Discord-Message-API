@@ -1,0 +1,61 @@
+{
+  "username": "Server Manager",
+  "avatar_url": "https://i.imgur.com/F1DXjII.png",
+  "content": "",
+  "embeds": [
+    {
+      "title": "🛰️ {SERVER_NAME} | 狀態詳情",
+      "description": "### 任務: `{MISSION_NAME}`\n**狀態:** :white_check_mark: 伺服器運作中",
+      "color": "3447003",
+      "fields": [
+        {
+          "name": "📍 基本資訊",
+          "value": "> **地圖:** {MAP_NAME}\n> **版本:** {GAME_VERSION}\n> **玩家:** {PLAYER_COUNT} / {AVALIABLE_PLAYERS}",
+          "inline": true
+        },
+        {
+          "name": "📊 效能監控",
+          "value": "**伺服器 FPS:** `{SERVER_FPS}` (最低: {FPS_MIN})\n**活動腳本:** `{ACTIVE_SCRIPTS}`",
+          "inline": true
+        },
+        {
+          "name": "🌐 連線位置",
+          "value": "```fix\narma.server.address:2302\n```",
+          "inline": false
+        },
+        {
+          "name": "👥 玩家清單",
+          "value": "```\n{PLAYER_LIST}\n```",
+          "inline": true
+        },
+        {
+          "name": "⚡ 網路狀態",
+          "value": "```\n{PLAYER_NETWORK}\n```",
+          "inline": true
+        },
+        {
+          "name": "🛠️ 玩家狀態",
+          "value": "```\n{PLAYER_STATE}\n```",
+          "inline": true
+        }
+      ],
+      "footer": {
+        "text": "最後更新於: {SYSTEM_DATE} {SYSTEM_TIME}",
+        "icon_url": "https://i.imgur.com/410CmKi.png"
+      }
+    }
+  ],
+  "components": [
+    {
+      "type": 1,
+      "components": [
+        {
+          "type": 2,
+          "style": 5,
+          "label": "立即加入伺服器",
+          "url": "https://arma.rzydev.com"
+        }
+      ]
+    }
+  ]
+}
