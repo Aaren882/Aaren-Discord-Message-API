@@ -70,7 +70,10 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: |
+        dotnet restore extension/DiscordMessageAPI/DiscordMessageAPI.csproj
+        dotnet restore extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj
+        dotnet restore extension/Arma3WebService/Arma3WebService.csproj
 
     # Ubuntu runners already have clang and zlib, but this ensures they exist
     - name: Install Prerequisites
