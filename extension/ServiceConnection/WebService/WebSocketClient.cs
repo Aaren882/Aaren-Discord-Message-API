@@ -1,8 +1,8 @@
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Components.Entity;
-using System.Linq;
 using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
@@ -81,62 +81,56 @@ public class WebSocketClient(string serverUri)
 		Logger(null, $"INFO: Sending RPT : {linesCount} lines");
 		if (Status == WebSocketState.Open)
 		{
-			await using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-			var stream = ReadLinesAsyncEnumerable(fileStream);
-			var readLines = await TakeLastAsync(stream, linesCount);
-			readLines.Reverse();
+			var sw = Stopwatch.StartNew();
+			await using var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+			var lastLines = await GetLastLinesAsync(fileStream, linesCount);
+			lastLines.Reverse();
 			
+			var lineCount = lastLines.Count;
 			var charCount = 0;
-			foreach (var line in readLines)
+			foreach (var (line, i) in lastLines.Select((value, i) => ( value, i )))
 			{
 				var wLine = line + "\n";
 				charCount += wLine.Length;
 				if  (charCount > 1980)
 				{
 					Logger(null ,$"SendRptLines has reached limit: \"{line}\".");
+					lineCount = i;
 					break;
 				}
 				var bytes = Encoding.UTF8.GetBytes(wLine);
 				await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, false, CancellationToken.None);
 			}
+			Logger(null ,$"SendRptLines [{lineCount}]: {filePath}");
 			await _webSocket.SendAsync(new ArraySegment<byte>([]), WebSocketMessageType.Binary, true, CancellationToken.None);
+			sw.Stop();
 			
-			Logger(null ,$"SendRptLines: {filePath}");
+			Logger(null, nameof(SendRptLinesAsync) + " Execution took: " + sw.ElapsedMilliseconds + "ms");
 		}
 		else
 		{
 			Logger(null ,"WebSocket is not connected. Cannot send message.");
 		}
-
+		
 		return;
 		
-		//- Local function
-		async Task<List<string>> TakeLastAsync(IAsyncEnumerable<string> source, int count)
+		async Task<List<string>> GetLastLinesAsync(FileStream stream, int count)
 		{
 			if (count <= 0) return [];
-        
-			var queue = new Queue<string>(count);
-
-			await foreach (var item in source)
-			{
-				if (queue.Count == count)
-				{
-					queue.Dequeue();
-				}
-				queue.Enqueue(item);
-			}
-
-			return queue.ToList();
-		}
-		async IAsyncEnumerable<string> ReadLinesAsyncEnumerable(Stream stream)
-		{
 			using var reader = new StreamReader(stream, Encoding.UTF8);
+			var queue = new Queue<string>(count);
+			
 			while (!reader.EndOfStream)
 			{
 				var line = await reader.ReadLineAsync();
-				if (line != null)
-					yield return line;
+				
+				if (line == null) continue;
+				
+				if (queue.Count == count) queue.Dequeue();
+				queue.Enqueue(line);
 			}
+			return queue.ToList();
 		}
 	}
 
@@ -188,7 +182,7 @@ public class WebSocketClient(string serverUri)
 					//- Respond request to the service 
 					if (payload is Arma3PayloadServiceRequest request)
 					{
-						ServiceRequestHandler.RespondRequest(request, message);
+						ServiceRequestHandler.RespondRequest(request);
 					}
 				}
 				else if (result.MessageType == WebSocketMessageType.Close)
