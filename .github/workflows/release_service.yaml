@@ -127,7 +127,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }} 
       uses: docker/build-push-action@v7
       with:
-        file: ./extension/Dockerfile
+        context: ./extension
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
