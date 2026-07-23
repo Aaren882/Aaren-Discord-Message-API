@@ -101,11 +101,8 @@ jobs:
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         # generate Docker tags based on the following events/attributes
         tags: |
-          type=sha
-          # use custom value instead of git tag
-          type=semver,pattern={{raw}},value=v${{ env.CLEAN_VERSION }},suffix=${{ format('-{0}', env.TAG_SUFFIX) }}
-          # set latest tag for master branch
-          type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
+          type=raw,value=v${{ env.CLEAN_VERSION }}
+          type=raw,value=${{ env.TAG_SUFFIX }}
       
     - name: Login to GitHub Container Registry
       if: ${{ matrix.os == 'ubuntu-latest' }} 
