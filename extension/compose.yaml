@@ -1,0 +1,38 @@
+services:
+  arma3webservice:
+    image: arma3webservice
+    # (Used for building Image)
+    # build: 
+    #   context: .
+    #   dockerfile: Dockerfile
+    ports:
+      - "5048:5048"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=${HTTP_PORTS:-5048}
+      - Jwt_Secret=${JWT_SECRET} # Useful Tool: https://it-tools.tech/token-generator
+
+      # (Database)
+      - DB_PROVIDER=${DB_PROVIDER:-SQLite} # SQLite , MySQL , NpgSQL
+      # SQLite
+      - DB_CONNECTION_STRING=Data Source=data.db
+      # MySQL (MySQL, mariaDB)
+      # - DB_CONNECTION_STRING=Server=${DB_HOST:-localhost};Port=${DB_PORT:-3306};Database=${DB};User=${DB_USER};Password=${DB_PW}
+      # PostgreSQL (NpgSQL)
+      # - DB_CONNECTION_STRING=Host=${DB_HOST:-localhost};Port=${DB_PORT:-5432};Database=${DB};Username=${DB_USER};Password=${DB_PW}
+
+      # (Discord)
+      - BotToken=${BOT_TOKEN}
+      - MonitorChannel=${MonitorChannel}
+      - AdminChannel=${AdminChannel}
+      - AdminLoggingChannel=${AdminLoggingChannel}
+      - LoggingChannel=${LoggingChannel}
+
+      # (IN GAME)
+      # - AdminPassword=1234 # (Optional) Admin password for calling admin Commands
+
+    volumes:
+      - app:/app
+
+volumes:
+  app:

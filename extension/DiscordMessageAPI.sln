@@ -31,6 +31,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arma3WebService.DBContext",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arma3WebService.Migrations.SQLite", "Arma3WebService.Migrations.SQLite\Arma3WebService.Migrations.SQLite.csproj", "{F8C94526-AF57-4C2B-AA2B-8B4A84FCE30C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D21DD5FB-A43F-4E41-8AD7-D0ABF86FA8A8}"
+	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
