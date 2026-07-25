@@ -1,25 +1,15 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Arma3WebService.DBContext;
 
-public class ServiceDbContext: DbContext
+public class ServiceDbContext(
+	DbContextOptions<ServiceDbContext> options,
+	IConfiguration configuration,
+	ILogger<ServiceDbContext> logger
+) : DbContext(options)
 {
-	private readonly ILogger<ServiceDbContext> _logger;
-	private readonly IConfiguration _configuration;
-	
-	public ServiceDbContext(
-		DbContextOptions<ServiceDbContext> options,
-		IConfiguration configuration,
-		ILogger<ServiceDbContext> logger
-	): base(options)
-	{
-		_logger = logger;
-	}
-
 	public DbSet<ServerIdentity> ServerIdentities { get; set; }
 	public DbSet<ServerInfoTemplate> ServerInfoList { get; set; }
 	public DbSet<InternalManagement> InternalManagement { get; set; }
@@ -36,7 +26,7 @@ public class ServiceDbContext: DbContext
 			messageId = ulong.Parse(messageId),
 		});
 		await SaveChangesAsync();
-		_logger.LogInformation("Create \"{profileName}\" ServerIdentity.", profileName);
+		logger.LogInformation("Create \"{profileName}\" ServerIdentity.", profileName);
 		return true;
 	}
 
@@ -48,7 +38,7 @@ public class ServiceDbContext: DbContext
 
 		if (exist == null)
 		{
-			_logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
+			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
 			return;
 		}
 
@@ -82,7 +72,7 @@ public class ServiceDbContext: DbContext
 		);
 
 		if (exist is null)
-			_logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
+			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
 		
 		return exist;
 	}
@@ -93,7 +83,7 @@ public class ServiceDbContext: DbContext
 		);
 
 		if (exist is null)
-			_logger.LogError("\"{messageId}\" ServerIdentity  is not found !!", messageId);
+			logger.LogError("\"{messageId}\" ServerIdentity  is not found !!", messageId);
 		
 		return exist;
 	}
@@ -103,7 +93,7 @@ public class ServiceDbContext: DbContext
 		base.OnModelCreating(modelBuilder);
 		
 		//- Postgres work around
-		var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? _configuration["DB_PROVIDER"] ?? "SQLite";
+		var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? configuration["DB_PROVIDER"] ?? "SQLite";
 		if (provider == "NpgSQL")
 		{
 			//- it cannot take ulong :(
