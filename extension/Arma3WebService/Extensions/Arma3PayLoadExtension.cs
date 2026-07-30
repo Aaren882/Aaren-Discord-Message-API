@@ -2,28 +2,26 @@ using System.Text.Json;
 using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Components.Entity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Extensions;
 
 public static class Arma3PayLoadExtension
 {
-    private static ILogger? Logger;
-    private static IServiceScopeFactory? ServiceScopeFactory;
+	private static ILogger logger;
     
     public static async Task Invoke(
         this Arma3PayloadExtended action,
         IConnection connection,
-        IServiceProvider serviceProvider
+        IServiceProvider serviceProvider,
+        IDbContextFactory<ServiceDbContext> dbContextFactory
     )
     {
-        if (Logger is null || ServiceScopeFactory is null) return;
-        
-        using var scope = ServiceScopeFactory.CreateScope();
-        await using (var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>())
+	    await using (var dbContext = await dbContextFactory.CreateDbContextAsync())
         {
-	        Logger.LogInformation("Invoking : {Type}", action.Type);
+	        logger.LogInformation("Invoking : {Type}", action.Type);
 	        await action.Run(serviceProvider, dbContext);
-	        Logger.LogInformation("Invoked : {Type}", action.Type);
+	        logger.LogInformation("Invoked : {Type}", action.Type);
         }
         
         //- Send back message to the client
@@ -31,11 +29,10 @@ public static class Arma3PayLoadExtension
         await connection.SendArmaCallBackMessage(msg);
     }
     
-    public static void Options(ILogger logger, IServiceScopeFactory serviceScopeFactory)
+    public static void Options()
     {
-	    if (Logger is not null && ServiceScopeFactory is not null) return;
-	    Logger = logger;
-	    ServiceScopeFactory = serviceScopeFactory;
+	    var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConsole());
+	    logger = loggerFactory.CreateLogger<Arma3PayloadExtended>();
     }
 
     public static string ToJsonString(this Arma3Payload payload)

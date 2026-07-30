@@ -12,6 +12,8 @@ using Components.Entity;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService
@@ -22,8 +24,28 @@ namespace Arma3WebService
 		{
 			Env.Load();
 			var builder = WebApplication.CreateBuilder(args);
+			Arma3PayLoadExtension.Options();
 			
-			builder.Services.AddDbContext<ServiceDbContext>();
+			var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? builder.Configuration["DB_PROVIDER"] ?? "SQLite";
+			builder.Services.AddDbContextFactory<ServiceDbContext>(options =>
+			{
+				var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration["DB_CONNECTION_STRING"] ?? "Data Source=data.db";
+
+				var migrationAssembly = $"Arma3WebService.Migrations.{provider}";
+				var optionsBuilder = (provider) switch 
+				{
+					"MySQL" => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), x => x.MigrationsAssembly(migrationAssembly)),
+					"NpgSQL" => options.UseNpgsql(connectionString, x => x.MigrationsAssembly(migrationAssembly)),
+					// Default to SQLite
+					_ => options.UseSqlite(connectionString, x => x.MigrationsAssembly(migrationAssembly)) 
+				};
+				
+				//- ignore last db setting warning (e.g. migrate from MySQL to Postgres)
+				optionsBuilder.ConfigureWarnings(w => 
+					w.Ignore(RelationalEventId.PendingModelChangesWarning)
+				);
+			});
+
 			
 			// Add services to the container.
 			builder.Services.AddHostedService<DiscordBotService>();
@@ -87,6 +109,15 @@ namespace Arma3WebService
 			builder.Services.AddResourceMonitoring();
 
 			var app = builder.Build();
+			
+			// Create a scope to resolve your DbContext safely
+			using (var scope = app.Services.CreateScope())
+			{
+				var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
+    
+				// This applies any pending migrations and creates the database if it doesn't exist
+				dbContext.Database.Migrate();
+			}
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
@@ -110,17 +141,6 @@ namespace Arma3WebService
 			app.UseAuthorization();
 
 			app.MapControllers();
-
-			using (
-				var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder
-					.AddConsole())
-			)
-			{
-				var factory = app.Services.GetRequiredService<IServiceScopeFactory>();
-				var logger = loggerFactory.CreateLogger<Arma3PayloadExtended>();
-					
-				Arma3PayLoadExtension.Options(logger, factory); //- Setup Extension Methods
-			}
 
 			app.Run();
 		}

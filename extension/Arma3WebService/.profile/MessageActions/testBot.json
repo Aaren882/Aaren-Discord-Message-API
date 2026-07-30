@@ -1,0 +1,101 @@
+{
+  "click_me" : {
+    "componentType": "Button",
+    "Steps": [{
+      "$type": "Respond",
+      "message":{
+        "components": [
+          {
+            "type": 12,
+            "items": [
+              {
+                "media": {"url": "https://discord.com/channels/1236040708696182908/1476133789552869541/1488923084726603789"},
+                "description": "An aerial view looking down on older industrial complex buildings. The main building is white with many windows and pipes running up the walls."
+              },
+              {
+                "media": {"url": "https://cdn.discordapp.com/attachments/1480154231355867227/1488247765518516459/WhippinDisHoe.mp4?ex=69ed0bbd&is=69ebba3d&hm=999bb344f69e6a6decad60e88c52b9cd07f4af707748cbb693122ea905b5fe6c&"},
+                "description": "An aerial view of old broken buildings. Nature has begun to take root in the rooftops. A portion of the middle building's roof has collapsed inward. In the distant haze you can make out a far away city."
+              },
+              {
+                "media": {"url": "https://static.scientificamerican.com/sciam/cache/file/2AE14CDD-1265-470C-9B15F49024186C10_source.jpg?crop=1%3A1%2Csmart&w=1000"},
+                "description": "A street view of a downtown city. Prominently in photo are skyscrapers and a domed building"
+              }
+            ]
+          }
+        ]
+      }
+    }]
+  },
+  "server_actions" : {
+    "componentType": "SelectMenu",
+    "Options": {
+      "mod_list" : {
+        "Steps": [
+          {
+            "$type": "WithFile",
+            "ephemeral": true,
+            "message": {
+              "File": "testBot.json",
+              "FileName": "test.html",
+              "components": [
+                {
+                  "type": 13,
+                  "file": {
+                    "url": "attachment://test.html"
+                  }
+                },
+                {
+                  "type": 12,
+                  "items": [
+                    {
+                      "media": {
+                        "url": "https://discord.com/channels/1236040708696182908/1476133789552869541/1488923084726603789"
+                      },
+                      "description": "An aerial view looking down on older industrial complex buildings. The main building is white with many windows and pipes running up the walls."
+                    },
+                    {
+                      "media": {
+                        "url": "https://cdn.discordapp.com/attachments/1480154231355867227/1488247765518516459/WhippinDisHoe.mp4?ex=69ed0bbd&is=69ebba3d&hm=999bb344f69e6a6decad60e88c52b9cd07f4af707748cbb693122ea905b5fe6c&"
+                      },
+                      "description": "An aerial view of old broken buildings. Nature has begun to take root in the rooftops. A portion of the middle building's roof has collapsed inward. In the distant haze you can make out a far away city."
+                    },
+                    {
+                      "media": {
+                        "url": "https://static.scientificamerican.com/sciam/cache/file/2AE14CDD-1265-470C-9B15F49024186C10_source.jpg?crop=1%3A1%2Csmart&w=1000"
+                      },
+                      "description": "A street view of a downtown city. Prominently in photo are skyscrapers and a domed building"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "upload_list": {
+        "Steps": [
+          {
+            "$type": "RespondModal",
+            "message": {
+              "custom_id": "bug_submit_modal",
+              "title": "Upload Mod List (html)",
+              "components": [
+                {
+                  "type": 18,
+                  "label": "File Upload",
+                  "description": "Please upload the mod list for the mission. (It only takes one html file)",
+                  "component": {
+                    "type": 19,
+                    "custom_id": "file_upload",
+                    "min_values": 1,
+                    "required": true
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
