@@ -1,9 +1,10 @@
 using System.Net.WebSockets;
 using System.Text;
-using Arma3WebService.Entity;
 using Components.Entity;
 using System.Text.Json;
 using Arma3WebService.Extensions;
+using Arma3WebService.Managers;
+using Arma3WebService.Entity;
 
 namespace Arma3WebService;
 
@@ -21,7 +22,10 @@ public interface IConnection
 	string? CloseStatusDescription();
 }
 
-public sealed class WebSocketConnection(WebsocketContextEntity websocketContext) : IConnection
+public sealed class WebSocketConnection(
+	WebsocketContextEntity websocketContext,
+	IArma3ActionManager Arma3ActionManager
+) : IConnection
 {
 	private WebSocket _webSocket;
 	private readonly CancellationToken _cts = websocketContext.CancellationToken;
@@ -44,17 +48,18 @@ public sealed class WebSocketConnection(WebsocketContextEntity websocketContext)
 			//- Deserialize Payload
 			var receivedMessage = Encoding.UTF8.GetString(memoryStream.ToArray());
 			if (string.IsNullOrEmpty(receivedMessage)) continue;
-			
+
 			var payload = JsonSerializer.Deserialize(
 				receivedMessage,
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
-			
+
 			//- Execute
-			await websocketContext
-				.CreateAction(this, payload)
-				.DoAction;
-			
+			// await websocketContext
+			// 	.CreateAction(this, payload)
+			// 	.DoAction;
+			await Arma3ActionManager.GetAction(this, payload);
+
 		} while (message.MessageType != WebSocketMessageType.Close);
 
 		return message.CloseStatus;

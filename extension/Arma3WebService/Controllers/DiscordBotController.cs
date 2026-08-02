@@ -1,5 +1,4 @@
 using Arma3WebService.Models;
-using Discord;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Arma3WebService.Controllers

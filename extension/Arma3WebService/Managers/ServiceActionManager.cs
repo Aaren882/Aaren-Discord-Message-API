@@ -9,8 +9,9 @@ using Components.Entity;
 using Discord;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
+using Arma3WebService.Entity;
 
-namespace Arma3WebService.Entity;
+namespace Arma3WebService.Managers;
 
 public sealed class ServiceActionManager(
 	ILogger<ServiceActionManager> logger,
@@ -68,7 +69,7 @@ public sealed class ServiceActionManager(
 				payload.JsonString,
 				Arma3PayloadExtendedJsonSerializerContext.Default.Arma3PayloadExtended
 			);
-			
+
 			if (deserialize == null) throw new NullReferenceException("JsonStringAction is Null.");
 			await deserialize.Invoke(connection, serviceProvider, dbContextFactory);
 		}
