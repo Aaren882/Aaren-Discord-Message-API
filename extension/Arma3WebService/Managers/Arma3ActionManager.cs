@@ -1,19 +1,19 @@
-using Arma3WebService.Entity;
-using Arma3WebService.Models;
 using Components.Entity;
+using Arma3WebService.Models;
 
 namespace Arma3WebService.Managers;
 
 public interface IArma3ActionManager
 {
-	Task GetAction(Arma3Action action);
+	// Task GetAction(Arma3Action action);
+	Task GetAction(IConnection connection, Arma3Payload payload);
 }
 
 public sealed class Arma3ActionManager(ServiceActionManager serviceAction, IDiscordBotService discordBotService) : IArma3ActionManager
 {
-	public async Task GetAction(Arma3Action action)
+	public async Task GetAction(IConnection connection, Arma3Payload payload)
 	{
-		var (connection, payload) = action;
+		// var (connection, payload) = action;
 
 		try
 		{

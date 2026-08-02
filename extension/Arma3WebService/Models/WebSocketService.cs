@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using Arma3WebService.Entity;
-using Arma3WebService.Factory;
 using Arma3WebService.Managers;
+using Arma3WebService.Factory;
+using static Arma3WebService.Factory.WebSocketConnectionManager;
 using static Arma3WebService.Factory.WebSocketConnectionFactory;
-using static Arma3WebService.Managers.WebSocketConnectionManager;
+using Arma3WebService.Entity;
 
 namespace Arma3WebService.Models
 {
@@ -73,8 +73,7 @@ namespace Arma3WebService.Models
 			finally
 			{
 				// Wait until the task completes or the stop token triggers
-				var connections = _connections.Values
-					.ToAsyncEnumerable()
+				var connections = _connections.Values.ToAsyncEnumerable()
 					.WithCancellation(cancellationToken);
 				
 				await foreach (var connection in connections)
