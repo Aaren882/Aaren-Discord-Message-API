@@ -1,10 +1,11 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using Arma3WebService.Managers;
-using Arma3WebService.Factory;
-using static Arma3WebService.Factory.WebSocketConnectionManager;
-using static Arma3WebService.Factory.WebSocketConnectionFactory;
 using Arma3WebService.Entity;
+using Arma3WebService.Factory;
+using Arma3WebService.Managers;
+using Component.Websocket;
+using static Arma3WebService.Factory.WebSocketConnectionFactory;
+using static Arma3WebService.Factory.WebSocketConnectionManager;
 
 namespace Arma3WebService.Models
 {
@@ -20,6 +21,7 @@ namespace Arma3WebService.Models
 
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
+		WebsocketWorker websocketWorker,
 		ServiceActionManager serviceActionManager,
 		RemoteStateManager remoteStateManager,
 		WebsocketContextEntityFactory contextEntityFactory,
@@ -50,13 +52,13 @@ namespace Arma3WebService.Models
 		}
 
 		public IEnumerable<string> GetConnectionsNames() => _connections.Keys;
-		
+
 		public Task InvokeArmaCallBack(Arma3RemoteCommand command)
 			=> serviceActionManager.CallBackAction(
 				GetConnection(command.gameId),
 				command.payload
 			);
-		
+
 		public Task StartAsync(CancellationToken cancellationToken)
 		{
 			_logger.LogInformation("WebSocket is Listening now");
@@ -75,7 +77,7 @@ namespace Arma3WebService.Models
 				// Wait until the task completes or the stop token triggers
 				var connections = _connections.Values.ToAsyncEnumerable()
 					.WithCancellation(cancellationToken);
-				
+
 				await foreach (var connection in connections)
 				{
 					await connection.Close();
@@ -84,8 +86,8 @@ namespace Arma3WebService.Models
 
 			_logger.LogInformation("WebSocket Has Stopped Listening...");
 		}
-		
-		public async Task CreateConnection(HttpContext context)
+
+		/* public async Task CreateConnection(HttpContext context)
 		{
 			var contextEntity = contextEntityFactory.CreateJsonStringContext(context);
 			var connectionIdentity = contextEntity.GetIdentity();
@@ -93,8 +95,8 @@ namespace Arma3WebService.Models
 			if (_connections.ContainsKey(connectionIdentity))
 			{
 				_logger.LogError(
-					"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'", 
-					connectionIdentity, 
+					"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'",
+					connectionIdentity,
 					contextEntity.Id
 				);
 				return;
@@ -109,7 +111,7 @@ namespace Arma3WebService.Models
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
 					connectionIdentity,
-					contextEntity.Id, 
+					contextEntity.Id,
 					contextEntity.ClientIpAddress,
 					_connections.Count
 				);
@@ -123,7 +125,7 @@ namespace Arma3WebService.Models
 				_logger.LogInformation(
 					"WebSocket '{Identity}'/'{ContextId}' - '{ClientIpAddress}' connection was cancelled. Total connections: {Counts}",
 					connectionIdentity,
-					contextEntity.Id, 
+					contextEntity.Id,
 					contextEntity.ClientIpAddress,
 					_connections.Count
 				);
@@ -134,7 +136,7 @@ namespace Arma3WebService.Models
 				_logger.LogWarning(
 					"Client '{Identity}'/'{ContextId}' - '{ClientIpAddress}' unexpectedly disconnected. Total connections: {Counts}",
 					connectionIdentity,
-					contextEntity.Id, 
+					contextEntity.Id,
 					contextEntity.ClientIpAddress,
 					_connections.Count
 				);
@@ -145,7 +147,7 @@ namespace Arma3WebService.Models
 					e,
 					"Client '{Identity}'/'{ContextId}' - '{ClientIpAddress}' \n disconnected. Total connections: {Counts}",
 					connectionIdentity,
-					contextEntity.Id, 
+					contextEntity.Id,
 					contextEntity.ClientIpAddress,
 					_connections.Count
 				);
@@ -156,7 +158,7 @@ namespace Arma3WebService.Models
 					e,
 					"Client '{Identity}'/'{ContextId}' - '{ClientIpAddress}' \n disconnected. Total connections: {Counts}",
 					connectionIdentity,
-					contextEntity.Id, 
+					contextEntity.Id,
 					contextEntity.ClientIpAddress,
 					_connections.Count
 				);
@@ -167,7 +169,7 @@ namespace Arma3WebService.Models
 				{
 					OnDisconnected.Invoke(contextEntity, connection);
 					_logger.LogInformation(
-						"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}", 
+						"\"({Status})\" connection \"{ConnectionIdentity}\" - \"{ConnectionRemoteIpAddress}\". Total connections: {ConnectionsCount}",
 						connection.CloseStatusDescription(),
 						contextEntity.GetIdentity(),
 						contextEntity.ClientIpAddress,
@@ -179,6 +181,33 @@ namespace Arma3WebService.Models
 					_logger.LogError("{connectionIdentity} was not found.", connectionIdentity);
 				}
 			}
+		} */
+		public async Task CreateConnection(HttpContext context)
+		{
+			var contextEntity = contextEntityFactory.CreateJsonStringContext(context);
+			var connectionIdentity = contextEntity.GetIdentity();
+
+			if (_connections.ContainsKey(connectionIdentity))
+			{
+				_logger.LogError(
+					"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'",
+					connectionIdentity,
+					contextEntity.Id
+				);
+				return;
+			}
+
+			_logger.LogInformation(
+				"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
+				connectionIdentity,
+				contextEntity.Id,
+				contextEntity.ClientIpAddress,
+				_connections.Count
+			);
+
+			//- Implement new Framework
+			var webSocket = await context.WebSockets.AcceptWebSocketAsync(subProtocol: null);
+			await websocketWorker.StartAsync(webSocket);
 		}
 
 
