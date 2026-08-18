@@ -60,7 +60,7 @@ namespace Arma3WebService
 			builder.Services.AddSingleton<DiscordBotRequestHandler>();
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
-			builder.Services.AddSingleton<WebsocketWorker, WebsocketServer>();
+			builder.Services.AddScoped<WebsocketServer>();
 
 			builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
 			builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
