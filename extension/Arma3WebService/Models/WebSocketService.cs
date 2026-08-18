@@ -11,9 +11,10 @@ namespace Arma3WebService.Models
 {
 	public interface IWebSocketService
 	{
-		IConnection GetConnection(string connectionIdentity);
-		Task InvokeArmaCallBack(Arma3RemoteCommand command);
-		Task CreateConnection(HttpContext context);
+		bool TryGetConnection(string connectionIdentity, out WebsocketServer? websocketServer);
+		ValueTask InvokeArmaCallBack(Arma3RemoteCommand command);
+		bool TryAddConnection(WebsocketContextEntity contextEntity, in WebsocketServer websocketWorker);
+		void RemoveConnection(WebsocketContextEntity contextEntity);
 		IEnumerable<string> GetConnectionsNames();
 		event Action<WebsocketContextEntity, IConnection> OnConnected;
 		event Action<WebsocketContextEntity, IConnection> OnDisconnected;
@@ -21,12 +22,8 @@ namespace Arma3WebService.Models
 
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
-		WebsocketWorker websocketWorker,
 		ServiceActionManager serviceActionManager,
-		RemoteStateManager remoteStateManager,
-		WebsocketContextEntityFactory contextEntityFactory,
-		IConnectionFactory connectionFactory,
-		IConnectionManager connectionManager
+		RemoteStateManager remoteStateManager
 	) : IWebSocketService, IHostedService, IDisposable
 	{
 		private readonly ILogger _logger = logger;
@@ -44,20 +41,25 @@ namespace Arma3WebService.Models
 			_ = remoteStateManager.UpdateGameSessionCacheAsync(entity.GetIdentity()).ConfigureAwait(false);
 		};
 
-		public IConnection GetConnection(string connectionIdentity)
+		public bool TryGetConnection(string connectionIdentity, out WebsocketServer? session)
 		{
-			return _connections.TryGetValue(connectionIdentity, out var session)
-				? session
-				: throw new NullReferenceException($"No \"{connectionIdentity}\" connection is not found.");
+			return _connectionWorkers.TryGetValue(connectionIdentity, out session);
 		}
 
-		public IEnumerable<string> GetConnectionsNames() => _connections.Keys;
+		public IEnumerable<string> GetConnectionsNames() => _connectionWorkers.Keys;
 
-		public Task InvokeArmaCallBack(Arma3RemoteCommand command)
-			=> serviceActionManager.CallBackAction(
-				GetConnection(command.gameId),
-				command.payload
-			);
+		public ValueTask InvokeArmaCallBack(Arma3RemoteCommand command)
+		{
+			if (TryGetConnection(command.gameId, out var session))
+			{
+				ArgumentNullException.ThrowIfNull(session);
+				return serviceActionManager.CallBackAction(
+					session,
+					command.payload
+				);
+			}
+			return ValueTask.CompletedTask;
+		}
 
 		public Task StartAsync(CancellationToken cancellationToken)
 		{
@@ -182,34 +184,60 @@ namespace Arma3WebService.Models
 				}
 			}
 		} */
-		public async Task CreateConnection(HttpContext context)
+		private readonly ConcurrentDictionary<string, WebsocketServer> _connectionWorkers = new();
+		public bool TryAddConnection(WebsocketContextEntity contextEntity, in WebsocketServer websocketWorker)
 		{
-			var contextEntity = contextEntityFactory.CreateJsonStringContext(context);
 			var connectionIdentity = contextEntity.GetIdentity();
+			var tryAdd = _connectionWorkers.TryAdd(connectionIdentity, websocketWorker);
 
-			if (_connections.ContainsKey(connectionIdentity))
+			if (tryAdd)
+			{
+				_logger.LogInformation(
+					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
+					connectionIdentity,
+					contextEntity.Id,
+					contextEntity.ClientIpAddress,
+					_connectionWorkers.Count
+				);
+				// OnConnected.Invoke(contextEntity, connection);
+			}
+			else
 			{
 				_logger.LogError(
 					"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'",
 					connectionIdentity,
 					contextEntity.Id
 				);
-				return;
 			}
 
-			_logger.LogInformation(
-				"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
-				connectionIdentity,
-				contextEntity.Id,
-				contextEntity.ClientIpAddress,
-				_connections.Count
-			);
-
-			//- Implement new Framework
-			var webSocket = await context.WebSockets.AcceptWebSocketAsync(subProtocol: null);
-			await websocketWorker.StartAsync(webSocket);
+			return tryAdd;
 		}
+		public void RemoveConnection(WebsocketContextEntity contextEntity)
+		{
+			var connectionIdentity = contextEntity.GetIdentity();
+			var tryRemove = _connectionWorkers.TryRemove(connectionIdentity, out _);
 
+			if (tryRemove)
+			{
+				_logger.LogInformation(
+					"Removed connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
+					connectionIdentity,
+					contextEntity.Id,
+					contextEntity.ClientIpAddress,
+					_connectionWorkers.Count
+				);
+				// OnDisconnected.Invoke(contextEntity, connection);
+			}
+			else
+			{
+				_logger.LogError(
+					"Refuse Remove. Connection is not exist. Name : '{Identity}'/'{ContextId}'. Total connections: {Count}",
+					connectionIdentity,
+					contextEntity.Id,
+					_connectionWorkers.Count
+				);
+			}
+		}
 
 		public void Dispose()
 		{
