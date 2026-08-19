@@ -19,7 +19,7 @@ internal static class DiscordBotAdminModalRespondHelper
 	public static IEnumerable<string> GetComponentCustomId(this DiscordBotAdminModalType modalType)
 		=> ComponentCustomId[modalType];
 	
-	public static async Task Extension(this DiscordBotAdminSimpleAction simpleAction, SocketMessageComponent component)
+	public static async ValueTask Extension(this DiscordBotAdminSimpleAction simpleAction, SocketMessageComponent component)
 	{
 		RespondAction content = (simpleAction.ModalType) switch
 		{
