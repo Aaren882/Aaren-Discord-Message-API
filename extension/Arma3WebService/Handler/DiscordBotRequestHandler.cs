@@ -1,26 +1,27 @@
+using Arma3WebService.Managers;
 using Components.Entity;
-using Arma3WebService;
 
 namespace Arma3WebService.Handler;
 
 public sealed class DiscordBotRequestHandler(
+	BinaryStreamManager binaryStreamManager,
 	ILogger<DiscordBotRequestHandler> logger
 )
 {
-	private delegate Task ReceivedAction(IConnection connection, Arma3PayloadServiceRequest payload);
-	public async Task OnReceived(IConnection connection, Arma3PayloadServiceRequest payload)
+	private delegate Task ReceivedAction(WebsocketServer connection, Arma3PayloadServiceRequest payload);
+	public Task OnReceived(WebsocketServer connection, Arma3PayloadServiceRequest payload)
 	{
 		ReceivedAction action = (payload) switch
 		{
-			{ ActionType : 1 } => ReceiveRptLineAction,
-			{ ActionType : 2 } => BinaryAction
+			{ ActionType: 1 } => ReceiveRptLineAction,
+			{ ActionType: 2 } => BinaryAction
 		};
 
-		await action(connection, payload);
+		return action(connection, payload);
 	}
-	private async Task ReceiveRptLineAction(IConnection connection, Arma3PayloadServiceRequest payload)
+	private async Task ReceiveRptLineAction(WebsocketServer connection, Arma3PayloadServiceRequest payload)
 	{
-		var content = "```ts\n";
+		/* var content = "```ts\n";
 		var readEnumerable = connection.ReceiveAndReadBinary().Reverse();
 		await foreach (var line in readEnumerable)
 		{
@@ -28,36 +29,43 @@ public sealed class DiscordBotRequestHandler(
 		}
 		content += "```";
 		logger.LogInformation("Receiving for Rpt Line '{TotalLength}'", content.Length);
-		
-		if (!DiscordBotAdminSubmitHelper.
-			    SubmittedModalSockets.
-			    TryRemove(payload.RequestGuildId,
-				    out var modalSocket)
+
+		if (!DiscordBotAdminSubmitHelper.SubmittedModalSockets.TryRemove(payload.RequestGuildId,
+					out var modalSocket)
 		   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
-			
-		await modalSocket.RespondAsync(text: content, ephemeral: true);
+
+		await modalSocket.RespondAsync(text: content, ephemeral: true); */
 	}
-	
-	private async Task BinaryAction(IConnection connection, Arma3PayloadServiceRequest payload)
+
+	private async Task BinaryAction(WebsocketServer connection, Arma3PayloadServiceRequest request)
 	{
-		logger.LogInformation("Receiving metaData for binary file '{Arma3PayloadRpt}'", payload);
-		
-		if (payload.Payload is Arma3PayloadBinary binaryPayload)
+		logger.LogInformation("Receiving metaData for binary file '{request}'", request);
+
+		if (request.Payload is Arma3PayloadBinary binaryPayload)
 		{
-			await using Stream memoryStream = new MemoryStream(); 
-			await connection.ReceiveBinary(memoryStream);
-			
-			if (!DiscordBotAdminSubmitHelper.
-				    SubmittedModalSockets.
-				    TryRemove(payload.RequestGuildId,
-					    out var modalSocket)
-			   ) throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {payload.RequestGuildId}.");
+			var payloadId = binaryPayload.GetIdentifier(connection.websocketContext.GetIdentity());
+			binaryStreamManager.TryAddBinaryValue(payloadId, binaryPayload, new MemoryStream());
+
+			await binaryStreamManager.WaitUntilBinaryStreamFinished(payloadId);
+
+			if (!DiscordBotAdminSubmitHelper.SubmittedModalSockets
+					.TryGetValue(request.RequestGuildId, out var modalSocket))
+			{
+				throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {request.RequestGuildId}.");
+			}
+
+			binaryStreamManager.TryRemoveBinaryValue(payloadId, out var metaData, out var writeStream);
+			logger.LogDebug("Successfully processed binary file \"{FileName}\" for payload \"{PayloadId}\"", metaData.FileName, payloadId);
 
 			await modalSocket.RespondWithFileAsync(
-				fileStream: memoryStream,
+				fileStream: writeStream,
 				fileName: binaryPayload.FileName,
 				ephemeral: true
 			);
+
+			logger.LogInformation("Received Binary File \"{FileName}\"", metaData.FileName);
+			DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
+			await writeStream.DisposeAsync();
 		}
 		else
 		{
