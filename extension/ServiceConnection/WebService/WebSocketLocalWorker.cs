@@ -27,7 +27,7 @@ public record WebSocketWorkingTask(Arma3Payload? headerObj, Func<Task> webSocket
 			//- If Header exist and exception is thrown
 			if (!hasHeader) return;
 			
-			await serviceInteractions?.SendWebSocketMessageAsync(e.ToString())!;
+			// await serviceInteractions?.SendWebSocketMessageAsync(e.ToString())!;
 		}
 	}
 }
