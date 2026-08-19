@@ -10,7 +10,6 @@ public static class ServiceStartup
 {
     public static bool ExtensionInit { get; private set; }
     internal static DateTime ExtensionInitTime = DateTime.Now; //- must be static
-	
 	public static string? RptFileDirectory { get; set; }
 
 	public static ServiceInteractions? serviceInteractions { get; private set; }
@@ -43,7 +42,7 @@ public static class ServiceStartup
 			ExtensionStartup.Logger(e, "Initialization Failed");
 		}
 	}
-	
+
 	public static async Task InitializeAsync(string accessName, string? profilePayload = null)
 	{
 		if (serviceInteractions == null)
@@ -52,7 +51,7 @@ public static class ServiceStartup
 		}
 
 		ExtensionInit = true;
-		
+
 		//- Create
 		try
 		{

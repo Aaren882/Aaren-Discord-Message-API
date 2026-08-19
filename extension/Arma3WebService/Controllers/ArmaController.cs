@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
-using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Microsoft.AspNetCore.Mvc;
+using Arma3WebService.Managers;
 
 namespace Arma3WebService.Controllers
 {
@@ -17,7 +17,8 @@ namespace Arma3WebService.Controllers
 		ServiceActionManager serviceAction
 	) : ControllerBase
 	{
-		[HttpPost("RemoteCommand")]
+		//- #FIXME - InvokeArmaCallBack() implementation
+		/* [HttpPost("RemoteCommand")]
 		public async Task<IActionResult> RemoteCommand(Arma3RemoteCommand command)
 		{
 			try
@@ -30,7 +31,7 @@ namespace Arma3WebService.Controllers
 			{
 				return BadRequest(e.Message);
 			}
-		}
+		} */
 
 		[HttpGet("GetLogs/{sessionIdentity}")]
 		public async Task Get(string sessionIdentity)

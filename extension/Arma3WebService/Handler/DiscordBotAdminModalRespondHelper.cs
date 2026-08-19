@@ -33,7 +33,7 @@ internal static class DiscordBotAdminModalRespondHelper
 		var modal = content(simpleAction).Build();
 		await component.RespondWithModalAsync(modal);
 	}
-	
+
 	private static DiscordDto.ModalComponent UploadList(DiscordBotAdminSimpleAction simpleAction)
 	{
 		var componentCustomId = simpleAction.ModalType.GetComponentCustomId().First();

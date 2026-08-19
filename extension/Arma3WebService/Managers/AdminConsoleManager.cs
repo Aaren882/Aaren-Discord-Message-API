@@ -153,7 +153,7 @@ public sealed class AdminConsoleManager(
 	    }
     	catch (Exception e)
     	{
-    		logger.LogError("ERROR CreateAdminConsole : {Error}", e.Message);
+    		logger.LogError(e, "CreateAdminConsole: ");
     		await channel.SendMessageAsync($"Exception : {e.Message}");
     	}
     }
