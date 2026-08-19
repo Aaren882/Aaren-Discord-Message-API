@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
-using Arma3WebService.Managers;
 using Components.Entity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;

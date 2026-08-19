@@ -1,10 +1,8 @@
 using System.Net;
-using Arma3WebService.Factory;
-using Arma3WebService.Managers;
-using Arma3WebService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Arma3WebService.Managers;
 
 namespace Arma3WebService.Controllers;
 

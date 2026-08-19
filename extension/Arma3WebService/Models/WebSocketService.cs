@@ -1,11 +1,6 @@
 using System.Collections.Concurrent;
-using System.Net.WebSockets;
 using Arma3WebService.Entity;
-using Arma3WebService.Factory;
 using Arma3WebService.Managers;
-using Component.Websocket;
-using static Arma3WebService.Factory.WebSocketConnectionFactory;
-using static Arma3WebService.Factory.WebSocketConnectionManager;
 
 namespace Arma3WebService.Models
 {
