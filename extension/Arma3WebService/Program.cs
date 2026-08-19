@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Arma3WebService.Configuration;
 using Arma3WebService.DBContext;
-using Arma3WebService.Managers;
 using Arma3WebService.Extensions;
 using Arma3WebService.Factory;
 using Arma3WebService.Handler;
@@ -14,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Net.Http.Headers;
 using Arma3WebService.Models;
-using Component.Websocket;
+using Arma3WebService.Managers;
 
 namespace Arma3WebService
 {
@@ -65,6 +64,7 @@ namespace Arma3WebService
 			// builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
 			// builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
 			// builder.Services.AddSingleton<IArma3ActionFactory, Arma3ActionFactory>();
+			builder.Services.AddSingleton<BinaryStreamManager>();
 			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
 			builder.Services.AddSingleton<WebsocketContextEntityFactory>();
 			builder.Services.AddSingleton<ServiceActionManager>();
