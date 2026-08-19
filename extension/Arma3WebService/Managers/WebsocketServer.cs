@@ -20,28 +20,33 @@ public sealed class WebsocketServer(
 	public required WebsocketContextEntity websocketContext;
 	public override void PostReceived(in Stream assembledStream, WebSocketMessageType messageType)
 	{
-		using StreamReader reader = new(assembledStream, Encoding.UTF8);
-		var receivedMessage = reader.ReadToEnd();
-		if (string.IsNullOrEmpty(receivedMessage))
+		try
 		{
-			Logger.LogTrace("\"{Identity}\" : Received empty \"{MessageType}\" Message.", websocketContext.GetIdentity(), messageType.ToString());
-			return;
+			using StreamReader reader = new(assembledStream, Encoding.UTF8);
+			var receivedMessage = reader.ReadToEnd();
+			if (string.IsNullOrEmpty(receivedMessage))
+			{
+				Logger.LogTrace("\"{Identity}\" : Received empty \"{MessageType}\" Message.", websocketContext.GetIdentity(), messageType.ToString());
+				return;
+			}
+
+			var payload = JsonSerializer.Deserialize(
+				receivedMessage,
+				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+			)!;
+
+			Task.Run(async () => await arma3ActionManager.GetAction(this, payload), websocketContext.CancellationToken)
+				.GetAwaiter()
+				.GetResult();
 		}
-
-		var payload = JsonSerializer.Deserialize(
-			receivedMessage,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		)!;
-		Console.WriteLine($"From Client : {receivedMessage}");
-
-		Task.Run(async () => await arma3ActionManager.GetAction(this, payload), websocketContext.CancellationToken)
-			.GetAwaiter()
-			.GetResult();
-	}
-	public ValueTask Send(string payload, WebSocketMessageType messageType, bool endOfMessage)
-	{
-		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
-		return WebSocketStateMachine.SendMessageAsync(Encoding.UTF8.GetBytes(payload), messageType, endOfMessage);
+		catch (JsonException e)
+		{
+			Logger.LogWarning(e, "JsonException: ");
+		}
+		catch (Exception e)
+		{
+			Logger.LogError(e, "Fatal Exception: ");
+		}
 	}
 	public async Task StartAsync(HttpContext context)
 	{
