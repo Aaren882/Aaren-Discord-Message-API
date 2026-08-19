@@ -1,5 +1,6 @@
-using Components.Entity;
+using System.Collections.Concurrent;
 using Arma3WebService.Models;
+using Components.Entity;
 
 namespace Arma3WebService.Managers;
 
@@ -16,19 +17,21 @@ public sealed class Arma3ActionManager(ServiceActionManager serviceAction, IDisc
 		{
 			var result = payload switch
 			{
-				Arma3PayloadText payloadText => 
+				Arma3PayloadText payloadText =>
 					serviceAction.TextAction(connection, payloadText),
 				Arma3PayloadBinary payloadBinary =>
 					serviceAction.BinaryAction(connection, payloadBinary),
+				Arma3PayloadBinaryContent payloadBinary =>
+					serviceAction.BinaryContentAction(connection, payloadBinary),
 				Arma3PayloadCallBack payloadCallBack =>
 					serviceAction.CallBackAction(connection, payloadCallBack),
-				Arma3PayloadServiceRequest payloadServiceRequest => 
+				Arma3PayloadServiceRequest payloadServiceRequest =>
 					serviceAction.ServiceRequestAction(connection, payloadServiceRequest),
 				Arma3PayloadJson payloadJson =>
 					serviceAction.JsonStringAction(connection, payloadJson),
-				Arma3PayloadFlatJsonString payloadFlatJsonString => 
+				Arma3PayloadFlatJsonString payloadFlatJsonString =>
 					serviceAction.FlatJsonStringAction(connection, payloadFlatJsonString),
-				
+
 				_ => throw new ArgumentOutOfRangeException(nameof(payload.Type), payload.Type, null)
 			};
 			await result;
