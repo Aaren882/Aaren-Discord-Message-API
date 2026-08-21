@@ -183,9 +183,8 @@ namespace Arma3WebService.Models
 		public bool TryAddConnection(WebsocketContextEntity contextEntity, in WebsocketServer websocketWorker)
 		{
 			var connectionIdentity = contextEntity.GetIdentity();
-			var tryAdd = _connectionWorkers.TryAdd(connectionIdentity, websocketWorker);
 
-			if (tryAdd)
+			if (_connectionWorkers.TryAdd(connectionIdentity, websocketWorker))
 			{
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
@@ -195,24 +194,22 @@ namespace Arma3WebService.Models
 					_connectionWorkers.Count
 				);
 				// OnConnected.Invoke(contextEntity, connection);
-			}
-			else
-			{
-				_logger.LogError(
-					"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'",
-					connectionIdentity,
-					contextEntity.Id
-				);
+				return true;
 			}
 
-			return tryAdd;
+			_logger.LogError(
+				"Refuse Request. Connection already exist. Name : '{Identity}'/'{ContextId}'",
+				connectionIdentity,
+				contextEntity.Id
+			);
+
+			return false;
 		}
 		public void RemoveConnection(WebsocketContextEntity contextEntity)
 		{
 			var connectionIdentity = contextEntity.GetIdentity();
-			var tryRemove = _connectionWorkers.TryRemove(connectionIdentity, out _);
 
-			if (tryRemove)
+			if (_connectionWorkers.TryRemove(connectionIdentity, out var websocketServer))
 			{
 				_logger.LogInformation(
 					"Removed connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
@@ -221,17 +218,16 @@ namespace Arma3WebService.Models
 					contextEntity.ClientIpAddress,
 					_connectionWorkers.Count
 				);
+				websocketServer?.Dispose();
 				// OnDisconnected.Invoke(contextEntity, connection);
+				return;
 			}
-			else
-			{
-				_logger.LogError(
-					"Refuse Remove. Connection is not exist. Name : '{Identity}'/'{ContextId}'. Total connections: {Count}",
-					connectionIdentity,
-					contextEntity.Id,
-					_connectionWorkers.Count
-				);
-			}
+			_logger.LogError(
+				"Refuse Remove. Connection is not exist. Name : '{Identity}'/'{ContextId}'. Total connections: {Count}",
+				connectionIdentity,
+				contextEntity.Id,
+				_connectionWorkers.Count
+			);
 		}
 
 		public void Dispose()
