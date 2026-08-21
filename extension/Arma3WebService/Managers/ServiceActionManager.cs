@@ -44,7 +44,7 @@ public sealed class ServiceActionManager(
 			Path.Combine(DirectoryPrefix!, FileName),
 			FileMode.OpenOrCreate, FileAccess.Write
 		);
-		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs);
+		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, () => {});
 	}
 	public async ValueTask BinaryContentAction(WebsocketServer connection, Arma3PayloadBinaryContent payload)
 	{
@@ -52,8 +52,7 @@ public sealed class ServiceActionManager(
 
 		try
 		{
-			if (!binaryStreamManager.TryPushBinaryContent(payload))
-				throw new Exception("Push Binary Content Failed...");
+			await binaryStreamManager.PushBinaryContentAsync(payload);
 		}
 		catch (Exception e)
 		{
@@ -68,7 +67,7 @@ public sealed class ServiceActionManager(
 
 		try
 		{
-			_ = Task.Run(() => requestHandler.OnReceived(connection, payload));
+			await requestHandler.OnReceived(connection, payload);
 		}
 		catch (Exception e)
 		{
