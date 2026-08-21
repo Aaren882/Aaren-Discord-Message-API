@@ -44,8 +44,8 @@ public record Arma3PayloadBinary
 	string FileName,
 	long FileSize,
 	DateTime CreatedTime,
-	int TotalChunks,
-	string? DirectoryPrefix
+	int TotalChunks = -1,
+	string? DirectoryPrefix = null
 ) : Arma3Payload
 {
 	[JsonIgnore]
