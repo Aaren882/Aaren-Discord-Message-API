@@ -58,6 +58,6 @@ public sealed class WebsocketServer(
 		websocketContext = contextEntity;
 
 		await StartAsync(webSocket, websocketContext.CancellationToken);
-		service.RemoveConnection(contextEntity); //- Clean up
+		service.RemoveConnection(websocketContext);
 	}
 }
