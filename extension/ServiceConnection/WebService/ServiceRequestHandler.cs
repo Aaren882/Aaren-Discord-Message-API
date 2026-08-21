@@ -19,57 +19,52 @@ public sealed class ServiceRequestHandler
 	private async ValueTask GetRespond(Arma3PayloadServiceRequest request)
 	{
 		ArgumentNullException.ThrowIfNull(serviceInteractions);
+		ArgumentNullException.ThrowIfNull(RptFileDirectory);
+		FileInfo RPTFileInfo = new(RptFileDirectory);
 
 		//- which action should do
+		Func<ValueTask>? task = null;
 		switch (request.ActionType)
 		{
 			case 1: //- Send Rpt lines
-				ArgumentNullException.ThrowIfNull(RptFileDirectory);
-				await RespondWebSocketPrintRpt(RptFileDirectory, 50);
+				Arma3PayloadBinary RptLineMetaData = new
+				(
+					RPTFileInfo.Name,
+					RPTFileInfo.Length,
+					RPTFileInfo.CreationTime
+				);
+				request = request with { Payload = RptLineMetaData };
+				task = () => serviceInteractions.WsClient.SendRptLinesAsync(serviceInteractions!.AccessName, RptFileDirectory, RptLineMetaData, 50);
 				break;
 			case 2: //- RequestRpt
-				ArgumentNullException.ThrowIfNull(RptFileDirectory);
 				const int chunkSize = 60 * 1024;
-				var fileInfo = new FileInfo(RptFileDirectory);
-				var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+				var totalChunks = (int)Math.Ceiling((double)RPTFileInfo.Length / chunkSize);
 
 				// Send Metadata (as text message)
-				Arma3PayloadBinary metadata = new
+				Arma3PayloadBinary BinaryMetaData = new
 				(
-					fileInfo.Name,
-					fileInfo.Length,
-					fileInfo.CreationTime,
+					RPTFileInfo.Name,
+					RPTFileInfo.Length,
+					RPTFileInfo.CreationTime,
 					totalChunks,
 					null
 				);
 
-				request = request with { Payload = metadata };
-
-				//- Send MetaData
-				var payload = JsonSerializer.SerializeToUtf8Bytes(
-					request,
-					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-				)!;
-				await serviceInteractions.WsClient.SendAsync(payload, WebSocketMessageType.Binary, true);
-				await serviceInteractions.WsClient.SendBinaryAsync(serviceInteractions!.AccessName, RptFileDirectory, metadata, chunkSize);
-				// await RespondWebSocketExportRpt(RptFileDirectory, metadata);
+				request = request with { Payload = BinaryMetaData };
+				task = () => serviceInteractions.WsClient.SendBinaryAsync(serviceInteractions!.AccessName, RptFileDirectory, BinaryMetaData, chunkSize);
 				break;
 		}
+		ArgumentNullException.ThrowIfNull(task);
 
 		//- Put respond into websocket queue first
 		Logger(null, $"{nameof(ServiceRequestHandler)}.{nameof(GetRespond)} : \nrequest = {request}");
-		/* serviceInteractions?.SocketLocalWorker.WebSocketTrafficWriter(
-			request,
-			() => task!
-		); */
-	}
 
-	private async ValueTask RespondWebSocketPrintRpt(string filePath, int linesCount)
-	{
-		// await serviceInteractions?.WsClient.SendRptLinesAsync(filePath, linesCount)!;
-	}
-	private async ValueTask RespondWebSocketExportRpt(string filePath, Arma3PayloadBinary metadata)
-	{
-		// return serviceInteractions!.WsClient.SendBinaryAsync(filePath, metadata);
+		//- Send MetaData
+		var payload = JsonSerializer.SerializeToUtf8Bytes(
+			request,
+			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+		)!;
+		await serviceInteractions.WsClient.SendAsync(payload, WebSocketMessageType.Binary, true);
+		await task.Invoke();
 	}
 }

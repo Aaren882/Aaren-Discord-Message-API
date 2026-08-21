@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -64,6 +65,74 @@ public sealed class WebsocketClient(
 		}
 
 		Logger.LogInformation("Sent Binary: {File}", filePath);
+	}
+	public async ValueTask SendRptLinesAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary, int linesCount)
+	{
+		Logger.LogInformation("Sending RPT : {linesCount} lines", linesCount);
+
+		if (HasConnection)
+		{
+			var sw = Stopwatch.StartNew();
+			await using var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+			var lastLines = await GetLastLinesAsync(fileStream, linesCount);
+			lastLines.Reverse();
+
+			var identifier = payloadBinary.GetIdentifier(accessName);
+			var lineCount = lastLines.Count;
+			var charCount = 0;
+
+			Arma3PayloadBinaryContent content;
+			byte[] bytes;
+			foreach (var (line, i) in lastLines.Select((value, i) => (value, i)))
+			{
+				var wLine = line + "\n";
+				charCount += wLine.Length;
+
+				content = new(identifier, Encoding.UTF8.GetBytes(wLine), false);
+				bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+				await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+
+				if (charCount > 1980)
+				{
+					Logger.LogWarning("SendRptLines has reached limit: \"{line}\".", line);
+					lineCount = i;
+					break;
+				}
+			}
+			Logger.LogInformation("SendRptLines [{lineCount}]: {filePath}", lineCount, filePath);
+
+			content = new(identifier, [], true);
+			bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+
+			sw.Stop();
+			Logger.LogInformation("{Function} Execution took: {sw.ElapsedMilliseconds} ms", nameof(SendRptLinesAsync), sw.ElapsedMilliseconds);
+		}
+		else
+		{
+			Logger.LogError("WebSocket is not connected. Cannot send message.");
+		}
+
+		return;
+
+		static async Task<List<string>> GetLastLinesAsync(FileStream stream, int count)
+		{
+			if (count <= 0) return [];
+			using StreamReader reader = new(stream, Encoding.UTF8);
+			Queue<string> queue = new(count);
+
+			while (!reader.EndOfStream)
+			{
+				var line = await reader.ReadLineAsync();
+
+				if (line is null) continue;
+
+				if (queue.Count == count) queue.Dequeue();
+				queue.Enqueue(line);
+			}
+			return queue.ToList();
+		}
 	}
 	public async Task StartAsync(string uri, string? authToken)
 	{
