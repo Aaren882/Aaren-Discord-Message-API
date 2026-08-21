@@ -44,7 +44,7 @@ public sealed class ServiceActionManager(
 			Path.Combine(DirectoryPrefix ?? ".temp", FileName),
 			FileMode.OpenOrCreate, FileAccess.Write
 		);
-		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, () => {});
+		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, () => { });
 	}
 	public async ValueTask BinaryContentAction(WebsocketServer connection, Arma3PayloadBinaryContent payload)
 	{
@@ -140,7 +140,7 @@ public sealed class ServiceActionManager(
 		var serverInfo = dbContext.ServerInfoList.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
 		if (serverInfo is null) return;
 
-		var infoMessage = await File.ReadAllTextAsync(serverInfo.messageTemplatePath);
+		var infoMessage = await File.ReadAllTextAsync(serverInfo.messageTemplatePath!);
 		infoMessage = logItem.Aggregate(
 			infoMessage,
 			(current, item) => current.Replace(item.Key, item.Value)
@@ -161,15 +161,15 @@ public sealed class ServiceActionManager(
 			[
 				new DiscordDto.ButtonComponent(
 					label: "MOD",
+					emoji: new(0, "📦"),
 					url: url,
-					emoji: new Emote(0, "📦"),
 					style: ButtonStyle.Link
 				)
 			];
 			components.Add(new DiscordDto.ActionRowComponent(additionalComponents));
 		}
 
-		messageDto.Components = components;
+		messageDto!.Components = components;
 		await discordBotService.ModifyMessageAsync(serverIdentity.messageId, messageDto!);
 	}
 	public async ValueTask SSE_Logging(HttpContext ctx, string sessionIdentity)
