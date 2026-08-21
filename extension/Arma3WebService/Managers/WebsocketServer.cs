@@ -35,9 +35,8 @@ public sealed class WebsocketServer(
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
 
-			Task.Run(async () => await arma3ActionManager.GetAction(this, payload), websocketContext.CancellationToken)
-				.GetAwaiter()
-				.GetResult();
+			if (!arma3ActionManager.TryEnqueueAction(this, payload))
+				throw new InvalidOperationException($"Enqueue failed on {websocketContext.GetIdentity()}: \"{payload}\"");
 		}
 		catch (JsonException e)
 		{
