@@ -96,21 +96,6 @@ public sealed class BinaryStreamManager
 		await semaphore.WaitAsync();
 		Logger.LogInformation("Binary stream finished for identifier: {Identifier}", identifier);
 	}
-	/* public async IAsyncEnumerable<string> WaitUntilAsAsyncEnumerable(string identifier)
-	{
-		if (!TryGetBinaryValue(identifier, out _, out var writeStream))
-			throw new ArgumentOutOfRangeException(nameof(identifier), $"Binary value with identifier '{identifier}' not found.");
-
-		using StreamReader sr = new(writeStream);
-		while (!sr.EndOfStream)
-		{
-
-			if (line != null)
-			{
-				yield return line;
-			}
-		}
-	} */
 	private async Task DoLoop()
 	{
 		try
