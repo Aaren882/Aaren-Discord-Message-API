@@ -42,6 +42,7 @@
     <ProjectReference Include="..\Arma3WebService.Migrations.NpgSQL\Arma3WebService.Migrations.NpgSQL.csproj" />
     <ProjectReference Include="..\Arma3WebService.Migrations.SQLite\Arma3WebService.Migrations.SQLite.csproj" />
     <ProjectReference Include="..\Components\Components.csproj" />
+    <ProjectReference Include="..\Component.Websocket\Component.Websocket.csproj" />
   </ItemGroup>
 
   <ItemGroup>

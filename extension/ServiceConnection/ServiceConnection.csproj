@@ -26,6 +26,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Components\Components.csproj" />
       <ProjectReference Include="..\ExtensionComponents\ExtensionComponents.csproj" />
+      <ProjectReference Include="..\Component.Websocket\Component.Websocket.csproj" />
     </ItemGroup>
 
     <ItemGroup>
