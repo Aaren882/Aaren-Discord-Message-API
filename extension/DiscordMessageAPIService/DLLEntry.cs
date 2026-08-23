@@ -10,9 +10,9 @@ using static ExtensionComponents.ExtensionStartup;
 
 namespace DiscordMessageAPIService;
 
-public class DllEntry
+public sealed class DllEntry
 {
-    /// <summary>
+	/// <summary>
 	/// Register callback for Arma
 	/// </summary>
 	/// <param name="functionPtr"></param>
@@ -26,8 +26,7 @@ public class DllEntry
 		}
 		catch (Exception e)
 		{
-			LoggerBase.Trace("RVExtensionRegisterCallback", "ERROR...");
-			LoggerBase.Log(e);
+			LoggerBase.Log(e, "RVExtensionRegisterCallback");
 		}
 	}
 
@@ -40,34 +39,33 @@ public class DllEntry
 	[UnmanagedCallersOnly(EntryPoint = "RVExtensionVersion")]
 	public static void RVExtensionVersion(nint outputPrt, int outputSize)
 	{
-		//- Clean up logs
-		LoggerBase.CleanLogs();
-		
-		var services = new ServiceCollection();
+		ServiceCollection services = new();
 		services.AddSingleton<ServiceInteractions>();
-		services.AddSingleton<ILocalServices,LocalServices>();
+		services.AddSingleton<ILocalServices, LocalServices>();
 		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
+		services.AddSingleton<ServiceRequestHandler>();
+		services.AddSingleton<WebsocketClient>();
+		services.SetupFileLogger();
 
 		var serviceProvider = services.BuildServiceProvider();
-		
+
 		//- Setup Service Configuration (including Extension Configuration)
 		ServiceStartup.InitConfiguration(
 			LoggerBase.Trace,
 			LoggerBase.Log,
 			serviceProvider
 		);
-		
-		var version = typeof(DllEntry).GetTypeInfo().Assembly 
+
+		var version = typeof(DllEntry).GetTypeInfo().Assembly
 			.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
 			.InformationalVersion;
-		
-		version = version
-			.Substring(0, version.LastIndexOf('+') + 9);
+
+		version = version[..(version.LastIndexOf('+') + 9)];
 
 		LoggerBase.Log(null, $"Extension Version : [{version}]");
 		localServices.Output(outputPrt, outputSize, version);
 	}
-	
+
 	/// <summary>
 	/// Receives context information .
 	/// </summary>from Arma 3 about the execution environment
@@ -91,7 +89,7 @@ public class DllEntry
 			args[3]!,
 			Convert.ToInt16(args[4])
 		);
-		LoggerBase.Trace(nameof(ContextInfo),ContextInfo.ToString());
+		LoggerBase.Trace(nameof(ContextInfo), ContextInfo.ToString());
 	}
 
 	/// <summary>
@@ -134,10 +132,10 @@ public class DllEntry
 			LoggerBase.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
 			//args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
 		}
-		
+
 		var functionName = Marshal.PtrToStringUTF8(function)!;
-		var output = new OutputBuilder(outputPrt, outputSize);
-		var argsAction = new ArgsAction(output, args, functionName);
+		OutputBuilder output = new(outputPrt, outputSize);
+		ArgsAction argsAction = new(output, args, functionName);
 
 		return localServices.ExecuteArgsAction(argsAction);
 	}

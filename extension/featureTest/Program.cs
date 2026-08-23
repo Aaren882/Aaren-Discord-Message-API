@@ -9,6 +9,7 @@ using Discord;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using ExtensionComponents;
 using ExtensionComponents.Entity;
+using ExtensionComponents.Tools;
 using featureTest;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,14 +38,15 @@ namespace DiscordMessageAPI
 			{
 				builder
 					.AddConsole()
+					// .UseDefaultFileLogger()
 					.SetMinimumLevel(LogLevel.Debug);
 			});
 
 			await using var serviceProvider = services.BuildServiceProvider();
 
 			ServiceStartup.InitConfiguration(
-				(a, b) => Console.WriteLine($"\"{a}\" : {b}"),
-				(a, b) => Console.WriteLine($"\"{a?.Message}\" \n\n:- ADDITIONAL -: {b}"),
+				LoggerBase.Trace,
+				LoggerBase.Log,
 				serviceProvider
 			);
 
