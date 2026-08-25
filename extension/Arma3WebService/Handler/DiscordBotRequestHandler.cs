@@ -55,13 +55,17 @@ public sealed class DiscordBotRequestHandler(
 						content += "```";
 
 						if (content.Length >= 2000)
-							throw new OverflowException("Content length exceeds 2000 characters.");
+							throw new OverflowException($"\"{nameof(ReceiveRptLineAction)}\" Content length exceeds 2000 characters.");
 
 						await modalSocket.RespondAsync(text: content, ephemeral: true);
 
 						logger.LogInformation("Received Binary File \"{FileName}\"", metaData.FileName);
 						DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
 						await writeStream.DisposeAsync();
+					}
+					catch (OverflowException ex)
+					{
+						logger.LogWarning(ex.Message);
 					}
 					catch (TimeoutException ex)
 					{
