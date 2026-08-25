@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
-using System.Text.Json;
 using ExtensionComponents.Tools;
 using static ExtensionComponents.ExtensionStartup;
 
@@ -11,71 +11,68 @@ namespace ServiceConnection.WebService;
 
 public sealed class ServiceInteractions
 {
-	private const string Secret = "secret.json"; 
+	private const string Secret = "secret.json";
 	private readonly Arma3ServiceSecret ServiceSecret;
-	
-	private string? AccessName;
 
-	public event Action<IdentityRolesReturnPayload>? ServiceAccessResult = (authTokenPayload) => {
-		var callBack = new Arma3PayloadCallBack(
-			Data : $"[{authTokenPayload is not { AuthToken: null }},{authTokenPayload.AdditionalPayload ?? "[]"}]",
-			Function : "ServiceAccessResult"
+	internal string AccessName { get; private set; } = "";
+
+	public event Action<IdentityRolesReturnPayload>? ServiceAccessResult = (authTokenPayload) =>
+	{
+		Arma3PayloadCallBack callBack = new(
+			Function: "ServiceAccessResult",
+			Data: $"[{authTokenPayload is not { AuthToken: null }},{authTokenPayload.AdditionalPayload ?? "[]"}]"
 		);
 		Util.CallExtensionCallback(Callback, callBack);
 	};
-	public readonly WebSocketClient WsClient;
-	public readonly WebSocketLocalWorker SocketLocalWorker = new ();
-	
+	public WebsocketClient WsClient { get; init; }
+	// public readonly WebSocketLocalWorker SocketLocalWorker = new();
+
 	public string? RPTDirectory { get; internal set; }
 
-	public ServiceInteractions()
+	public ServiceInteractions(WebsocketClient websocket)
 	{
 		ServiceSecret = GetServiceSecret();
 		if (ServiceSecret.RPT_Directory != null)
 			RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
-		
-		WsClient = new WebSocketClient(ServiceSecret.WebSocketServiceUri);
+
+		WsClient = websocket;
 		WsClient.Connected += () =>
 		{
-			Logger(null, "INFO: Connected to server");
-			
-			var callBack = new Arma3PayloadCallBack(
-				Data : "[true]",
-				Function : "ConnectionChanged"
+			Arma3PayloadCallBack callBack = new(
+				Function: "ConnectionChanged",
+				Data: "[true]"
 			);
 			Util.CallExtensionCallback(Callback, callBack);
 		};
 		WsClient.Disconnected += () =>
 		{
-			Logger(null, "INFO: Disconnected from server");
-			
-			var callBack = new Arma3PayloadCallBack(
-				Data : "[false]",
-				Function : "ConnectionChanged"
+			Arma3PayloadCallBack callBack = new(
+				Function: "ConnectionChanged",
+				Data: "[false]"
 			);
 			Util.CallExtensionCallback(Callback, callBack);
 		};
 		WsClient.MessageReceived += (message) =>
 		{
-			Tracer("MessageReceived (message)", message.ToString());
+			// Tracer("MessageReceived (message)", message.ToString());
 			Util.CallExtensionCallback(Callback, message);
 		};
 	}
-	
+
 	public async Task EstablishWebSocketConnection(string accessName, string profilePayload)
 	{
-		if (WsClient.Status == WebSocketState.Open)
+		if (WsClient.HasConnection)
 		{
 			Logger(null, "WebSocket connection already established.");
 			return;
 		}
-		
+
 		var tokenPayload = await GetAccessToken(accessName, profilePayload);
-		await WsClient.ConnectAsync(tokenPayload.AuthToken);
+		await WsClient.StartAsync(ServiceSecret.WebSocketServiceUri, tokenPayload.AuthToken);
 	}
-	public async Task DisconnectWebSocket(string description = "Client disconnect")
+	public Task DisconnectWebSocket(string description = "Client disconnect")
 	{
-		await WsClient.DisconnectAsync(description);
+		return WsClient.CloseAsync();
 	}
 	public async Task ReconnectWebSocket(string profilePayload)
 	{
@@ -83,18 +80,18 @@ public sealed class ServiceInteractions
 		await EstablishWebSocketConnection(AccessName, profilePayload);
 	}
 	public void SendWebSocketMessage(string messageJson)
-		=> SocketLocalWorker.WebSocketTrafficWriter(() => WsClient.SendMessageAsync(messageJson));
-	
-	internal Task SendWebSocketMessageAsync(string messageJson)
-		=> WsClient.SendMessageAsync(messageJson);
+		=> Task.Run(async () => await SendWebSocketMessageAsync(messageJson));
 
-	public void SendWebSocketBinaries(Dictionary<string,string> binaryDict, int chunkSize = 64 * 1024)
+	internal ValueTask SendWebSocketMessageAsync(string messageJson)
+		=> WsClient.SendAsync(messageJson, WebSocketMessageType.Text, true);
+
+	public void SendWebSocketBinaries(Dictionary<string, string> binaryDict, int chunkSize = 64 * 1024)
 	{
 		Logger(null, "INFO: Sending binaries");
 		foreach (var (directoryPrefix, filePath) in binaryDict)
 			SendWebSocketBinary(filePath, directoryPrefix, chunkSize);
 	}
-	
+
 	public void SendWebSocketRptLines(string filePath, int linesCount)
 	{
 		Logger(null, $"INFO: Sending RPT \"{linesCount}\" lines");
@@ -104,33 +101,40 @@ public sealed class ServiceInteractions
 			fileInfo.Name,
 			fileInfo.CreationTime
 		);
-		
-		SocketLocalWorker.WebSocketTrafficWriter(
+
+		/* SocketLocalWorker.WebSocketTrafficWriter(
 			metadata,
 			() => WsClient.SendRptLinesAsync(filePath, linesCount)
-		);
+		); */
 	}
 	public void SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
-    {
-	    var fileInfo = new FileInfo(filePath);
-	    var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+	{
+		FileInfo fileInfo = new(filePath);
+		var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
 		Logger(null, $"INFO: Sending binary file \"{fileInfo.Name}\"");
 
-	    // Send Metadata (as text message)
-	    var metadata = new Arma3PayloadBinary
-	    (
-		    fileInfo.Name,
-		    fileInfo.Length,
-		    fileInfo.CreationTime,
-		    totalChunks,
-		    directoryPrefix
-	    );
-		
-	    SocketLocalWorker.WebSocketTrafficWriter(
-		    metadata,
-		    () => WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
-	    );
-    }
+		// Send Metadata (as text message)
+		Arma3PayloadBinary metadata = new
+		(
+			fileInfo.Name,
+			fileInfo.Length,
+			fileInfo.CreationTime,
+			totalChunks,
+			directoryPrefix
+		);
+
+		Task.Run(async () =>
+		{
+			var bytes = JsonSerializer.SerializeToUtf8Bytes(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
+			await WsClient.SendBinaryAsync(AccessName, filePath, metadata, chunkSize);
+		});
+
+		/* SocketLocalWorker.WebSocketTrafficWriter(
+			metadata,
+			() => WsClient.SendBinaryAsync(filePath, metadata, chunkSize)
+		); */
+	}
 
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
@@ -146,13 +150,13 @@ public sealed class ServiceInteractions
 			{
 				throw new Exception("INFO: No profile found.");
 			}
-			
+
 			//- Send Request for access token
 			var payload = new IdentityRolesPayload
 			{
 				Identity = new IdentityInfo
 				{
-					AccessName =  AccessName,
+					AccessName = AccessName,
 					Role = Role.GameServer
 				},
 				ExpireMinute = 15,
@@ -165,7 +169,7 @@ public sealed class ServiceInteractions
 
 			using var response = await APIRequest.PostRequest(
 				ServiceSecret.ServiceUri + "/api/token",
-				content : new StringContent(
+				content: new StringContent(
 					jsonPayload,
 					Encoding.UTF8, "application/json"
 				),
@@ -174,7 +178,7 @@ public sealed class ServiceInteractions
 					GetBasicAuthenticationBearer(ServiceSecret)
 				)
 			);
-			
+
 			//- Get the Token
 			var result = await response.Content.ReadAsStringAsync();
 			var authTokenPayload = JsonSerializer.Deserialize(
@@ -185,10 +189,10 @@ public sealed class ServiceInteractions
 
 			/*if (authTokenPayload is { AuthToken: null })
 				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");*/
-			
+
 			//- Established Socket Connection
 			ServiceAccessResult?.Invoke(authTokenPayload);
-			
+
 			return authTokenPayload;
 		}
 		catch (Exception e)
@@ -204,7 +208,7 @@ public sealed class ServiceInteractions
 			secretString,
 			Arma3PayloadJsonSerializerContext.Default.Arma3ServiceSecret
 		)!;
-		
+
 		Tracer("GetServiceSecret", secretString);
 		return tokenPayload;
 	}

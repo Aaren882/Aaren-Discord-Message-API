@@ -25,7 +25,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.17" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.ResourceMonitoring" Version="10.5.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
@@ -34,7 +34,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.6" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
     <PackageReference Include="System.Net.WebSockets" Version="4.3.0" />
-    <PackageReference Include="System.Text.Json" Version="10.0.3" />
+    <PackageReference Include="System.Text.Json" Version="10.0.10" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +42,7 @@
     <ProjectReference Include="..\Arma3WebService.Migrations.NpgSQL\Arma3WebService.Migrations.NpgSQL.csproj" />
     <ProjectReference Include="..\Arma3WebService.Migrations.SQLite\Arma3WebService.Migrations.SQLite.csproj" />
     <ProjectReference Include="..\Components\Components.csproj" />
+    <ProjectReference Include="..\Component.Websocket\Component.Websocket.csproj" />
   </ItemGroup>
 
   <ItemGroup>

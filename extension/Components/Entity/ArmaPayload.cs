@@ -7,6 +7,7 @@ public enum Arma3PayLoadType
 {
 	Text = 1,
 	Binary = 2,
+	BinaryContent = 8,
 	Command = 3,
 	RptLine = 4,
 	JsonString = 5,
@@ -17,6 +18,7 @@ public enum Arma3PayLoadType
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
 [JsonDerivedType(typeof(Arma3PayloadBinary), (int)Arma3PayLoadType.Binary)]
+[JsonDerivedType(typeof(Arma3PayloadBinaryContent), (int)Arma3PayLoadType.BinaryContent)]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
 [JsonDerivedType(typeof(Arma3PayloadRptLine), (int)Arma3PayLoadType.RptLine)]
 [JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
@@ -42,8 +44,22 @@ public record Arma3PayloadBinary
 	string FileName,
 	long FileSize,
 	DateTime CreatedTime,
-	int TotalChunks,
-	string? DirectoryPrefix
+	int TotalChunks = -1,
+	string? DirectoryPrefix = null
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.BinaryContent;
+	public string GetIdentifier(string ConnectionIdentity)
+	{
+		return Convert.ToBase64String(Encoding.UTF8.GetBytes(ConnectionIdentity + FileName + CreatedTime));
+	}
+};
+public record Arma3PayloadBinaryContent
+(
+	string Identifier,
+	byte[] Bytes,
+	bool EndOfContent
 ) : Arma3Payload
 {
 	[JsonIgnore]

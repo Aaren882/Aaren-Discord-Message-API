@@ -1,5 +1,5 @@
-using Arma3WebService.Entity;
 using Arma3WebService.Entity.DiscordBotAction;
+using Arma3WebService.Entity;
 using Discord;
 using Discord.WebSocket;
 
@@ -19,7 +19,7 @@ internal static class DiscordBotAdminModalRespondHelper
 	public static IEnumerable<string> GetComponentCustomId(this DiscordBotAdminModalType modalType)
 		=> ComponentCustomId[modalType];
 	
-	public static async Task Extension(this DiscordBotAdminSimpleAction simpleAction, SocketMessageComponent component)
+	public static async ValueTask Extension(this DiscordBotAdminSimpleAction simpleAction, SocketMessageComponent component)
 	{
 		RespondAction content = (simpleAction.ModalType) switch
 		{
@@ -33,7 +33,7 @@ internal static class DiscordBotAdminModalRespondHelper
 		var modal = content(simpleAction).Build();
 		await component.RespondWithModalAsync(modal);
 	}
-	
+
 	private static DiscordDto.ModalComponent UploadList(DiscordBotAdminSimpleAction simpleAction)
 	{
 		var componentCustomId = simpleAction.ModalType.GetComponentCustomId().First();

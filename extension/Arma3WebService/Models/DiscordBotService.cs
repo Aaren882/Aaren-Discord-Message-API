@@ -1,12 +1,10 @@
 using System.Text.Json;
-using Arma3WebService.DBContext;
-using Arma3WebService.Entity;
-using Arma3WebService.Entity.DiscordBotAction;
-using Arma3WebService.Managers;
 using Discord;
-using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Arma3WebService.Entity.DiscordBotAction;
+using Arma3WebService.Entity;
+using Arma3WebService.Managers;
 
 namespace Arma3WebService.Models;
 
@@ -46,14 +44,14 @@ public sealed class DiscordBotService(
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		await Client.LoginAsync(
-			TokenType.Bot, 
+			TokenType.Bot,
 			Environment.GetEnvironmentVariable("BotToken") ?? configuration["BotToken"]
 		);
 		await Client.StartAsync();
-		
+
 		var adminConsoleManager = serviceProvider.GetRequiredService<AdminConsoleManager>();
 		await adminConsoleManager.CreateAdminConsole();
-		
+
 		Client.Log += Log;
 		Client.ModalSubmitted += async (socketModal) =>
 		{
@@ -64,18 +62,18 @@ public sealed class DiscordBotService(
 					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.Modal);
 					await adminAction!.Execute(socketModal, serviceProvider);
 					return;
-				} 
-				
-				var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
+				}
+
+				/* var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotModalInteraction
 				);
-				await deserialize!.Execute(socketModal);
+				await deserialize!.Execute(socketModal); */
 			}
 			catch (Exception e)
 			{
-				logger.LogError("ModalSubmitted : {Error}", e.Message);
+				logger.LogError(e, "ModalSubmitted :");
 				await socketModal.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
@@ -89,7 +87,7 @@ public sealed class DiscordBotService(
 					await adminAction!.Execute(component, adminConsoleManager);
 					return;
 				}
-				
+
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
 				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
 				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
@@ -97,12 +95,12 @@ public sealed class DiscordBotService(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
 				);
-				
+
 				await deserialize!.Execute(component);
 			}
 			catch (Exception e)
 			{
-				logger.LogError("ButtonExecuted : {Error}", e.Message);
+				logger.LogError(e , "ButtonExecuted :");
 				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
@@ -116,7 +114,7 @@ public sealed class DiscordBotService(
 					await adminAction!.Execute(component, adminConsoleManager);
 					return;
 				}
-				
+
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
 				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
 				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
@@ -128,8 +126,8 @@ public sealed class DiscordBotService(
 			}
 			catch (Exception e)
 			{
-				logger.LogError("SelectMenuExecuted : {Error}", e.Message);
-				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
+				logger.LogError(e, "SelectMenuExecuted :");
+				// await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
 
@@ -141,7 +139,7 @@ public sealed class DiscordBotService(
 			{
 				//- Logging
 				var channel = await GetMessageChannelAsync(_loggingChannel);
-				
+
 				var embedBuilder = new EmbedBuilder()
 					.WithTitle("🎮 Session Connected!")
 					.WithDescription("A new Arma 3 session has successfully initialized and is ready for deployment.")
@@ -151,9 +149,9 @@ public sealed class DiscordBotService(
 					.WithCurrentTimestamp();
 				await channel.SendMessageAsync(embed: embedBuilder.Build());
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
-				logger.LogError("GameSession Connected (Bot Logging) : {Error}", e.Message);
+				logger.LogError(e, "GameSession Connected (Bot Logging):");
 			}
 		};
 		webSocketService.OnDisconnected += async (entity, connection) =>
@@ -163,13 +161,13 @@ public sealed class DiscordBotService(
 				var profileName = entity.GetIdentity();
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(profileName);
 
-				var json = await File.ReadAllTextAsync(currentTemplate.messageOfflinePath, stoppingToken);
+				var json = await File.ReadAllTextAsync(currentTemplate.messageOfflinePath!, stoppingToken);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					MsgPayload_JsonContext.Default.DiscordMessageDto
 				);
 				await ModifyMessageAsync(currentTemplate.messageId, deserialize!);
-				
+
 				var id = GetPresetMessageChannelId(DiscordBotChannel.Logging);
 				var channel = await GetMessageChannelAsync(id);
 				var embedBuilder = new EmbedBuilder()
@@ -182,13 +180,13 @@ public sealed class DiscordBotService(
 					.WithCurrentTimestamp();
 				await channel.SendMessageAsync(embed: embedBuilder.Build());
 			}
-			catch(Exception e)
+			catch (Exception e)
 			{
-				logger.LogError("GameSession Disconnected : {Error}", e.Message);
+				logger.LogError(e, "GameSession Disconnected :");
 			}
 		};
 	}
-	
+
 	public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
 	{
 		var channel = await GetMessageChannelAsync(_monitorChannel);
@@ -200,14 +198,14 @@ public sealed class DiscordBotService(
 			msg.Components = message.ConvertComponents();
 			msg.Flags = message.Flags;
 		});
-		
+
 		return modifyResult;
 	}
 	public async Task<string?> GetPermanentUrlAsync(ulong channelId, ulong messageId)
 	{
 		var channel = await GetMessageChannelAsync(channelId);
 		var message = await channel.GetMessageAsync(messageId);
-    
+
 		if (message != null && message.Attachments.Count != 0)
 		{
 			return message.Attachments.First().Url;
@@ -233,14 +231,14 @@ public sealed class DiscordBotService(
 		};
 		return channelId;
 	}
-	
+
 	public async Task<IUserMessage> SendMessageAsync(ulong channelId, DiscordMessageDto message)
 	{
 		var channel = await GetMessageChannelAsync(channelId);
 
 		var component = message.ConvertComponents();
 		var embeds = message.ConvertEmbeds();
-		
+
 		var sentMessage = (message) switch
 		{
 			{ Attachments: not null } => channel
@@ -264,7 +262,7 @@ public sealed class DiscordBotService(
 			{ FileStream: not null } => channel
 				.SendFileAsync(
 					stream: message.FileStream,
-					filename : message.FileName,
+					filename: message.FileName,
 					text: message.Content,
 					isTTS: message.Tts ?? false,
 					embeds: embeds,
@@ -284,12 +282,12 @@ public sealed class DiscordBotService(
 		return await sentMessage;
 	}
 
-	
+
 
 	public Task<byte[]> SendLocalFile(string filename)
 		=> File.ReadAllBytesAsync(Path.GetFullPath(filename));
 
-	
+
 	private Task Log(LogMessage msg)
 	{
 		var template = $"[{msg.Source}] {msg.Message}";

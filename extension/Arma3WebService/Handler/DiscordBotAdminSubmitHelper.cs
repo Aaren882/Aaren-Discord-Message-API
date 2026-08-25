@@ -1,7 +1,9 @@
 using System.Collections.Concurrent;
 using System.Net.Mime;
+using System.Net.WebSockets;
 using Arma3WebService.DBContext;
 using Arma3WebService.Entity.DiscordBotAction;
+using Arma3WebService.Extensions;
 using Arma3WebService.Models;
 using Components.Entity;
 using Discord;
@@ -15,7 +17,7 @@ internal static class DiscordBotAdminSubmitHelper
 {
 	private delegate Task<(string sessionName, string? additionMessage)> SubmitAction(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider);
 
-	public static async Task Extension(this DiscordBotAdminSimpleAction simpleAction, SocketModal component,
+	public static async ValueTask Extension(this DiscordBotAdminSimpleAction simpleAction, SocketModal component,
 		IServiceProvider serviceProvider)
 	{
 		SubmitAction content = (simpleAction.ModalType) switch
@@ -27,9 +29,9 @@ internal static class DiscordBotAdminSubmitHelper
 			DiscordBotAdminModalType.admin_broadcast => AdminBroadcast,
 			_ => throw new ArgumentOutOfRangeException(nameof(simpleAction), "\"ModalType\" does not exist in the options.")
 		};
-		
+
 		var (sessionName, additionMessage) = await content(component, simpleAction, serviceProvider);
-		
+
 		var discordBotService = serviceProvider.GetRequiredService<IDiscordBotService>();
 		var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminLogging);
 		var channel = await discordBotService.GetMessageChannelAsync(channelId);
@@ -38,18 +40,19 @@ internal static class DiscordBotAdminSubmitHelper
 			.WithAuthor(component.User.GlobalName)
 			.WithThumbnailUrl(component.User.GetAvatarUrl(size: 64))
 			.WithTitle("⚡ Admin Console Command Executed")
-			.AddField("Command", $"`{simpleAction.ModalType.ToString()}`", true)
+			.AddField("Command", $"`{simpleAction.ModalType}`", true)
 			.AddField("📨 To", $"`{sessionName}`", true)
 			.AddField("🔶 Message", $"```arm\n{additionMessage ?? "N/A"}\n```")
-			.AddField("Channel", $"https://discord.com/channels/{component.GuildId}/{component.Channel.Id}",true)
+			.AddField("Channel", $"https://discord.com/channels/{component.GuildId}/{component.Channel.Id}", true)
 			.AddField("Panel", component.Message.GetJumpUrl(), true)
 			.WithColor(3447003)
 			.WithFooter("System Logger")
 			.WithCurrentTimestamp();
-		
-		_ = channel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+
+		// _ = channel.SendMessageAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
+		await channel.SendMessageAsync(embed: embedBuilder.Build());
 	}
-	private static readonly HttpClient _httpClient = new ();
+	private static readonly HttpClient _httpClient = new();
 	private static async Task<(string sessionName, string? additionMessage)> UploadList(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		var attachments = component.Data.Attachments.ToList();
@@ -64,7 +67,7 @@ internal static class DiscordBotAdminSubmitHelper
 		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(sessionName);
 		if (serverIdentity is null)
 			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
-		
+
 		//- http://cdn.discordapp.com/attachments/1315253136511991818/1386731812268540054/TFOX_2025.html?ex=6a049aa4&is=6a034924&hm=e88ebbf4e32e3edfe24fb4078a23545ec5ab1a9d2e2ce2aa6b5d9f866bc3e46f&
 		var url = attachment.Url;
 
@@ -72,7 +75,7 @@ internal static class DiscordBotAdminSubmitHelper
 		var discordBotService = serviceProvider.GetRequiredService<IDiscordBotService>();
 		await using (var content = await _httpClient.GetStreamAsync(url))
 		{
-		
+
 			//- Send to logging channel
 			var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminLogging);
 			var channel = await discordBotService.GetMessageChannelAsync(channelId);
@@ -85,7 +88,7 @@ internal static class DiscordBotAdminSubmitHelper
 				.AddField("Filename", attachment.Filename, true)
 				.AddField("Size", $"{attachment.Size:##,###} Bytes", true)
 				.AddField("Session", $"`{serverIdentity.profileName}`", true)
-				.AddField("Channel", $"https://discord.com/channels/{component.GuildId}/{component.Channel.Id}",true)
+				.AddField("Channel", $"https://discord.com/channels/{component.GuildId}/{component.Channel.Id}", true)
 				.AddField("Panel", component.Message.GetJumpUrl(), true)
 				.WithFooter("System Logger")
 				.WithCurrentTimestamp();
@@ -100,18 +103,20 @@ internal static class DiscordBotAdminSubmitHelper
 
 			serverIdentity.modListMessageId = message.Id;
 		}
-		
+
 		await dbContext.SaveChangesAsync();
 
 		return (sessionName, null);
 	}
-	
+
 	internal static ConcurrentDictionary<string, SocketModal> SubmittedModalSockets = new();
 	private static async Task<(string sessionName, string? additionMessage)> PrintLog(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
 		var sessionName = GetSelectedSession(component);
-		var connection = webSocketService.GetConnection(sessionName);
+
+		if (!webSocketService.TryGetConnection(sessionName, out var websocketServer))
+			ArgumentNullException.ThrowIfNull(websocketServer, nameof(websocketServer));
 
 		//component.GuildId
 		var guildId = $"{component.GuildId}";
@@ -121,9 +126,9 @@ internal static class DiscordBotAdminSubmitHelper
 			return;
 		}*/
 		SubmittedModalSockets[guildId] = component;
-		var command = new Arma3PayloadServiceRequest(1, guildId);
-		await connection.SendArmaCallBackMessage(command);
-		
+		Arma3PayloadServiceRequest command = new(1, guildId);
+		await websocketServer!.SendAsync(command.ToJsonBytes(), WebSocketMessageType.Text, true);
+
 		return (sessionName, null);
 	}
 
@@ -131,28 +136,30 @@ internal static class DiscordBotAdminSubmitHelper
 	{
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
 		var sessionName = GetSelectedSession(component);
-		var connection = webSocketService.GetConnection(sessionName);
+
+		if (!webSocketService.TryGetConnection(sessionName, out var websocketServer))
+			ArgumentNullException.ThrowIfNull(websocketServer, nameof(websocketServer));
 
 		//component.GuildId
 		var guildId = $"{component.GuildId}";
 		SubmittedModalSockets[guildId] = component;
 
 		var command = new Arma3PayloadServiceRequest(2, guildId);
-		await connection.SendArmaCallBackMessage(command);
-		
+		await websocketServer!.SendAsync(command.ToJsonString(), WebSocketMessageType.Text, true);
+
 		return (sessionName, null);
 	}
 	private static async Task<(string sessionName, string? additionMessage)> AdminMpCommand(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		var password = Environment.GetEnvironmentVariable("AdminPassword");
 		if (password is null) throw new Exception("Missing AdminPassword (make sure password is set in environment variables)");
-		
+
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
 		var sessionName = GetSelectedSession(component);
-		
+
 		var componentCustomId = simpleAction.ModalType.GetComponentCustomId().First();
 		var inputComponent = component.Data.Components.First(x => string.Equals(x.CustomId, componentCustomId, StringComparison.OrdinalIgnoreCase));
-		
+
 		var remoteCommand = new Arma3RemoteCommand
 		{
 			gameId = sessionName,
@@ -161,23 +168,23 @@ internal static class DiscordBotAdminSubmitHelper
 				$"""[["{password}", "{inputComponent.Value}"], "{component.User.GlobalName}", "{component.User.Id}"]"""
 			)
 		};
-		
+
 		await webSocketService.InvokeArmaCallBack(remoteCommand);
 		await component.RespondAsync($"`\"{nameof(AdminMpCommand)}\" => \"{sessionName}\" Completed !`", ephemeral: true);
-	
+
 		return (sessionName, $"[[\"##password##\", \"{inputComponent.Value}\"], \"{component.User.GlobalName}\", \"{component.User.Id}\"]");
 	}
 	private static async Task<(string sessionName, string? additionMessage)> AdminBroadcast(SocketModal component, DiscordBotAdminSimpleAction simpleAction, IServiceProvider serviceProvider)
 	{
 		//- Saving Url
-		var webSocketService= serviceProvider.GetRequiredService<IWebSocketService>();
-		
+		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
+
 		//- Get correct server info
 		var sessionName = GetSelectedSession(component);
 
 		var componentCustomId = simpleAction.ModalType.GetComponentCustomId().First();
 		var inputComponent = component.Data.Components.First(x => string.Equals(x.CustomId, componentCustomId, StringComparison.OrdinalIgnoreCase));
-		
+
 		var data = $"[\"{inputComponent.Value}\", \"{component.User.GlobalName}\", \"{component.User.Id}\"]";
 		var remoteCommand = new Arma3RemoteCommand
 		{
@@ -186,18 +193,18 @@ internal static class DiscordBotAdminSubmitHelper
 		};
 		await webSocketService.InvokeArmaCallBack(remoteCommand);
 		await component.RespondAsync($"`\"{nameof(AdminBroadcast)}\" => \"{sessionName}\" Completed !`", ephemeral: true);
-		
+
 		return (sessionName, data);
 	}
 
 	private static string GetSelectedSession(SocketModal component)
 	{
-		var sessionSelectMenu = component.Data.Components.FirstOrDefault(o => 
+		var sessionSelectMenu = component.Data.Components.FirstOrDefault(o =>
 			o.CustomId == RespondHelper.SessionSelectMenuComponentCustomId);
-		
+
 		return sessionSelectMenu is null
 			? throw new Exception("Cannot Find Session Select Menu")
 			: sessionSelectMenu.Values.First();
 	}
-	
+
 }

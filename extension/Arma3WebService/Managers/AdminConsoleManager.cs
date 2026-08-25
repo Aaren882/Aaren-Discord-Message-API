@@ -1,12 +1,13 @@
 using System.Text.Json;
 using System.Diagnostics.Metrics;
 using Arma3WebService.DBContext;
-using Arma3WebService.Entity;
-using Arma3WebService.Entity.DiscordBotAction;
 using Discord;
 using Microsoft.EntityFrameworkCore;
+using Arma3WebService.Entity.DiscordBotAction;
+using Arma3WebService.Models;
+using Arma3WebService.Entity;
 
-namespace Arma3WebService.Models;
+namespace Arma3WebService.Managers;
 
 public sealed class AdminConsoleManager(
 	ILogger<AdminConsoleManager> logger,
@@ -152,7 +153,7 @@ public sealed class AdminConsoleManager(
 	    }
     	catch (Exception e)
     	{
-    		logger.LogError("ERROR CreateAdminConsole : {Error}", e.Message);
+    		logger.LogError(e, "CreateAdminConsole: ");
     		await channel.SendMessageAsync($"Exception : {e.Message}");
     	}
     }

@@ -2,232 +2,162 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Component.Websocket;
 using Components.Entity;
-using static ExtensionComponents.ExtensionStartup;
+using Microsoft.Extensions.Logging;
 
 namespace ServiceConnection.WebService;
 
-public class WebSocketClient(string serverUri)
+public sealed class WebsocketClient(
+	ILogger<IWebsocketWorker> logger,
+	ServiceRequestHandler serviceRequestHandler
+) : WebsocketWorker
 {
-	private ClientWebSocket? _webSocket;
-	private CancellationTokenSource? _cancellationTokenSource;
-
+	protected override ILogger<IWebsocketWorker> Logger => logger;
 	public event Action<Arma3Payload>? MessageReceived;
 	public event Action? Connected;
 	public event Action? Disconnected;
 
-	public WebSocketState? Status => _webSocket?.State;
-
-	public async Task ConnectAsync(string? jwtToken)
+	public override void PostReceived(in Stream assembledStream, WebSocketMessageType messageType)
 	{
-		try
+		using StreamReader reader = new(assembledStream, Encoding.UTF8);
+		var receivedMessage = reader.ReadToEnd();
+		if (string.IsNullOrEmpty(receivedMessage))
 		{
-			if (Status == WebSocketState.Open)
-				throw new Exception("WebSocket already connected."); 
-			
-			_webSocket = new ClientWebSocket();
-			if (jwtToken != null)
-				_webSocket.Options.SetRequestHeader("Authorization", "Bearer " + jwtToken);
-			
-			_cancellationTokenSource = new CancellationTokenSource();
-
-			Logger(null ,$"Connecting to {serverUri}...");
-			await _webSocket.ConnectAsync(new Uri(serverUri), _cancellationTokenSource.Token);
-
-			Logger(null ,"Connected successfully!");
-			Connected?.Invoke();
-
-			// Start listening for messages
-			_ = ReceiveMessages();
+			Logger.LogWarning("Received empty \"{MessageType}\" Message.", messageType);
+			return;
 		}
-		catch (Exception ex)
+
+		var payload = JsonSerializer.Deserialize(
+			receivedMessage,
+			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+		)!;
+		if (payload is Arma3PayloadServiceRequest request)
 		{
-			Logger(null ,$"Connection failed: {ex.Message}");
+			Task.Run(async () => await serviceRequestHandler.RespondRequest(request))
+				.GetAwaiter().GetResult();
 		}
+		MessageReceived?.Invoke(payload);
 	}
-	public async Task SendBinaryAsync(string filePath, Arma3PayloadBinary payloadBinary, int chunkSize = 64 * 1024)
+	public async ValueTask SendBinaryAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary, int chunkSize = 60 * 1024)
 	{
-		Logger(null, "INFO: Sending Binary");
-		
-		if (Status == WebSocketState.Open)
-		{
-			await Task.Delay(500); //- # Wait for the RPT get written first.   
-			
-			// Send Chunks (as binary messages)
-			await using (FileStream fs = new (filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-			{
-				for (var i = 1; i < payloadBinary.TotalChunks + 1; i++)
-				{
-					var buffer = new byte[chunkSize];			
-					Tracer("SendBinaryAsync (Progress)", $"{i}/{payloadBinary.TotalChunks}");
-					var bytesRead = await fs.ReadAsync(buffer, _cancellationTokenSource?.Token ?? CancellationToken.None);
-					
-					// If the last chunk is smaller than the buffer size
-					var chunkBytes = new byte[bytesRead];
-					Buffer.BlockCopy(buffer, 0, chunkBytes, 0, bytesRead);
+		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 
-					await _webSocket.SendAsync(new ArraySegment<byte>(chunkBytes), WebSocketMessageType.Binary, (i == payloadBinary.TotalChunks), CancellationToken.None);
-				}
-			}
-			Logger(null ,$"Sent Binary: {filePath}");
-		}
-		else
+		if (!HasConnection)
 		{
-			Logger(null ,"WebSocket is not connected. Cannot send message.");
+			Logger.LogError("WebSocket is not connected. Cannot send message.");
+			return;
 		}
+
+		Logger.LogInformation("Sending Binary: \n File: {File} \n Header: {header}", filePath, payloadBinary);
+		// Send Chunks (as binary messages)
+		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, chunkSize))
+		{
+			var readBuffer = (new byte[chunkSize]).AsMemory<byte>();
+			var identifier = payloadBinary.GetIdentifier(accessName);
+
+			for (var i = 1; i < payloadBinary.TotalChunks + 1; i++)
+			{
+				int readLength = await fs.ReadAsync(readBuffer, CancellationToken.None);
+				Arma3PayloadBinaryContent content = new(identifier, readBuffer[..readLength].ToArray(), i == payloadBinary.TotalChunks);
+
+				Logger.LogDebug("SendBinaryAsync (Progress): {i}/{TotalChunks}", i, payloadBinary.TotalChunks);
+				var payload = JsonSerializer.SerializeToUtf8Bytes(
+					content,
+					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+				);
+				await WebSocketStateMachine.SendMessageAsync(payload, WebSocketMessageType.Binary, true);
+			}
+		}
+
+		Logger.LogInformation("Sent Binary: {File}", filePath);
 	}
-	public async Task SendRptLinesAsync(string filePath, int linesCount)
+	public async ValueTask SendRptLinesAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary, int linesCount)
 	{
-		Logger(null, $"INFO: Sending RPT : {linesCount} lines");
-		if (Status == WebSocketState.Open)
-		{
-			var sw = Stopwatch.StartNew();
-			await using var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 
-			var lastLines = await GetLastLinesAsync(fileStream, linesCount);
-			lastLines.Reverse();
-			
-			var lineCount = lastLines.Count;
-			var charCount = 0;
-			foreach (var (line, i) in lastLines.Select((value, i) => ( value, i )))
-			{
-				var wLine = line + "\n";
-				charCount += wLine.Length;
-				if  (charCount > 1980)
-				{
-					Logger(null ,$"SendRptLines has reached limit: \"{line}\".");
-					lineCount = i;
-					break;
-				}
-				var bytes = Encoding.UTF8.GetBytes(wLine);
-				await _webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, false, CancellationToken.None);
-			}
-			Logger(null ,$"SendRptLines [{lineCount}]: {filePath}");
-			await _webSocket.SendAsync(new ArraySegment<byte>([]), WebSocketMessageType.Binary, true, CancellationToken.None);
-			sw.Stop();
-			
-			Logger(null, nameof(SendRptLinesAsync) + " Execution took: " + sw.ElapsedMilliseconds + "ms");
-		}
-		else
+		if (!HasConnection)
 		{
-			Logger(null ,"WebSocket is not connected. Cannot send message.");
+			Logger.LogError("WebSocket is not connected. Cannot send message.");
+			return;
 		}
-		
-		return;
-		
-		async Task<List<string>> GetLastLinesAsync(FileStream stream, int count)
+
+		Logger.LogInformation("Sending RPT : {linesCount} lines", linesCount);
+
+		var sw = Stopwatch.StartNew();
+		await using var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+		var lastLines = await GetLastLinesAsync(fileStream, linesCount);
+		lastLines.Reverse();
+
+		var identifier = payloadBinary.GetIdentifier(accessName);
+		var lineCount = lastLines.Count;
+		var charCount = 0;
+
+		Arma3PayloadBinaryContent content;
+		byte[] bytes;
+		foreach (var (line, i) in lastLines.Select((value, i) => (value, i)))
+		{
+			var wLine = line + "\n";
+			charCount += wLine.Length;
+
+			if (charCount > 1980)
+			{
+				Logger.LogWarning("SendRptLines has reached limit: \"{line}\".", line);
+				lineCount = i;
+				break;
+			}
+
+			content = new(identifier, Encoding.UTF8.GetBytes(wLine), false);
+			bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			await WebSocketStateMachine.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+		}
+		Logger.LogInformation("SendRptLines [{lineCount}]: {filePath}", lineCount, filePath);
+
+		content = new(identifier, [], true);
+		bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		await WebSocketStateMachine.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+
+		sw.Stop();
+		Logger.LogInformation("{Function} Execution took: {Milliseconds} ms", nameof(SendRptLinesAsync), sw.ElapsedMilliseconds);
+
+		static async ValueTask<List<string>> GetLastLinesAsync(FileStream stream, int count)
 		{
 			if (count <= 0) return [];
-			using var reader = new StreamReader(stream, Encoding.UTF8);
-			var queue = new Queue<string>(count);
-			
+			using StreamReader reader = new(stream, Encoding.UTF8);
+			Queue<string> queue = new(count);
+
 			while (!reader.EndOfStream)
 			{
 				var line = await reader.ReadLineAsync();
-				
-				if (line == null) continue;
-				
+
+				if (line is null) continue;
+
 				if (queue.Count == count) queue.Dequeue();
 				queue.Enqueue(line);
 			}
 			return queue.ToList();
 		}
 	}
-
-	public async Task SendMessageAsync(string messagePayload)
+	public async Task StartAsync(string uri, string? authToken)
 	{
-		if (Status == WebSocketState.Open)
-		{
-			var bytes = Encoding.UTF8.GetBytes(messagePayload);
-			
-			await _webSocket.SendAsync(
-				new ArraySegment<byte>(bytes),
-				WebSocketMessageType.Text,
-				true,
-				_cancellationTokenSource?.Token ?? CancellationToken.None);
+		if (WebSocketStateMachine is not null) throw new InvalidOperationException("Websocket Connection is already Established...");
 
-			Logger(null ,$"Sent: {messagePayload}");
-		}
-		else
-		{
-			Logger(null ,"WebSocket is not connected. Cannot send message.");
-		}
+		var webSocket = new ClientWebSocket();
+		if (authToken != null)
+			webSocket.Options.SetRequestHeader("Authorization", "Bearer " + authToken);
+
+		await webSocket.ConnectAsync(new(uri), CancellationToken.None);
+		Logger.LogInformation("Connected to server.");
+		Connected?.Invoke();
+
+		WebSocketStateMachine = new(this, Logger);
+		await WebSocketStateMachine.StartAsync(webSocket);
 	}
-
-	private async Task ReceiveMessages()
+	public override async Task CloseAsync()
 	{
-		var buffer = new byte[1024 * 2];
-
-		try
-		{
-			while (Status == WebSocketState.Open)
-			{
-				var result = await _webSocket.ReceiveAsync(
-					new ArraySegment<byte>(buffer),
-					_cancellationTokenSource?.Token ?? CancellationToken.None);
-
-				if (result.MessageType == WebSocketMessageType.Text)
-				{
-					var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-					Logger(null ,$"Received: {message}");
-					
-					var payload = JsonSerializer.Deserialize(
-						message, 
-						Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-					);
-					
-					//- Invoke callback
-					MessageReceived?.Invoke(payload);
-					
-					//- Respond request to the service 
-					if (payload is Arma3PayloadServiceRequest request)
-					{
-						ServiceRequestHandler.RespondRequest(request);
-					}
-				}
-				else if (result.MessageType == WebSocketMessageType.Close)
-				{
-					Logger(null ,"Server closed the connection.");
-					break;
-				}
-			}
-		}
-		catch (OperationCanceledException)
-		{
-			Logger(null ,"Connection cancelled.");
-		}
-		catch (Exception ex)
-		{
-			Logger(null ,$"Error receiving message: \"{ex.Message}\"");
-		}
-		finally
-		{
-			Disconnected?.Invoke();
-		}
-	}
-
-	public async Task DisconnectAsync(string description)
-	{
-		try
-		{
-			if (Status == WebSocketState.Open)
-			{
-				await _webSocket!.CloseAsync(
-					WebSocketCloseStatus.NormalClosure,
-					description,
-					CancellationToken.None);
-			}
-
-			_cancellationTokenSource?.Cancel();
-			_webSocket?.Dispose();
-			_cancellationTokenSource?.Dispose();
-			Disconnected?.Invoke();
-
-			Logger(null ,"Disconnected successfully.");
-		}
-		catch (Exception ex)
-		{
-			Logger(null ,$"Error during disconnect: {ex.Message}");
-		}
+		await base.CloseAsync();
+		Disconnected?.Invoke();
+		Logger.LogInformation("Disconnected from server.");
 	}
 }

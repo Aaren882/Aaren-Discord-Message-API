@@ -4,19 +4,21 @@ using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
+using Components.Entity;
 using Discord;
 using DiscordMessageAPI.ServiceConnection.WebService;
+using ExtensionComponents;
+using ExtensionComponents.Entity;
+using ExtensionComponents.Tools;
 using featureTest;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ServiceConnection;
 using ServiceConnection.Discord;
 using ServiceConnection.Tools;
 using ServiceConnection.WebService;
-using Components.Entity;
-using ExtensionComponents;
-using ExtensionComponents.Entity;
-using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DiscordMessageAPI
@@ -30,22 +32,31 @@ namespace DiscordMessageAPI
 			services.AddSingleton<ServiceRequestHandler>();
 			services.AddSingleton<ILocalServices, LocalServices>();
 			services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
+			services.AddSingleton<WebsocketClient>();
 
-			var serviceProvider = services.BuildServiceProvider();
+			services.AddLogging(builder =>
+			{
+				builder
+					.AddConsole()
+					// .UseDefaultFileLogger()
+					.SetMinimumLevel(LogLevel.Debug);
+			});
+
+			await using var serviceProvider = services.BuildServiceProvider();
 
 			ServiceStartup.InitConfiguration(
-				(a, b) => Console.WriteLine($"\"{a}\" : {b}"),
-				(a, b) => Console.WriteLine($"\"{a?.Message}\" \n\n:- ADDITIONAL -: {b}"),
+				LoggerBase.Trace,
+				LoggerBase.Log,
 				serviceProvider
 			);
 
 			const string jsonProfile = "Discord_Message_API/profiles/default.json";
 			var json = await File.ReadAllTextAsync(jsonProfile, Encoding.UTF8);
-			
+
 			var profile = JsonConvert.DeserializeObject(json) as JObject;
 			var configuration = profile["Configuration"]
-				.ToObject<Dictionary<string,string>>();
-			
+				.ToObject<Dictionary<string, string>>();
+
 			var serviceInteractions = serviceProvider.GetRequiredService<ServiceInteractions>();
 
 			var isDifferent = false;
@@ -55,7 +66,7 @@ namespace DiscordMessageAPI
 				var returnPayloadStrings = returnPayload.AdditionalPayload!
 					.Trim('[', ']')
 					.Split(',');
-				
+
 				returnMessageId = returnPayloadStrings[1].Trim('"', '"');
 				if (!bool.TryParse(returnPayloadStrings.Last(), out isDifferent))
 					throw new Exception("\"returnPayloadStrings\" `isDifferent` Parsing failed.");
@@ -102,7 +113,7 @@ namespace DiscordMessageAPI
 						v => v.Value
 					);
 				serviceInteractions.SendWebSocketBinaries(config);
-					
+
 				//- Update DB
 				var jsonString = new JObject
 				{
@@ -110,27 +121,27 @@ namespace DiscordMessageAPI
 					["MessageId"] = returnMessageId,
 					["Configuration"] = profile["Configuration"],
 				}.ToString();
-				
+
 				var payload = new Arma3PayloadJson(jsonString);
 				var message = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 
 				Console.WriteLine("DB data Updated !!");
 				ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);
 			};
-			
-			
+
+
 			var profileDateOffsets = configuration
 				.Select(x =>
 					{
 						var fileInfo = new FileInfo(x.Value);
 						DateTimeOffset dateTimeOffset = fileInfo.LastWriteTime;
 
-						return fileInfo.Exists ? 
-							dateTimeOffset.ToUnixTimeSeconds().ToString() : 
+						return fileInfo.Exists ?
+							dateTimeOffset.ToUnixTimeSeconds().ToString() :
 							throw new FileNotFoundException($"File \"{x}\" not found");
 					}
 				).ToList();
-			
+
 			var profileIdentity = new JObject
 			{
 				["type"] = 2,
@@ -139,17 +150,17 @@ namespace DiscordMessageAPI
 				["Configuration"] = profile["Configuration"],
 				["ProfileDateOffsets"] = JArray.FromObject(profileDateOffsets),
 			}.ToString();
-			
-			
+
+
 			await ServiceStartup.InitializeAsync(
 				"FeatureTest", profileIdentity
 			);
-			
+
 			/*var output = new TestOutputBuilder();
 			var argsAction = new TestArgsAction(output, ["20"], "SendWebSocketRptLines");
 
 			argsAction.ExecuteAction();*/
-			
+
 			//////////////////////////////
 			// var readLines = File.ReadLinesAsync(
 			// 	@"C:\Users\aaren_bb64lye\AppData\Local\Arma 3\Arma3_x64_2026-05-01_21-39-20.rpt", Encoding.UTF8);
@@ -162,7 +173,7 @@ namespace DiscordMessageAPI
 
 			// const string jsonPath = "Discord_Message_API/Server_Info_msg.json";
 			// json = await File.ReadAllTextAsync(jsonPath, Encoding.UTF8);
-			
+
 			/*var jsonObj = new JObject
 			{
 				["ProcessType"] = 2,
@@ -174,7 +185,7 @@ namespace DiscordMessageAPI
 			/*var array = "{ \"type\": 6, \"FlatJsonString\": { \"{MISSION_NAME}\": \"Nigga\" }}";
 			var message = JsonSerializer.Deserialize(
 				array, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);*/
-			
+
 			/*var payload = new Arma3PayloadFlatJsonString(new Dictionary<string, string>
 			{
 				{ "{MISSION_NAME}", "Nigga" }
@@ -182,19 +193,19 @@ namespace DiscordMessageAPI
 			/*var payload = new Arma3PayloadJson(jsonObj.ToString());
 			var message = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 			await ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);*/
-			
-			
+
+
 			// var payload = new Arma3PayloadText("msg");
 			// var message = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 			// Console.WriteLine(message);
-			
-			
-			
+
+
+
 			// var RPT = Util.GetLastestFile(ServiceStartup.serviceInteractions.RPTDirectory);
 			// await ServiceStartup.serviceInteractions.SendWebSocketBinary(RPT);
-			
+
 			Console.ReadKey();
-			
+
 			////////////////////////////
 
 			/*var url = "http://localhost:5000/api/Arma/stream";

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using Arma3WebService.Handler;
-using Arma3WebService.Models;
+using Arma3WebService.Managers;
 using Discord.WebSocket;
 
 namespace Arma3WebService.Entity.DiscordBotAction;
@@ -11,7 +11,7 @@ public enum DiscordBotActionComponentType
 	SelectMenu,
 }
 
-public sealed class DiscordBotInteraction: Dictionary<string, DiscordBotActionsBase>
+public sealed class DiscordBotInteraction : Dictionary<string, DiscordBotActionsBase>
 {
 	public async Task Execute(SocketMessageComponent component)
 	{
@@ -22,12 +22,12 @@ public sealed class DiscordBotInteraction: Dictionary<string, DiscordBotActionsB
 			.Select(
 				x => x.Value
 			);
-		
+
 		foreach (var discordBotAction in queried)
 			await discordBotAction.Execute(component);
 	}
 }
-public sealed class DiscordBotAdminInteraction: Dictionary<DiscordBotAdminModalType, DiscordBotAdminSimpleAction>
+public sealed class DiscordBotAdminInteraction : Dictionary<DiscordBotAdminModalType, DiscordBotAdminSimpleAction>
 {
 	public async Task Execute(SocketMessageComponent component, AdminConsoleManager adminConsoleManager)
 	{
@@ -36,7 +36,7 @@ public sealed class DiscordBotAdminInteraction: Dictionary<DiscordBotAdminModalT
 		var (type, simpleAction) = this.FirstOrDefault(
 			x => string.Equals(x.Key.ToString(), selectedValue, StringComparison.OrdinalIgnoreCase)
 		);
-		
+
 		simpleAction.ModalType = type;
 		simpleAction.ConnectionsNames = adminConsoleManager.CreateSessionsNames(type);
 		await simpleAction.Extension(component);
@@ -44,10 +44,10 @@ public sealed class DiscordBotAdminInteraction: Dictionary<DiscordBotAdminModalT
 	public async Task Execute(SocketModal modal, IServiceProvider serviceProvider)
 	{
 		var (type, simpleAction) = this.FirstOrDefault(
-			x => 
+			x =>
 				string.Equals(x.Key.ToString(), modal.Data.CustomId, StringComparison.OrdinalIgnoreCase)
 		);
-		
+
 		simpleAction.ModalType = type;
 		await simpleAction.Extension(modal, serviceProvider);
 	}
@@ -78,7 +78,7 @@ public record DiscordBotSelectMenuActions : DiscordBotActionsBase
 	{
 		var selectedValue = component.Data.Values.First();
 		var action = Options[selectedValue];
-		
+
 		foreach (var discordBotAction in action.Steps.ToList())
 			await discordBotAction.Run(component);
 	}
