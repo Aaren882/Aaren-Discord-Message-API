@@ -109,7 +109,7 @@ public sealed class ServiceInteractions
 	}
 	public void SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
 	{
-		var fileInfo = new FileInfo(filePath);
+		FileInfo fileInfo = new(filePath);
 		var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
 		Logger(null, $"INFO: Sending binary file \"{fileInfo.Name}\"");
 
@@ -123,9 +123,12 @@ public sealed class ServiceInteractions
 			directoryPrefix
 		);
 
-		Task.Run(async () => await WsClient.SendBinaryAsync(AccessName, filePath, metadata, chunkSize))
-			.GetAwaiter()
-			.GetResult();
+		Task.Run(async () =>
+		{
+			var bytes = JsonSerializer.SerializeToUtf8Bytes(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
+			await WsClient.SendBinaryAsync(AccessName, filePath, metadata, chunkSize);
+		});
 
 		/* SocketLocalWorker.WebSocketTrafficWriter(
 			metadata,
