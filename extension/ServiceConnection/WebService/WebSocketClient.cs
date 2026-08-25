@@ -110,16 +110,16 @@ public sealed class WebsocketClient(
 
 			content = new(identifier, Encoding.UTF8.GetBytes(wLine), false);
 			bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-			await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+			await WebSocketStateMachine.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
 		}
 		Logger.LogInformation("SendRptLines [{lineCount}]: {filePath}", lineCount, filePath);
 
 		content = new(identifier, [], true);
 		bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-		await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+		await WebSocketStateMachine.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
 
 		sw.Stop();
-		Logger.LogInformation("{Function} Execution took: {sw.ElapsedMilliseconds} ms", nameof(SendRptLinesAsync), sw.ElapsedMilliseconds);
+		Logger.LogInformation("{Function} Execution took: {Milliseconds} ms", nameof(SendRptLinesAsync), sw.ElapsedMilliseconds);
 
 		static async ValueTask<List<string>> GetLastLinesAsync(FileStream stream, int count)
 		{
