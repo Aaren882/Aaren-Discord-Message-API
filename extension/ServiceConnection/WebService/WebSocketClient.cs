@@ -42,8 +42,14 @@ public sealed class WebsocketClient(
 	public async ValueTask SendBinaryAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary, int chunkSize = 60 * 1024)
 	{
 		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
-		Logger.LogInformation("Sending Binary: \n File: {File} \n Header: {header}", filePath, payloadBinary);
 
+		if (!HasConnection)
+		{
+			Logger.LogError("WebSocket is not connected. Cannot send message.");
+			return;
+		}
+
+		Logger.LogInformation("Sending Binary: \n File: {File} \n Header: {header}", filePath, payloadBinary);
 		// Send Chunks (as binary messages)
 		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, chunkSize))
 		{
@@ -68,55 +74,54 @@ public sealed class WebsocketClient(
 	}
 	public async ValueTask SendRptLinesAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary, int linesCount)
 	{
-		Logger.LogInformation("Sending RPT : {linesCount} lines", linesCount);
+		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 
-		if (HasConnection)
-		{
-			var sw = Stopwatch.StartNew();
-			await using var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-
-			var lastLines = await GetLastLinesAsync(fileStream, linesCount);
-			lastLines.Reverse();
-
-			var identifier = payloadBinary.GetIdentifier(accessName);
-			var lineCount = lastLines.Count;
-			var charCount = 0;
-
-			Arma3PayloadBinaryContent content;
-			byte[] bytes;
-			foreach (var (line, i) in lastLines.Select((value, i) => (value, i)))
-			{
-				var wLine = line + "\n";
-				charCount += wLine.Length;
-
-				content = new(identifier, Encoding.UTF8.GetBytes(wLine), false);
-				bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-				await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
-
-				if (charCount > 1980)
-				{
-					Logger.LogWarning("SendRptLines has reached limit: \"{line}\".", line);
-					lineCount = i;
-					break;
-				}
-			}
-			Logger.LogInformation("SendRptLines [{lineCount}]: {filePath}", lineCount, filePath);
-
-			content = new(identifier, [], true);
-			bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-			await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
-
-			sw.Stop();
-			Logger.LogInformation("{Function} Execution took: {sw.ElapsedMilliseconds} ms", nameof(SendRptLinesAsync), sw.ElapsedMilliseconds);
-		}
-		else
+		if (!HasConnection)
 		{
 			Logger.LogError("WebSocket is not connected. Cannot send message.");
+			return;
 		}
 
-		return;
+		Logger.LogInformation("Sending RPT : {linesCount} lines", linesCount);
 
-		static async Task<List<string>> GetLastLinesAsync(FileStream stream, int count)
+		var sw = Stopwatch.StartNew();
+		await using var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+		var lastLines = await GetLastLinesAsync(fileStream, linesCount);
+		lastLines.Reverse();
+
+		var identifier = payloadBinary.GetIdentifier(accessName);
+		var lineCount = lastLines.Count;
+		var charCount = 0;
+
+		Arma3PayloadBinaryContent content;
+		byte[] bytes;
+		foreach (var (line, i) in lastLines.Select((value, i) => (value, i)))
+		{
+			var wLine = line + "\n";
+			charCount += wLine.Length;
+
+			if (charCount > 1980)
+			{
+				Logger.LogWarning("SendRptLines has reached limit: \"{line}\".", line);
+				lineCount = i;
+				break;
+			}
+
+			content = new(identifier, Encoding.UTF8.GetBytes(wLine), false);
+			bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+		}
+		Logger.LogInformation("SendRptLines [{lineCount}]: {filePath}", lineCount, filePath);
+
+		content = new(identifier, [], true);
+		bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		await WebSocketStateMachine!.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
+
+		sw.Stop();
+		Logger.LogInformation("{Function} Execution took: {sw.ElapsedMilliseconds} ms", nameof(SendRptLinesAsync), sw.ElapsedMilliseconds);
+
+		static async ValueTask<List<string>> GetLastLinesAsync(FileStream stream, int count)
 		{
 			if (count <= 0) return [];
 			using StreamReader reader = new(stream, Encoding.UTF8);
