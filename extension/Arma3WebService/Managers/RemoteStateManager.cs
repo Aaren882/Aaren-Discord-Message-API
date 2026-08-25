@@ -9,11 +9,11 @@ public sealed class RemoteStateManager(
 	IServiceProvider ServiceProvider
 )
 {
-	private readonly ConcurrentDictionary<ulong, IConnection> _gameSessionsCache = [];
+	private readonly ConcurrentDictionary<ulong, WebsocketServer> _gameSessionsCache = [];
 	private readonly ConcurrentDictionary<ulong, ServerInfoTemplate> _serverInfoTemplatesCache = [];
 	private readonly ConcurrentDictionary<string, ulong> _serverInfoProfileNamesCache = [];
 
-	internal async Task UpdateGameSessionCacheAsync(string profileName, IConnection? connection = null)
+	internal async Task UpdateGameSessionCacheAsync(string profileName, WebsocketServer? connection = null)
 	{
 		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 
