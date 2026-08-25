@@ -42,7 +42,7 @@ public sealed class ServiceActionManager(
 		var payloadId = payload.GetIdentifier(connection.websocketContext.GetIdentity());
 		FileStream fs = new(
 			Path.Combine(DirectoryPrefix ?? ".temp", FileName),
-			FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read
+			FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
 		);
 		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async () => await fs.DisposeAsync());
 
