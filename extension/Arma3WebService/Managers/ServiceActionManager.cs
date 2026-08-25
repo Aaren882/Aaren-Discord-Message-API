@@ -31,7 +31,7 @@ public sealed class ServiceActionManager(
 	{
 		return connection.SendAsync(payload.ToJsonString(), WebSocketMessageType.Text, true);
 	}
-	public async ValueTask BinaryAction(WebsocketServer connection, Arma3PayloadBinary payload)
+	public ValueTask BinaryAction(WebsocketServer connection, Arma3PayloadBinary payload)
 	{
 		logger.LogInformation("Receiving metaData for binary file '{Payload}'", payload);
 		var (FileName, _, _, _, DirectoryPrefix) = payload;
@@ -40,16 +40,16 @@ public sealed class ServiceActionManager(
 			Directory.CreateDirectory(payload.DirectoryPrefix!);
 
 		var payloadId = payload.GetIdentifier(connection.websocketContext.GetIdentity());
-		var fs = new FileStream(
+		FileStream fs = new(
 			Path.Combine(DirectoryPrefix ?? ".temp", FileName),
-			FileMode.OpenOrCreate, FileAccess.Write
+			FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read
 		);
-		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, () => { });
+		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async () => await fs.DisposeAsync());
+
+		return ValueTask.CompletedTask;
 	}
 	public async ValueTask BinaryContentAction(WebsocketServer connection, Arma3PayloadBinaryContent payload)
 	{
-		// logger.LogInformation("Receiving Content for binary file '{Payload}'", payload);
-
 		try
 		{
 			await binaryStreamManager.PushBinaryContentAsync(payload);
