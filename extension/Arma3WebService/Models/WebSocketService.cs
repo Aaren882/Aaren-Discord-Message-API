@@ -11,8 +11,8 @@ namespace Arma3WebService.Models
 		bool TryAddConnection(WebsocketContextEntity contextEntity, in WebsocketServer websocketWorker);
 		void RemoveConnection(WebsocketContextEntity contextEntity);
 		IEnumerable<string> GetConnectionsNames();
-		event Action<WebsocketContextEntity, IConnection> OnConnected;
-		event Action<WebsocketContextEntity, IConnection> OnDisconnected;
+		event Action<WebsocketContextEntity, WebsocketServer> OnConnected;
+		event Action<WebsocketContextEntity, WebsocketServer> OnDisconnected;
 	}
 
 	public sealed class WebSocketService(
@@ -23,18 +23,16 @@ namespace Arma3WebService.Models
 	{
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
-		private readonly ConcurrentDictionary<string, IConnection> _connections = new();
-		public event Action<WebsocketContextEntity, IConnection> OnConnected = (entity, connection) =>
+		// private readonly ConcurrentDictionary<string, IConnection> _connections = new();
+		public event Action<WebsocketContextEntity, WebsocketServer> OnConnected = async (entity, connection) =>
 		{
 			var profileName = entity.GetIdentity();
-			_ = remoteStateManager.GetServerInfoTemplateAsync(profileName).ConfigureAwait(false);
-			_ = remoteStateManager.UpdateGameSessionCacheAsync(profileName, connection).ConfigureAwait(false);
+			await remoteStateManager.GetServerInfoTemplateAsync(profileName);
+			await remoteStateManager.UpdateGameSessionCacheAsync(profileName, connection);
 		};
 
-		public event Action<WebsocketContextEntity, IConnection> OnDisconnected = (entity, connection) =>
-		{
-			_ = remoteStateManager.UpdateGameSessionCacheAsync(entity.GetIdentity()).ConfigureAwait(false);
-		};
+		public event Action<WebsocketContextEntity, WebsocketServer> OnDisconnected = async (entity, connection) =>
+			await remoteStateManager.UpdateGameSessionCacheAsync(entity.GetIdentity());
 
 		public bool TryGetConnection(string connectionIdentity, out WebsocketServer? session)
 		{
@@ -72,12 +70,12 @@ namespace Arma3WebService.Models
 			finally
 			{
 				// Wait until the task completes or the stop token triggers
-				var connections = _connections.Values.ToAsyncEnumerable()
+				var connections = _connectionWorkers.Values.ToAsyncEnumerable()
 					.WithCancellation(cancellationToken);
 
 				await foreach (var connection in connections)
 				{
-					await connection.Close();
+					await connection.CloseAsync();
 				}
 			}
 
@@ -180,11 +178,11 @@ namespace Arma3WebService.Models
 			}
 		} */
 		private readonly ConcurrentDictionary<string, WebsocketServer> _connectionWorkers = new();
-		public bool TryAddConnection(WebsocketContextEntity contextEntity, in WebsocketServer websocketWorker)
+		public bool TryAddConnection(WebsocketContextEntity contextEntity, in WebsocketServer websocketServer)
 		{
 			var connectionIdentity = contextEntity.GetIdentity();
 
-			if (_connectionWorkers.TryAdd(connectionIdentity, websocketWorker))
+			if (_connectionWorkers.TryAdd(connectionIdentity, websocketServer))
 			{
 				_logger.LogInformation(
 					"Accepted connection Name : '{Identity}'/'{ContextId}' - '{ClientIpAddress}'. Total connections: {Count}",
@@ -193,7 +191,7 @@ namespace Arma3WebService.Models
 					contextEntity.ClientIpAddress,
 					_connectionWorkers.Count
 				);
-				// OnConnected.Invoke(contextEntity, connection);
+				OnConnected.Invoke(contextEntity, websocketServer);
 				return true;
 			}
 
@@ -218,8 +216,8 @@ namespace Arma3WebService.Models
 					contextEntity.ClientIpAddress,
 					_connectionWorkers.Count
 				);
-				websocketServer?.Dispose();
-				// OnDisconnected.Invoke(contextEntity, connection);
+				websocketServer.Dispose();
+				OnDisconnected.Invoke(contextEntity, websocketServer);
 				return;
 			}
 			_logger.LogError(
