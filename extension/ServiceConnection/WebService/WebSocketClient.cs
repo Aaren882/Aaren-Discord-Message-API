@@ -53,7 +53,7 @@ public sealed class WebsocketClient(
 			for (var i = 1; i < payloadBinary.TotalChunks + 1; i++)
 			{
 				int readLength = await fs.ReadAsync(readBuffer, CancellationToken.None);
-				Arma3PayloadBinaryContent content = new(identifier, readBuffer.ToArray(), i == payloadBinary.TotalChunks);
+				Arma3PayloadBinaryContent content = new(identifier, readBuffer[..readLength].ToArray(), i == payloadBinary.TotalChunks);
 
 				Logger.LogDebug("SendBinaryAsync (Progress): {i}/{TotalChunks}", i, payloadBinary.TotalChunks);
 				var payload = JsonSerializer.SerializeToUtf8Bytes(

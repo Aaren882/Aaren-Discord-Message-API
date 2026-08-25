@@ -112,7 +112,7 @@ public sealed class BinaryStreamManager
 						continue;
 					}
 
-					await writeStream.WriteAsync(bytes);
+					await writeStream.WriteAsync(bytes.AsMemory<byte>());
 
 					if (EndOfContent)
 					{
