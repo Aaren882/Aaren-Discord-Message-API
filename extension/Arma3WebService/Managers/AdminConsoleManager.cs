@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Models;
 using Arma3WebService.Entity;
+using Arma3WebService.DBContext.Schema;
 
 namespace Arma3WebService.Managers;
 
