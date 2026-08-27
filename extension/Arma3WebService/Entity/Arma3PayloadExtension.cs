@@ -4,6 +4,7 @@ using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Discord;
 using Microsoft.EntityFrameworkCore;
+using Arma3WebService.DBContext.Entity;
 
 namespace Arma3WebService.Entity;
 
@@ -24,7 +25,7 @@ public abstract record Arma3PayloadExtended
 {
 	public abstract Arma3PayLoadTypeExtension Type { get; }
 	public static DateTime Timestamp => DateTime.Now;
-	public virtual Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext) => Task.CompletedTask;
+	public abstract Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext);
 }
 
 public record DiscordJsonExtension
@@ -35,17 +36,17 @@ public record DiscordJsonExtension
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.DiscordSend;
-	
-	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
+
+	public override Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		var service = serviceProvider.GetRequiredService<IDiscordBotService>();
-		await SendMessage(service);
+		return SendMessage(service);
 	}
 
 	private Task<IUserMessage> SendMessage(IDiscordBotService service)
 	{
-		return ulong.TryParse(MessageId, out var id) ? 
-			service.ModifyMessageAsync(id, DiscordMessage) : 
+		return ulong.TryParse(MessageId, out var id) ?
+			service.ModifyMessageAsync(id, DiscordMessage) :
 			service.SendMessageAsync(
 				service.GetPresetMessageChannelId(DiscordBotChannel.Monitor),
 				DiscordMessage);
@@ -63,7 +64,7 @@ public record UpdateServerIdentityExtension
 	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
 	{
 		await dbContext.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
-		
+
 		var messageId = ulong.Parse(MessageId);
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
 		remoteStateManager.TryUpdateServerInfoMessageId(profileName, messageId);
@@ -84,7 +85,7 @@ public record UpdateServerInfoTemplateExtension
 		var messageId = ulong.Parse(MessageId);
 		var exist = await dbContext.ServerInfoList.FirstOrDefaultAsync(x => x.messageId == messageId);
 		var updated = Configuration.CreateInfoTemplate(messageId);
-		
+
 		if (exist == null)
 		{
 			await dbContext.ServerInfoList.AddAsync(updated);
@@ -93,9 +94,9 @@ public record UpdateServerInfoTemplateExtension
 		{
 			dbContext.Entry(exist).CurrentValues.SetValues(updated);
 		}
-		
+
 		await dbContext.SaveChangesAsync();
-		
+
 		//- Update cache for other services
 		var existIdentity = await dbContext.ServerIdentities.FirstAsync(x => x.messageId == messageId);
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
