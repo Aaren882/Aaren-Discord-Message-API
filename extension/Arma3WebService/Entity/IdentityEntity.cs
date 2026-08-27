@@ -1,3 +1,4 @@
+using Arma3WebService.DBContext.Schema;
 using System.Text.Json.Serialization;
 using Arma3WebService.DBContext;
 using Arma3WebService.Models;

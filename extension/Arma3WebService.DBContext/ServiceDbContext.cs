@@ -1,3 +1,4 @@
+using Arma3WebService.DBContext.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

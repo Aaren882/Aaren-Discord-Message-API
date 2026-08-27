@@ -1,3 +1,4 @@
+using Arma3WebService.DBContext.Schema;
 using System.Collections.Concurrent;
 using Arma3WebService.DBContext;
 using Microsoft.EntityFrameworkCore;
