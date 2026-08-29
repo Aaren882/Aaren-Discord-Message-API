@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Net.Http.Headers;
 using Arma3WebService.Models;
 using Arma3WebService.Managers;
+using Arma3WebService.DBContext.Repositories;
 
 namespace Arma3WebService
 {
@@ -60,6 +61,8 @@ namespace Arma3WebService
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 			builder.Services.AddScoped<WebsocketServer>();
+			builder.Services.AddScoped<IServerIdentityRepository, ServerIdentityRepository>();
+			builder.Services.AddScoped<IServerInfoTemplateRepository, ServerInfoTemplateRepository>();
 
 			// builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
 			// builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();

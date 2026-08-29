@@ -1,10 +1,9 @@
 using System.Net.WebSockets;
 using System.Text.Json;
-using Arma3WebService.DBContext;
+using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity;
 using Arma3WebService.Managers;
 using Components.Entity;
-using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Extensions;
 
@@ -16,15 +15,17 @@ public static class Arma3PayLoadExtension
 		this Arma3PayloadExtended action,
 		WebsocketServer connection,
 		IServiceProvider serviceProvider,
-		IDbContextFactory<ServiceDbContext> dbContextFactory
+		IServerIdentityRepository identityRepository,
+		IServerInfoTemplateRepository infoRepository
 	)
 	{
-		await using (var dbContext = await dbContextFactory.CreateDbContextAsync())
+		/* await using (var dbContext = await dbContextFactory.CreateDbContextAsync())
 		{
-			logger.LogInformation("Invoking : {Type}", action.Type);
-			await action.Run(serviceProvider, dbContext);
-			logger.LogInformation("Invoked : {Type}", action.Type);
-		}
+		} */
+
+		logger.LogInformation("Invoking : {Type}", action.Type);
+		await action.Run(serviceProvider, identityRepository, infoRepository);
+		logger.LogInformation("Invoked : {Type}", action.Type);
 
 		//- Send back message to the client
 		var msg = new Arma3PayloadText($"Invoked \"{action.Type}\"");

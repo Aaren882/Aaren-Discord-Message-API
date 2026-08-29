@@ -1,13 +1,14 @@
-using Arma3WebService.DBContext.Schema;
 using System.Collections.Concurrent;
 using Arma3WebService.DBContext;
+using Arma3WebService.DBContext.Repositories;
+using Arma3WebService.DBContext.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Managers;
 
 public sealed class RemoteStateManager(
-	IDbContextFactory<ServiceDbContext> dbContextFactory,
-	IServiceProvider ServiceProvider
+	IServerIdentityRepository identityRepository,
+	IServerInfoTemplateRepository infoTemplateRepository
 )
 {
 	private readonly ConcurrentDictionary<ulong, WebsocketServer> _gameSessionsCache = [];
@@ -16,9 +17,8 @@ public sealed class RemoteStateManager(
 
 	internal async Task UpdateGameSessionCacheAsync(string profileName, WebsocketServer? connection = null)
 	{
-		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName);
 
-		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(profileName);
 		if (serverIdentity == null)
 			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
 
@@ -29,36 +29,14 @@ public sealed class RemoteStateManager(
 			_gameSessionsCache.TryRemove(messageId, out connection);
 	}
 
-	/* internal async Task<IConnection> GetGameSessionAsync(ulong messageId)
-	{
-		if (_gameSessionsCache.TryGetValue(messageId, out var session))
-			return session;
-
-		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-		
-		var serverIdentity = await dbContext.GetServerIdentityFromMessageIdAsync(messageId);
-		if (serverIdentity == null)
-			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
-		
-		var webSocketService = ServiceProvider.GetRequiredService<IWebSocketService>();
-		var connection = webSocketService.GetConnection(serverIdentity.profileName);
-		_gameSessionsCache[messageId] = connection;
-
-		return connection;
-	} */
-
 	internal async Task<ServerInfoTemplate> GetServerInfoTemplateAsync(ulong messageId)
 	{
 		if (_serverInfoTemplatesCache.TryGetValue(messageId, out var template))
 			return template;
 
-		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+		var infoTemplate = await infoTemplateRepository.GetByMessageIdAsync(messageId);
 
-		var infoTemplate = await dbContext.ServerInfoList
-			.FirstOrDefaultAsync(o => o.messageId == messageId);
-
-		if (infoTemplate == null) throw new NullReferenceException("\"infoTemplate\" does not exist.");
-
+		ArgumentNullException.ThrowIfNull(infoTemplate);
 		_serverInfoTemplatesCache.TryAdd(messageId, infoTemplate);
 
 		return infoTemplate;
@@ -68,12 +46,9 @@ public sealed class RemoteStateManager(
 		if (_serverInfoProfileNamesCache.TryGetValue(profileName, out var messageId))
 			return await GetServerInfoTemplateAsync(messageId);
 
-		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName);
 
-		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(profileName);
-		if (serverIdentity is null)
-			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
-
+		ArgumentNullException.ThrowIfNull(serverIdentity);
 		_serverInfoProfileNamesCache.TryAdd(profileName, serverIdentity.messageId);
 
 		return await GetServerInfoTemplateAsync(serverIdentity.messageId);

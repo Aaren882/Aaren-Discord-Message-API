@@ -1,10 +1,9 @@
 using System.Text.Json.Serialization;
-using Arma3WebService.DBContext;
 using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Discord;
-using Microsoft.EntityFrameworkCore;
 using Arma3WebService.DBContext.Entity;
+using Arma3WebService.DBContext.Repositories;
 
 namespace Arma3WebService.Entity;
 
@@ -25,7 +24,7 @@ public abstract record Arma3PayloadExtended
 {
 	public abstract Arma3PayLoadTypeExtension Type { get; }
 	public static DateTime Timestamp => DateTime.Now;
-	public abstract Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext);
+	public abstract Task Run(IServiceProvider serviceProvider, IServerIdentityRepository identityRepository, IServerInfoTemplateRepository infoRepository);
 }
 
 public record DiscordJsonExtension
@@ -37,7 +36,7 @@ public record DiscordJsonExtension
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.DiscordSend;
 
-	public override Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override Task Run(IServiceProvider serviceProvider, IServerIdentityRepository identityRepository, IServerInfoTemplateRepository infoRepository)
 	{
 		var service = serviceProvider.GetRequiredService<IDiscordBotService>();
 		return SendMessage(service);
@@ -61,9 +60,9 @@ public record UpdateServerIdentityExtension
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerIdentity;
-	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override async Task Run(IServiceProvider serviceProvider, IServerIdentityRepository identityRepository, IServerInfoTemplateRepository infoRepository)
 	{
-		await dbContext.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
+		await identityRepository.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
 
 		var messageId = ulong.Parse(MessageId);
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
@@ -80,27 +79,16 @@ public record UpdateServerInfoTemplateExtension
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.UpdateServerInfo;
 
-	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override async Task Run(IServiceProvider serviceProvider, IServerIdentityRepository identityRepository, IServerInfoTemplateRepository infoRepository)
 	{
 		var messageId = ulong.Parse(MessageId);
-		var exist = await dbContext.ServerInfoList.FirstOrDefaultAsync(x => x.messageId == messageId);
-		var updated = Configuration.CreateInfoTemplate(messageId);
 
-		if (exist == null)
-		{
-			await dbContext.ServerInfoList.AddAsync(updated);
-		}
-		else
-		{
-			dbContext.Entry(exist).CurrentValues.SetValues(updated);
-		}
+		// Use the repository to handle fetching and creating/updating
+		var (updated, existIdentity) = await infoRepository.GetOrCreateTemplateAndIdentityAsync(messageId, Configuration);
 
-		await dbContext.SaveChangesAsync();
-
-		//- Update cache for other services
-		var existIdentity = await dbContext.ServerIdentities.FirstAsync(x => x.messageId == messageId);
+		// Update cache for other services
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
-		remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, exist!);
+		remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, updated);
 		remoteStateManager.TryUpdateServerInfoMessageId(existIdentity.profileName, messageId);
 	}
 	/*public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
@@ -121,19 +109,16 @@ public record UpdateServerInfoTemplateExtension
 }
 
 
-public record RegisterServerIdentity
-(
-	UpdateServerIdentityExtension Identity, //- Setup Message ID for profile
-	UpdateServerInfoTemplateExtension InfoTemplate //- Acquire JSON message template
-) : Arma3PayloadExtended
+public record RegisterServerIdentity(UpdateServerIdentityExtension Identity, UpdateServerInfoTemplateExtension InfoTemplate) : Arma3PayloadExtended
 {
 	[JsonIgnore]
 	public override Arma3PayLoadTypeExtension Type => Arma3PayLoadTypeExtension.RegisterServerIdentity;
 
-	public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
+	public override async Task Run(IServiceProvider serviceProvider, IServerIdentityRepository identityRepository, IServerInfoTemplateRepository infoRepository)
 	{
-		foreach (var task in (IEnumerable<Arma3PayloadExtended>)[InfoTemplate, Identity])
-			await task.Run(serviceProvider, dbContext);
+		// The dependency injection framework is responsible for resolving the correct repositories
+		await Identity.Run(serviceProvider, identityRepository, infoRepository);
+		await InfoTemplate.Run(serviceProvider, identityRepository, infoRepository);
 	}
 };
 
