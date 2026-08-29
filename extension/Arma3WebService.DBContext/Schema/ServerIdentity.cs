@@ -5,7 +5,7 @@ namespace Arma3WebService.DBContext.Schema;
 [PrimaryKey(nameof(profileName))]
 public class ServerIdentity
 {
-	public string profileName { get; set; }
+	public required string profileName { get; set; }
 	public ulong messageId { get; set; }
 	public long profileStateStamp { get; set; }
 	public ulong? modListMessageId { get; set; }
