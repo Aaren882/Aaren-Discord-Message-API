@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Net.WebSockets;
 using System.Text.Json;
 using Arma3WebService.DBContext;
+using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity;
 using Arma3WebService.Extensions;
 using Arma3WebService.Handler;
@@ -20,7 +21,8 @@ public sealed class ServiceActionManager(
 	IDiscordBotService discordBotService,
 	DiscordBotRequestHandler requestHandler,
 	BinaryStreamManager binaryStreamManager,
-	IDbContextFactory<ServiceDbContext> dbContextFactory
+	IServerIdentityRepository identityRepository,
+	IServerInfoTemplateRepository infoRepository
 )
 {
 	public ValueTask CallBackAction(WebsocketServer connection, Arma3PayloadCallBack command)
@@ -88,7 +90,7 @@ public sealed class ServiceActionManager(
 			);
 
 			ArgumentNullException.ThrowIfNull(JsonStringAction, nameof(JsonStringAction));
-			await JsonStringAction.Invoke(connection, serviceProvider, dbContextFactory);
+			await JsonStringAction.Invoke(connection, serviceProvider, identityRepository, infoRepository);
 		}
 		catch (Exception e)
 		{
@@ -125,9 +127,7 @@ public sealed class ServiceActionManager(
 	}
 	private async ValueTask UpdateDiscordServerInfoMessageAsync(string sessionIdentity, Dictionary<string, string> logItem)
 	{
-		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-
-		var serverIdentity = await dbContext.ServerIdentities.FirstOrDefaultAsync(o => o.profileName == sessionIdentity);
+		var serverIdentity = await identityRepository.GetByProfileNameAsync(sessionIdentity);
 
 		//- If messageId not set  
 		if (serverIdentity is null)
@@ -137,7 +137,7 @@ public sealed class ServiceActionManager(
 		}
 		if (serverIdentity.messageId is 0) return;
 
-		var serverInfo = dbContext.ServerInfoList.FirstOrDefault(o => o.messageId == serverIdentity.messageId);
+		var serverInfo = await infoRepository.GetByMessageIdAsync(serverIdentity.messageId);
 		if (serverInfo is null) return;
 
 		var infoMessage = await File.ReadAllTextAsync(serverInfo.messageTemplatePath!);

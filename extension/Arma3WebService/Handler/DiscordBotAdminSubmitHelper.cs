@@ -1,14 +1,13 @@
 using System.Collections.Concurrent;
 using System.Net.Mime;
 using System.Net.WebSockets;
-using Arma3WebService.DBContext;
+using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Extensions;
 using Arma3WebService.Models;
 using Components.Entity;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Handler;
 
@@ -57,22 +56,21 @@ internal static class DiscordBotAdminSubmitHelper
 	{
 		var attachments = component.Data.Attachments.ToList();
 		var attachment = attachments[0];
-		if (!attachment.ContentType.Contains(MediaTypeNames.Text.Html)) throw new Exception("Invalid content type.");
+
+		if (!attachment.ContentType.Contains(MediaTypeNames.Text.Html))
+			throw new ArgumentOutOfRangeException(attachment.ContentType);
 
 		//- Saving Url
-		var dbContextFactory = serviceProvider.GetRequiredService<IDbContextFactory<ServiceDbContext>>();
-		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 		//- Get correct server info
 		var sessionName = GetSelectedSession(component);
-		var serverIdentity = await dbContext.GetServerIdentityFromProfileNameAsync(sessionName);
-		if (serverIdentity is null)
-			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
+		var identityRepository = serviceProvider.GetRequiredService<IServerIdentityRepository>();
+		var serverIdentity = await identityRepository.GetByProfileNameAsync(sessionName);
 
-		//- http://cdn.discordapp.com/attachments/1315253136511991818/1386731812268540054/TFOX_2025.html?ex=6a049aa4&is=6a034924&hm=e88ebbf4e32e3edfe24fb4078a23545ec5ab1a9d2e2ce2aa6b5d9f866bc3e46f&
-		var url = attachment.Url;
+		ArgumentNullException.ThrowIfNull(serverIdentity);
 
 		//- Respond with a message
 		var discordBotService = serviceProvider.GetRequiredService<IDiscordBotService>();
+		var url = attachment.Url;
 		await using (var content = await _httpClient.GetStreamAsync(url))
 		{
 
@@ -104,7 +102,8 @@ internal static class DiscordBotAdminSubmitHelper
 			serverIdentity.modListMessageId = message.Id;
 		}
 
-		await dbContext.SaveChangesAsync();
+		//- Update Save into DB
+		await identityRepository.UpdateServerIdentityAsync(serverIdentity);
 
 		return (sessionName, null);
 	}
