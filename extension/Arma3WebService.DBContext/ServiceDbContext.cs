@@ -7,40 +7,13 @@ namespace Arma3WebService.DBContext;
 
 public class ServiceDbContext(
 	DbContextOptions<ServiceDbContext> options,
-	IConfiguration configuration,
-	ILogger<ServiceDbContext> logger
+	IConfiguration configuration
 ) : DbContext(options)
 {
 	public DbSet<ServerIdentity> ServerIdentities { get; set; }
 	public DbSet<ServerInfoTemplate> ServerInfoList { get; set; }
 	public DbSet<InternalManagement> InternalManagement { get; set; }
 
-	public async Task UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId)
-	{
-		var exist = ServerIdentities.FirstOrDefault(
-			o => o.profileName == profileName
-		);
-
-		if (exist == null)
-		{
-			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
-			return;
-		}
-
-		exist.messageId = ulong.Parse(serverInfoMessageId);
-		await SaveChangesAsync();
-	}
-	public async Task<ServerIdentity?> GetServerIdentityFromProfileNameAsync(string profileName)
-	{
-		var exist = await ServerIdentities.FirstOrDefaultAsync(
-			o => o.profileName == profileName
-		);
-
-		if (exist is null)
-			logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
-
-		return exist;
-	}
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		base.OnModelCreating(modelBuilder);
