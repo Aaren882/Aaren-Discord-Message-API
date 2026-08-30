@@ -1,6 +1,5 @@
 using Arma3WebService.DBContext.Schema;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace Arma3WebService.DBContext.Repositories;
@@ -8,6 +7,7 @@ namespace Arma3WebService.DBContext.Repositories;
 public interface IServerIdentityRepository
 {
 	ServiceDbContext DbContext { get; }
+	Task<ServerIdentity?> GetByMessageIdAsync(ulong messageId);
 	Task<ServerIdentity?> GetByProfileNameAsync(string profileName);
 
 	Task<int> AddServerIdentityAsync(ServerIdentity identity);
@@ -23,6 +23,11 @@ public class ServerIdentityRepository(ILogger<IServerIdentityRepository> Logger,
 {
 	public ServiceDbContext DbContext { get; } = DbContext;
 
+	public Task<ServerIdentity?> GetByMessageIdAsync(ulong messageId)
+	{
+		return DbContext.ServerIdentities
+			.FirstOrDefaultAsync(o => o.messageId == messageId);
+	}
 	public Task<ServerIdentity?> GetByProfileNameAsync(string profileName)
 	{
 		// The repository is where the specific EF Core call lives
