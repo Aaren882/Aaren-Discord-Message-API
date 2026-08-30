@@ -104,6 +104,7 @@ internal static class DiscordBotAdminSubmitHelper
 
 		//- Update Save into DB
 		await identityRepository.UpdateServerIdentityAsync(serverIdentity);
+		await identityRepository.DbContext.SaveChangesAsync();
 
 		return (sessionName, null);
 	}

@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
+using Arma3WebService.DBContext.Entity;
+using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Discord;
-using Arma3WebService.DBContext.Entity;
-using Arma3WebService.DBContext.Repositories;
 
 namespace Arma3WebService.Entity;
 
@@ -63,6 +63,7 @@ public record UpdateServerIdentityExtension
 	public override async Task Run(IServiceProvider serviceProvider, IServerIdentityRepository identityRepository, IServerInfoTemplateRepository infoRepository)
 	{
 		await identityRepository.UpdateServerIdentityMessageIdAsync(profileName, MessageId);
+		await identityRepository.DbContext.SaveChangesAsync();
 
 		var messageId = ulong.Parse(MessageId);
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
@@ -84,12 +85,14 @@ public record UpdateServerInfoTemplateExtension
 		var messageId = ulong.Parse(MessageId);
 
 		// Use the repository to handle fetching and creating/updating
-		var (updated, existIdentity) = await infoRepository.GetOrCreateTemplateAndIdentityAsync(messageId, Configuration);
+		// var (updated, existIdentity) = await infoRepository.GetOrCreateTemplateAndIdentityAsync(messageId, Configuration);
+		var updated = await infoRepository.GetOrCreateTemplateAsync(messageId, Configuration);
+		await infoRepository.DbContext.SaveChangesAsync();
 
 		// Update cache for other services
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
 		remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, updated);
-		remoteStateManager.TryUpdateServerInfoMessageId(existIdentity.profileName, messageId);
+		// remoteStateManager.TryUpdateServerInfoMessageId(existIdentity.profileName, messageId);
 	}
 }
 
