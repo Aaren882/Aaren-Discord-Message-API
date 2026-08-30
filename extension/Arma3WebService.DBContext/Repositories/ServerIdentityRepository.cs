@@ -1,5 +1,6 @@
 using Arma3WebService.DBContext.Schema;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace Arma3WebService.DBContext.Repositories;
@@ -8,9 +9,14 @@ public interface IServerIdentityRepository
 {
 	ServiceDbContext DbContext { get; }
 	Task<ServerIdentity?> GetByProfileNameAsync(string profileName);
-	Task AddServerIdentityAsync(ServerIdentity identity);
-	Task UpdateServerIdentityAsync(ServerIdentity identity);
-	Task UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId);
+
+	Task<int> AddServerIdentityAsync(ServerIdentity identity);
+
+	Task<int> UpdateServerIdentityAsync(ServerIdentity identity);
+
+	Task<int> UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId);
+
+	Task<int> RemoveServerIdentityAsync(ServerIdentity identity);
 }
 
 public class ServerIdentityRepository(ILogger<IServerIdentityRepository> Logger, ServiceDbContext DbContext) : IServerIdentityRepository
@@ -24,20 +30,20 @@ public class ServerIdentityRepository(ILogger<IServerIdentityRepository> Logger,
 			.FirstOrDefaultAsync(o => o.profileName == profileName);
 	}
 
-	public Task AddServerIdentityAsync(ServerIdentity identity)
+	public Task<int> AddServerIdentityAsync(ServerIdentity identity)
 	{
 		DbContext.ServerIdentities.Add(identity);
-		return DbContext.SaveChangesAsync();
+		return Task.FromResult(0);
 	}
 
-	public Task UpdateServerIdentityAsync(ServerIdentity identity)
+	public Task<int> UpdateServerIdentityAsync(ServerIdentity identity)
 	{
 		// EF Core tracks changes, so you often just attach/update and save.
 		DbContext.ServerIdentities.Update(identity);
-		return DbContext.SaveChangesAsync();
+		return Task.FromResult(0);
 	}
 
-	public async Task UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId)
+	public async Task<int> UpdateServerIdentityMessageIdAsync(string profileName, string serverInfoMessageId)
 	{
 		var exist = await DbContext.ServerIdentities.FirstOrDefaultAsync(
 			o => o.profileName == profileName
@@ -46,10 +52,17 @@ public class ServerIdentityRepository(ILogger<IServerIdentityRepository> Logger,
 		if (exist == null)
 		{
 			Logger.LogError("\"{profileName}\" ServerIdentity  is not found !!", profileName);
-			return;
+			return -1;
 		}
 
 		exist.messageId = ulong.Parse(serverInfoMessageId);
-		await DbContext.SaveChangesAsync();
+
+		return 0;
+	}
+
+	public Task<int> RemoveServerIdentityAsync(ServerIdentity identity)
+	{
+		DbContext.ServerIdentities.Remove(identity);
+		return Task.FromResult(0);
 	}
 }

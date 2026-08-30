@@ -7,29 +7,25 @@ namespace Arma3WebService.DBContext.Repositories;
 public interface IServerInfoTemplateRepository
 {
 	ServiceDbContext DbContext { get; }
-	// Returns a tuple: (The updated template, The associated identity)
-	Task<(ServerInfoTemplate updatedTemplate, ServerIdentity identity)> GetOrCreateTemplateAndIdentityAsync(
-		ulong messageId,
-		Arma3ClientProfileConfiguration configuration);
 
+	Task<ServerInfoTemplate> GetOrCreateTemplateAsync(ulong messageId, Arma3ClientProfileConfiguration configuration);
 	Task<ServerInfoTemplate?> GetByMessageIdAsync(ulong messageId);
-
 	// Handles the update logic for an existing template
-	Task UpdateTemplateAsync(ServerInfoTemplate existingTemplate, Arma3ClientProfileConfiguration updatedConfiguration);
-
+	Task<int> UpdateTemplateAsync(ServerInfoTemplate existingTemplate, Arma3ClientProfileConfiguration updatedConfiguration);
 	// Handles the creation of a new template
-	Task AddTemplateAsync(ulong messageId, Arma3ClientProfileConfiguration configuration);
+	Task<int> AddTemplateAsync(ulong messageId, Arma3ClientProfileConfiguration configuration);
+	Task<int> RemoveTemplateAsync(ServerInfoTemplate template);
 }
 
 public class ServerInfoTemplateRepository(ServiceDbContext DbContext) : IServerInfoTemplateRepository
 {
 	public ServiceDbContext DbContext { get; } = DbContext;
 
-	public async Task<(ServerInfoTemplate updatedTemplate, ServerIdentity identity)> GetOrCreateTemplateAndIdentityAsync(
+	public async Task<ServerInfoTemplate> GetOrCreateTemplateAsync(
 		ulong messageId,
 		Arma3ClientProfileConfiguration configuration)
 	{
-		// 1. Try to find the existing ServerInfoTemplate
+		// Try to find the existing ServerInfoTemplate
 		var existingTemplate = await DbContext.ServerInfoList
 			.FirstOrDefaultAsync(x => x.messageId == messageId);
 
@@ -38,10 +34,7 @@ public class ServerInfoTemplateRepository(ServiceDbContext DbContext) : IServerI
 			// Template exists, update it
 			await UpdateTemplateAsync(existingTemplate, configuration);
 
-			// Retrieve the identity associated with this messageId
-			var identity = await DbContext.ServerIdentities.FirstOrDefaultAsync(x => x.messageId == messageId);
-
-			return (existingTemplate, identity ?? throw new NullReferenceException($"ServerIdentity not found for MessageId: {messageId}"));
+			return existingTemplate;
 		}
 		else
 		{
@@ -49,19 +42,10 @@ public class ServerInfoTemplateRepository(ServiceDbContext DbContext) : IServerI
 			var newTemplate = configuration.CreateInfoTemplate(messageId);
 			DbContext.ServerInfoList.Add(newTemplate);
 
-			// Create a new identity entry to track this messageId
-			var newIdentity = new ServerIdentity
-			{
-				profileName = "TemplateProfile", // Placeholder or derive from context
-				messageId = messageId,
-				profileStateStamp = 0, // Initial stamp
-			};
-			DbContext.ServerIdentities.Add(newIdentity);
-			await DbContext.SaveChangesAsync();
-
-			return (newTemplate, newIdentity);
+			return newTemplate;
 		}
 	}
+
 	public Task<ServerInfoTemplate?> GetByMessageIdAsync(ulong messageId)
 	{
 		// The repository is where the specific EF Core call lives
@@ -69,16 +53,22 @@ public class ServerInfoTemplateRepository(ServiceDbContext DbContext) : IServerI
 			.FirstOrDefaultAsync(o => o.messageId == messageId);
 	}
 
-	public Task UpdateTemplateAsync(ServerInfoTemplate existingTemplate, Arma3ClientProfileConfiguration updatedConfiguration)
+	public Task<int> UpdateTemplateAsync(ServerInfoTemplate existingTemplate, Arma3ClientProfileConfiguration updatedConfiguration)
 	{
 		// Use CurrentValues to update properties on the tracked entity
 		DbContext.Entry(existingTemplate).CurrentValues.SetValues(updatedConfiguration.CreateInfoTemplate(existingTemplate.messageId));
-		return DbContext.SaveChangesAsync();
+		return Task.FromResult(0);
 	}
 
-	public Task AddTemplateAsync(ulong messageId, Arma3ClientProfileConfiguration configuration)
+	public Task<int> AddTemplateAsync(ulong messageId, Arma3ClientProfileConfiguration configuration)
 	{
 		DbContext.ServerInfoList.Add(configuration.CreateInfoTemplate(messageId));
-		return DbContext.SaveChangesAsync();
+		return Task.FromResult(0);
+	}
+
+	public Task<int> RemoveTemplateAsync(ServerInfoTemplate template)
+	{
+		DbContext.ServerInfoList.Remove(template);
+		return Task.FromResult(0);
 	}
 }
