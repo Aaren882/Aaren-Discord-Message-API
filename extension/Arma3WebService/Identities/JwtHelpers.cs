@@ -3,7 +3,6 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Arma3WebService.DBContext;
 using Arma3WebService.Entity;
 using Components.Entity;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -11,17 +10,17 @@ using Microsoft.IdentityModel.Tokens;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 
 namespace Arma3WebService.Identities;
+
 public sealed class JwtHelpers(
 	IConfiguration configuration,
 	IServiceProvider serviceProvider,
-	ILogger<JwtHelpers> logger,
-	ServiceDbContext dbContext
+	ILogger<JwtHelpers> logger
 )
 {
 	private readonly string issuer = configuration["Jwt:Issuer"]!;
 	private readonly string audience = configuration["Jwt:Audience"]!;
 	private readonly string signKey = Environment.GetEnvironmentVariable("Jwt_Secret") ?? configuration["Jwt:Secret"]!;
-	
+
 	public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
 	{
 		var accessName = payload.Identity.AccessName;
@@ -53,30 +52,32 @@ public sealed class JwtHelpers(
 		var tokenHandler = new JwtSecurityTokenHandler();
 		var securityToken = tokenHandler.CreateToken(tokenDescriptor);
 		var serializeToken = tokenHandler.WriteToken(securityToken);
-		
-		logger.LogInformation("\"{accessName}\" is using JWT.",accessName);
-		
+
+		logger.LogInformation("\"{accessName}\" is using JWT.", accessName);
+
 		//- Get additional info in database
 		if (string.IsNullOrEmpty(payload.AdditionalPayload))
+		{
 			return new IdentityRolesReturnPayload
 			{
 				Identity = payload.Identity,
 				RoleName = roleName,
 				AuthToken = serializeToken,
 			};
-		
-		
+		}
+
 		var identityPayload = JsonSerializer.Deserialize(
-			payload.AdditionalPayload, 
+			payload.AdditionalPayload,
 			IdentityEntityJsonSerializerContext.Default.IdentityEntity
 		);
-		
-		var additionalPayload = identityPayload?.Run(payload, serviceProvider, dbContext)
-			.GetAwaiter().GetResult();
-		
-		logger.LogInformation("Additional Payload (Result) : \"{additionalPayload}\"",additionalPayload);
 
-		return new IdentityRolesReturnPayload {
+		var additionalPayload = identityPayload?.Run(payload, serviceProvider)
+			.GetAwaiter().GetResult();
+
+		logger.LogInformation("Additional Payload (Result) : \"{additionalPayload}\"", additionalPayload);
+
+		return new IdentityRolesReturnPayload
+		{
 			Identity = payload.Identity,
 			RoleName = roleName,
 			AuthToken = serializeToken,
@@ -89,7 +90,7 @@ public sealed class JwtHelpers(
 		var tokenHandler = new JsonWebTokenHandler();
 		return tokenHandler.ValidateTokenAsync(payload.AuthToken, GetValidationParameters());
 	}
-	
+
 	internal TokenValidationParameters GetValidationParameters()
 	{
 		// Symmetric Key for Credential
