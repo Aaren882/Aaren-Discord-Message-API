@@ -91,21 +91,6 @@ public record UpdateServerInfoTemplateExtension
 		remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, updated);
 		remoteStateManager.TryUpdateServerInfoMessageId(existIdentity.profileName, messageId);
 	}
-	/*public override async Task Run(IServiceProvider serviceProvider, ServiceDbContext dbContext)
-	{
-		var fileInfo = await CreateTemplate();
-		await dbContext.UpsertServerInfoTemplateAsync(fileInfo, MessageId);
-	}
-	private async Task<FileInfo> CreateTemplate()
-	{
-		var file = $".profile/ServerInfoTemplate/{MessageId}.json";
-		var directory = Path.GetDirectoryName(file);
-
-		if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-		await File.WriteAllTextAsync(file, JsonContent, Encoding.UTF8);
-
-		return new FileInfo(file);
-	}*/
 }
 
 
