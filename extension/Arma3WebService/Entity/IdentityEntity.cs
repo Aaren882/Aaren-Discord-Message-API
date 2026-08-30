@@ -5,18 +5,11 @@ using Components.Entity;
 
 namespace Arma3WebService.Entity;
 
-/*public enum ProfileIdentity
-{
-	Admin = 1,
-	GameServer = 2,
-}*/
-
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
-[JsonDerivedType(typeof(IdentityEntity), (int)Role.Admin)]
 [JsonDerivedType(typeof(ProfileIdentityCheck), (int)Role.GameServer)]
-public record IdentityEntity
+public abstract record IdentityEntity
 {
-	public virtual Task<string> Run(IdentityRolesPayload payload, IServiceProvider serviceProvider) => Task.FromResult(string.Empty);
+	public abstract Task<string> Run(IdentityRolesPayload payload, IServiceProvider serviceProvider);
 }
 
 public record ProfileIdentityCheck(
