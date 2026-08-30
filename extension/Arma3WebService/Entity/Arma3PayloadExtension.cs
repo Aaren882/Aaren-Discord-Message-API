@@ -84,6 +84,9 @@ public record UpdateServerInfoTemplateExtension
 	{
 		var messageId = ulong.Parse(MessageId);
 
+		var existIdentity = await identityRepository.GetByMessageIdAsync(messageId);
+		ArgumentNullException.ThrowIfNull(existIdentity);
+
 		// Use the repository to handle fetching and creating/updating
 		// var (updated, existIdentity) = await infoRepository.GetOrCreateTemplateAndIdentityAsync(messageId, Configuration);
 		var updated = await infoRepository.GetOrCreateTemplateAsync(messageId, Configuration);
@@ -92,7 +95,7 @@ public record UpdateServerInfoTemplateExtension
 		// Update cache for other services
 		var remoteStateManager = serviceProvider.GetRequiredService<RemoteStateManager>();
 		remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, updated);
-		// remoteStateManager.TryUpdateServerInfoMessageId(existIdentity.profileName, messageId);
+		remoteStateManager.TryUpdateServerInfoMessageId(existIdentity.profileName, messageId);
 	}
 }
 
