@@ -15,7 +15,7 @@ public record struct Arma3ClientProfileConfiguration
 		{
 			if (value is not null)
 			{
-				_messageTemplate = new FileInfo(
+				_messageTemplate = new (
 					Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}")
 				);
 			}
@@ -29,7 +29,7 @@ public record struct Arma3ClientProfileConfiguration
 		{
 			if (value is not null)
 			{
-				_messageOfflineTemplate = new FileInfo(
+				_messageOfflineTemplate = new (
 					Path.GetFullPath($".profile/MessageOfflineTemplate/{Path.GetFileName(value)}")
 				);
 			}
@@ -46,7 +46,7 @@ public record struct Arma3ClientProfileConfiguration
 
 	public readonly ServerInfoTemplate CreateInfoTemplate(ulong messageId)
 	{
-		return new ServerInfoTemplate
+		return new()
 		{
 			messageId = messageId,
 			messageTemplatePath = MessageTemplate,
