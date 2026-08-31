@@ -46,12 +46,15 @@ namespace Arma3WebService
 				);
 			});
 
+			//- #LINK - `ServiceDbContextFactory.cs`
+			//  : Design time for migration
+			builder.Services.AddScoped(sp => 
+				sp.GetRequiredService<IDbContextFactory<ServiceDbContext>>().CreateDbContext());
 
 			// Add services to the container.
 			builder.Services.AddHostedService<DiscordBotService>();
 			//- Register Bot Service -//
 
-			// builder.Services.AddSingleton<WebSocketService>();
 			builder.Services.AddHostedService<WebSocketService>();
 			//- Register WebSocket Service -//
 
@@ -112,6 +115,8 @@ namespace Arma3WebService
 			builder.Services.ConfigureOptions<JwtConfigureOptions>();
 
 			builder.Services.AddResourceMonitoring();
+			
+			
 
 			var app = builder.Build();
 
