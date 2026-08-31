@@ -1,39 +1,31 @@
+using System.Text.Json;
 using Arma3WebService.DBContext.Schema;
+using Component.DiscordEntity;
 
 namespace Arma3WebService.DBContext.Entity;
 
-public record struct Arma3ClientProfileConfiguration
+public record struct Arma3ClientProfileConfiguration()
 {
-	private FileInfo? _messageTemplate;
-	private FileInfo? _messageOfflineTemplate;
-	private FileInfo? _messageActions;
+	private FileInfo _messageTemplate = new(".profile/MessageTemplate/default.json");
+	private FileInfo _messageOfflineTemplate = new(".profile/MessageOfflineTemplate/default.json");
+	private FileInfo? _messageActions = null;
 
-	public string? MessageTemplate
+	public string MessageTemplate
 	{
-		readonly get => _messageTemplate?.FullName;
-		set
-		{
-			if (value is not null)
-			{
-				_messageTemplate = new (
-					Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}")
-				);
-			}
-		}
+		readonly get => _messageTemplate.FullName;
+		set =>
+			_messageTemplate = new(
+				Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}")
+			);
 	}
 
-	public string? MessageOfflineTemplate
+	public string MessageOfflineTemplate
 	{
-		readonly get => _messageOfflineTemplate?.FullName;
-		set
-		{
-			if (value is not null)
-			{
-				_messageOfflineTemplate = new (
-					Path.GetFullPath($".profile/MessageOfflineTemplate/{Path.GetFileName(value)}")
-				);
-			}
-		}
+		readonly get => _messageOfflineTemplate.FullName;
+		set => 
+			_messageOfflineTemplate = new(
+				Path.GetFullPath($".profile/MessageOfflineTemplate/{Path.GetFileName(value)}")
+			);
 	}
 
 	public string? MessageActions
@@ -46,11 +38,12 @@ public record struct Arma3ClientProfileConfiguration
 
 	public readonly ServerInfoTemplate CreateInfoTemplate(ulong messageId)
 	{
+		// ArgumentNullException.ThrowIfNull(MessageOfflineTemplate);
 		return new()
 		{
 			messageId = messageId,
 			messageTemplatePath = MessageTemplate,
-			messageOfflinePath = MessageOfflineTemplate,
+			messageOffline = JsonSerializer.Deserialize(MessageOfflineTemplate, MsgPayload_JsonContext.Default.DiscordMessageDto)!,
 			messageActionPath = MessageActions,
 		};
 	}
