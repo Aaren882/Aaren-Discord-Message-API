@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Components.Entity;
+using Arma3WebService.Entity;
 
 namespace Arma3WebService.Managers;
 

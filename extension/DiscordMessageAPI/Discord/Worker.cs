@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using ExtensionComponents.Tools;
-using ServiceConnection.Discord;
+using Component.DiscordEntity;
 using static ExtensionComponents.ExtensionStartup;
 
 namespace DiscordMessageAPI.Discord;

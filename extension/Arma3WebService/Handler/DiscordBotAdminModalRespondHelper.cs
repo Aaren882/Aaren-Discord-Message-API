@@ -1,7 +1,7 @@
 using Arma3WebService.Entity.DiscordBotAction;
-using Arma3WebService.Entity;
 using Discord;
 using Discord.WebSocket;
+using Component.DiscordEntity;
 
 namespace Arma3WebService.Handler;
 

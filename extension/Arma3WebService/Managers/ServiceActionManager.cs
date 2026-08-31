@@ -2,15 +2,14 @@ using System.Collections.Concurrent;
 using System.Net.Mime;
 using System.Net.WebSockets;
 using System.Text.Json;
-using Arma3WebService.DBContext;
 using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity;
 using Arma3WebService.Extensions;
 using Arma3WebService.Handler;
 using Arma3WebService.Models;
+using Component.DiscordEntity;
 using Components.Entity;
 using Discord;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 
 namespace Arma3WebService.Managers;
