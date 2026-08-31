@@ -1,23 +1,13 @@
-using System.Dynamic;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Net.WebSockets;
-using System.Reflection;
 using System.Text;
 using Components.Entity;
-using Discord;
-using DiscordMessageAPI.ServiceConnection.WebService;
 using ExtensionComponents;
 using ExtensionComponents.Entity;
 using ExtensionComponents.Tools;
-using featureTest;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ServiceConnection;
-using ServiceConnection.Discord;
-using ServiceConnection.Tools;
 using ServiceConnection.WebService;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
