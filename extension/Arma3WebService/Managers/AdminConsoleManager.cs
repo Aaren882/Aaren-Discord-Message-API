@@ -5,8 +5,8 @@ using Discord;
 using Microsoft.EntityFrameworkCore;
 using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Models;
-using Arma3WebService.Entity;
 using Arma3WebService.DBContext.Schema;
+using Component.DiscordEntity;
 
 namespace Arma3WebService.Managers;
 
@@ -18,7 +18,7 @@ public sealed class AdminConsoleManager(
 )
 {
 	internal ulong AdminMessageId;
-	
+
 	public enum ActionType
 	{
 		Modal,
@@ -95,69 +95,71 @@ public sealed class AdminConsoleManager(
 			return queryable.ToList();
 		}
 	}
-	
+
 	public async Task CreateAdminConsole()
-    {
-    	var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
-    	var channel = await discordBotService.GetMessageChannelAsync(channelId);
-    	try
-    	{
-    		await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-    		var exist = dbContext.InternalManagement.FirstOrDefault(
-    			o => 
-    				o.managementType == InternalManagementType.AdminConsole
-    			);
+	{
+		var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
+		var channel = await discordBotService.GetMessageChannelAsync(channelId);
+		try
+		{
+			await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+			var exist = dbContext.InternalManagement.FirstOrDefault(
+				o =>
+					o.managementType == InternalManagementType.AdminConsole
+				);
 
-    		var updateColumn = true;
-    		IMessage message;
-    		
-    		//- Checking DB data
-    		if (exist is null)
-		    {
-			    message = await CreateConsole();
+			var updateColumn = true;
+			IMessage message;
 
-    			await dbContext.InternalManagement.AddAsync(
-    				new InternalManagement
-    				{
-    					messageId = message.Id,
-    					description = "it's used for handling remote action on Discord."
-    				}
-    			);
-    		} else
-    		{
-			    message = await channel.GetMessageAsync(exist.messageId);
+			//- Checking DB data
+			if (exist is null)
+			{
+				message = await CreateConsole();
+
+				await dbContext.InternalManagement.AddAsync(
+					new InternalManagement
+					{
+						messageId = message.Id,
+						description = "it's used for handling remote action on Discord."
+					}
+				);
+			}
+			else
+			{
+				message = await channel.GetMessageAsync(exist.messageId);
 				var id = message?.Id ?? 0;
 				if (id == 0)
 					message = await CreateConsole();
-    			
-				updateColumn = exist.messageId != id;
-    			if (updateColumn) exist.messageId = message!.Id;
-    		}
 
-		    AdminMessageId = message!.Id;
-		    _ = UpdateConsoleInfo(channel, AdminMessageId);
-    		
-    		//- Make sure DB updated
-    		if (updateColumn)
-    			await dbContext.SaveChangesAsync();
-			
-		    //- Local Method
-		    async Task<IMessage> CreateConsole()
-		    {
-			    var json = await File.ReadAllTextAsync("AdminConsole.json");
-			    var deserialize = JsonSerializer.Deserialize(
-				    json,
-				    MsgPayload_JsonContext.Default.DiscordMessageDto
-			    );
-			    return await discordBotService.SendMessageAsync(channelId, deserialize!);
-		    };
-	    }
-    	catch (Exception e)
-    	{
-    		logger.LogError(e, "CreateAdminConsole: ");
-    		await channel.SendMessageAsync($"Exception : {e.Message}");
-    	}
-    }
+				updateColumn = exist.messageId != id;
+				if (updateColumn) exist.messageId = message!.Id;
+			}
+
+			AdminMessageId = message!.Id;
+			_ = UpdateConsoleInfo(channel, AdminMessageId);
+
+			//- Make sure DB updated
+			if (updateColumn)
+				await dbContext.SaveChangesAsync();
+
+			//- Local Method
+			async Task<IMessage> CreateConsole()
+			{
+				var json = await File.ReadAllTextAsync("AdminConsole.json");
+				var deserialize = JsonSerializer.Deserialize(
+					json,
+					MsgPayload_JsonContext.Default.DiscordMessageDto
+				);
+				return await discordBotService.SendMessageAsync(channelId, deserialize!);
+			}
+			;
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "CreateAdminConsole: ");
+			await channel.SendMessageAsync($"Exception : {e.Message}");
+		}
+	}
 
 	private List<string> GetSessionNames()
 	{
@@ -167,13 +169,13 @@ public sealed class AdminConsoleManager(
 
 		return names;
 	}
-	
+
 	private async Task UpdateConsoleInfo(IMessageChannel channel, ulong messageID)
 	{
 		var samples = new Dictionary<string, string>();
 		const string rmMeterName = "Microsoft.Extensions.Diagnostics.ResourceMonitoring";
-		using var meter = new Meter(rmMeterName);
-		using var meterListener = new MeterListener
+		using Meter meter = new(rmMeterName);
+		using MeterListener meterListener = new()
 		{
 			InstrumentPublished = (instrument, listener) =>
 			{
@@ -183,7 +185,7 @@ public sealed class AdminConsoleManager(
 				}
 			}
 		};
-		
+
 		//- Keys can be found from https://learn.microsoft.com/en-us/dotnet/core/diagnostics/built-in-metrics-diagnostics#microsoftextensionsdiagnosticsresourcemonitoring
 		meterListener.SetMeasurementEventCallback<double>((instrument, measurement, tags, state) =>
 		{
@@ -201,18 +203,18 @@ public sealed class AdminConsoleManager(
 				var sessionCountColor = sessionCount == 0 ? "arm" : "fix";
 				samples["{TOTAL_SESSIONS}"] = @$"{sessionCountColor}\n{sessionCount}";
 				samples["{SYSTEM_TIMESTAMP}"] = $"{((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}";
-				
+
 				var json = await File.ReadAllTextAsync("AdminConsole.json");
 				json = samples.Aggregate(
 					json,
 					(current, item) =>
 					{
 						var (key, value) = item;
-						logger.LogDebug("Admin Panel : {KEY}, {Value}",key, value);
+						logger.LogDebug("Admin Panel : {KEY}, {Value}", key, value);
 						return current.Replace(key, value, StringComparison.OrdinalIgnoreCase);
 					}
 				);
-				
+
 				var message = JsonSerializer.Deserialize(
 					json,
 					MsgPayload_JsonContext.Default.DiscordMessageDto
@@ -220,14 +222,15 @@ public sealed class AdminConsoleManager(
 
 				await channel.ModifyMessageAsync(messageID, msg =>
 				{
-					msg.Content = message.Content;
-					msg.Embeds = message.ConvertEmbeds();
-					msg.Components = message.ConvertComponents();
-					msg.Flags = message.Flags;
+					msg.Content = message?.Content;
+					msg.Embeds = message?.ConvertEmbeds();
+					msg.Components = message?.ConvertComponents();
+					msg.Flags = message?.Flags;
 				});
-				
+
 				await Task.Delay(10000);
-			} catch (Exception e)
+			}
+			catch (Exception e)
 			{
 				logger.LogError(e, "\"UpdateConsoleInfo\" throw an Exception.");
 			}

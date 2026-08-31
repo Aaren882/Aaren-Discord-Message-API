@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Discord;
 using Discord.WebSocket;
+using Component.DiscordEntity;
 
 namespace Arma3WebService.Entity.DiscordBotAction;
 

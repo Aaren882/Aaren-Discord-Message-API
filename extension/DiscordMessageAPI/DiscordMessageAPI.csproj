@@ -25,6 +25,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ExtensionComponents\ExtensionComponents.csproj" />
+    <ProjectReference Include="..\Component.DiscordEntity\Component.DiscordEntity.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />

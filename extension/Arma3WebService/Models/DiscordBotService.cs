@@ -1,10 +1,9 @@
 using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
 using Arma3WebService.Entity.DiscordBotAction;
-using Arma3WebService.Entity;
 using Arma3WebService.Managers;
+using Component.DiscordEntity;
 
 namespace Arma3WebService.Models;
 
@@ -100,7 +99,7 @@ public sealed class DiscordBotService(
 			}
 			catch (Exception e)
 			{
-				logger.LogError(e , "ButtonExecuted :");
+				logger.LogError(e, "ButtonExecuted :");
 				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
@@ -161,12 +160,7 @@ public sealed class DiscordBotService(
 				var profileName = entity.GetIdentity();
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(profileName);
 
-				var json = await File.ReadAllTextAsync(currentTemplate.messageOfflinePath!, stoppingToken);
-				var deserialize = JsonSerializer.Deserialize(
-					json,
-					MsgPayload_JsonContext.Default.DiscordMessageDto
-				);
-				await ModifyMessageAsync(currentTemplate.messageId, deserialize!);
+				await ModifyMessageAsync(currentTemplate.messageId, currentTemplate.messageOffline);
 
 				var id = GetPresetMessageChannelId(DiscordBotChannel.Logging);
 				var channel = await GetMessageChannelAsync(id);

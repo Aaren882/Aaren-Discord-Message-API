@@ -3,6 +3,7 @@ using Arma3WebService.DBContext.Entity;
 using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Managers;
 using Arma3WebService.Models;
+using Component.DiscordEntity;
 using Discord;
 
 namespace Arma3WebService.Entity;

@@ -43,6 +43,8 @@
     <ProjectReference Include="..\Arma3WebService.Migrations.SQLite\Arma3WebService.Migrations.SQLite.csproj" />
     <ProjectReference Include="..\Components\Components.csproj" />
     <ProjectReference Include="..\Component.Websocket\Component.Websocket.csproj" />
+    <ProjectReference Include="..\Component.DiscordEntity\Component.DiscordEntity.csproj" />
+    <ProjectReference Include="..\Arma3WebService.DBContext\Arma3WebService.DBContext.csproj" />
   </ItemGroup>
 
   <ItemGroup>
