@@ -152,7 +152,7 @@ public sealed class WebsocketClient(
 		Connected?.Invoke();
 
 		WebSocketStateMachine = new(this, Logger);
-		await WebSocketStateMachine.StartAsync(webSocket);
+		_ = WebSocketStateMachine.StartAsync(webSocket); //- Don't block the thread (Client-Side)
 	}
 	public override async Task CloseAsync()
 	{
