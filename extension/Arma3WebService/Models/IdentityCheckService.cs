@@ -1,3 +1,4 @@
+using Arma3WebService.Broker;
 using Arma3WebService.DBContext;
 using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity;
@@ -13,6 +14,7 @@ public class IdentityCheckService(
 	IServerInfoTemplateRepository infoRepository,
 	IDiscordBotService discordBotService,
 	RemoteStateManager remoteStateManager,
+	BinaryPayloadBroker binaryPayloadBroker,
 	ILogger<IdentityCheckService> logger
 )
 {
@@ -47,10 +49,24 @@ public class IdentityCheckService(
 					messageId = message.Id;
 				}
 
-				// The repository now tracks the creation/update, but does NOT save it.
-				var infoTemplate = await infoRepository.GetOrCreateTemplateAsync(messageId, profileIdentity.Configuration);
-
-				remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, infoTemplate);
+				foreach (var templateFileInfo in profileIdentity.Configuration.GetTemplateFileList())
+				{
+					var actionName = profileName + templateFileInfo.Name;
+					binaryPayloadBroker.TryAdd(actionName, async () =>
+					{
+						try
+						{
+							// The repository now tracks the creation/update, but does NOT save it.
+							var infoTemplate = await infoRepository.GetOrCreateTemplateAsync(messageId, profileIdentity.Configuration);
+							remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, infoTemplate);
+							await infoRepository.DbContext.SaveChangesAsync();
+						}
+						finally
+						{
+							binaryPayloadBroker.TryRemove(actionName); //- Remove after message template updated
+						}
+					});
+				}
 			}
 
 			// Update Identity
