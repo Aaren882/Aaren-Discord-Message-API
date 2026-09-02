@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.Mime;
 using System.Net.WebSockets;
 using System.Text.Json;
+using Arma3WebService.Broker;
 using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity;
 using Arma3WebService.Extensions;
@@ -20,6 +21,7 @@ public sealed class ServiceActionManager(
 	IDiscordBotService discordBotService,
 	DiscordBotRequestHandler requestHandler,
 	BinaryStreamManager binaryStreamManager,
+	BinaryPayloadBroker binaryPayloadBroker,
 	IServerIdentityRepository identityRepository,
 	IServerInfoTemplateRepository infoRepository
 )
@@ -40,12 +42,24 @@ public sealed class ServiceActionManager(
 		if (DirectoryPrefix != null && !Directory.Exists(payload.DirectoryPrefix))
 			Directory.CreateDirectory(payload.DirectoryPrefix!);
 
-		var payloadId = payload.GetIdentifier(connection.websocketContext.GetIdentity());
+		string? profileName = connection.websocketContext.GetIdentity();
+		var payloadId = payload.GetIdentifier(profileName);
 		FileStream fs = new(
 			Path.Combine(DirectoryPrefix ?? ".temp", FileName),
 			FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
 		);
-		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async () => await fs.DisposeAsync());
+		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async () =>
+		{
+			try
+			{
+				await fs.DisposeAsync();
+				binaryPayloadBroker.Publish(profileName + FileName); //- Invoke subscribed events
+			}
+			catch (Exception ex)
+			{
+				logger.LogWarning(ex, "[{profileName}] having trouble with \"{FileName}\".", profileName, FileName);
+			}
+		});
 
 		return ValueTask.CompletedTask;
 	}
@@ -139,7 +153,8 @@ public sealed class ServiceActionManager(
 		var serverInfo = await infoRepository.GetByMessageIdAsync(serverIdentity.messageId);
 		if (serverInfo is null) return;
 
-		var infoMessage = await File.ReadAllTextAsync(serverInfo.messageTemplatePath!);
+		// var infoMessage = await File.ReadAllTextAsync(serverInfo.messageTemplatePath!);
+		var infoMessage = serverInfo.messageTemplate;
 		infoMessage = logItem.Aggregate(
 			infoMessage,
 			(current, item) => current.Replace(item.Key, item.Value)

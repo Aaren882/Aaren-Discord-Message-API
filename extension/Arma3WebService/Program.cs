@@ -15,6 +15,7 @@ using Microsoft.Net.Http.Headers;
 using Arma3WebService.Models;
 using Arma3WebService.Managers;
 using Arma3WebService.DBContext.Repositories;
+using Arma3WebService.Broker;
 
 namespace Arma3WebService
 {
@@ -48,7 +49,7 @@ namespace Arma3WebService
 
 			//- #LINK - `ServiceDbContextFactory.cs`
 			//  : Design time for migration
-			builder.Services.AddScoped(sp => 
+			builder.Services.AddScoped(sp =>
 				sp.GetRequiredService<IDbContextFactory<ServiceDbContext>>().CreateDbContext());
 
 			// Add services to the container.
@@ -72,6 +73,7 @@ namespace Arma3WebService
 			// builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
 			// builder.Services.AddSingleton<IArma3ActionFactory, Arma3ActionFactory>();
 			builder.Services.AddSingleton<BinaryStreamManager>();
+			builder.Services.AddSingleton<BinaryPayloadBroker>();
 			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
 			builder.Services.AddSingleton<WebsocketContextEntityFactory>();
 			builder.Services.AddSingleton<ServiceActionManager>();
@@ -115,8 +117,8 @@ namespace Arma3WebService
 			builder.Services.ConfigureOptions<JwtConfigureOptions>();
 
 			builder.Services.AddResourceMonitoring();
-			
-			
+
+
 
 			var app = builder.Build();
 
