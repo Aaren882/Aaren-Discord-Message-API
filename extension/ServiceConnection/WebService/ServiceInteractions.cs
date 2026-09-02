@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net.Mime;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -171,7 +172,7 @@ public sealed class ServiceInteractions
 				ServiceSecret.ServiceUri + "/api/token",
 				content: new StringContent(
 					jsonPayload,
-					Encoding.UTF8, "application/json"
+					Encoding.UTF8, MediaTypeNames.Application.Json
 				),
 				authHeader: new AuthenticationHeaderValue(
 					"Basic",

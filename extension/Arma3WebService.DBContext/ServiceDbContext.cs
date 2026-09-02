@@ -9,7 +9,7 @@ public class ServiceDbContext : DbContext
 {
 	public ServiceDbContext(
 		DbContextOptions<ServiceDbContext> options
-	): base(options)
+	) : base(options)
 	{
 	}
 
@@ -22,7 +22,7 @@ public class ServiceDbContext : DbContext
 		base.OnModelCreating(modelBuilder);
 
 		// Prevents EF Core from treating external types as DB Entities
-		modelBuilder.Entity<ServerInfoTemplate>(builder  =>
+		modelBuilder.Entity<ServerInfoTemplate>(builder =>
 		{
 			var propertyBuilder = builder.Property(c => c.messageOffline)
 				.HasColumnName("MessageOffline")
@@ -30,8 +30,8 @@ public class ServiceDbContext : DbContext
 					// To: DB
 					v => JsonSerializer.Serialize(v, MsgPayload_JsonContext.Default.DiscordMessageDto),
 					// From: DB
-					v => JsonSerializer.Deserialize(v, MsgPayload_JsonContext.Default.DiscordMessageDto) 
-					     ?? new DiscordMessageDto()
+					v => JsonSerializer.Deserialize(v, MsgPayload_JsonContext.Default.DiscordMessageDto)
+						 ?? new DiscordMessageDto()
 				);
 			if (Database.IsNpgsql()) // PostgreSQL
 			{
