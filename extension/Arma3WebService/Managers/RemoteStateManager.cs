@@ -15,7 +15,7 @@ public sealed class RemoteStateManager(
 
 	internal async Task UpdateGameSessionCacheAsync(string profileName, WebsocketServer? connection = null)
 	{
-		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName);
+		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
 
 		if (serverIdentity == null)
 			throw new NullReferenceException($"\"serverIdentity : {serverIdentity}\" is not exist.");
@@ -32,7 +32,7 @@ public sealed class RemoteStateManager(
 		if (_serverInfoTemplatesCache.TryGetValue(messageId, out var template))
 			return template;
 
-		var infoTemplate = await infoTemplateRepository.GetByMessageIdAsync(messageId);
+		var infoTemplate = await infoTemplateRepository.GetByMessageIdAsync(messageId, tracked: false);
 
 		ArgumentNullException.ThrowIfNull(infoTemplate);
 		_serverInfoTemplatesCache.TryAdd(messageId, infoTemplate);
@@ -44,7 +44,7 @@ public sealed class RemoteStateManager(
 		if (_serverInfoProfileNamesCache.TryGetValue(profileName, out var messageId))
 			return await GetServerInfoTemplateAsync(messageId);
 
-		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName);
+		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
 
 		ArgumentNullException.ThrowIfNull(serverIdentity);
 		_serverInfoProfileNamesCache.TryAdd(profileName, serverIdentity.messageId);

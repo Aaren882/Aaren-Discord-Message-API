@@ -7,8 +7,8 @@ namespace Arma3WebService.DBContext.Repositories;
 public interface IServerIdentityRepository
 {
 	ServiceDbContext DbContext { get; }
-	Task<ServerIdentity?> GetByMessageIdAsync(ulong messageId);
-	Task<ServerIdentity?> GetByProfileNameAsync(string profileName);
+	Task<ServerIdentity?> GetByMessageIdAsync(ulong messageId, bool tracked = true);
+	Task<ServerIdentity?> GetByProfileNameAsync(string profileName, bool tracked = true);
 
 	Task<int> AddServerIdentityAsync(ServerIdentity identity);
 
@@ -23,16 +23,22 @@ public class ServerIdentityRepository(ILogger<IServerIdentityRepository> Logger,
 {
 	public ServiceDbContext DbContext { get; } = DbContext;
 
-	public Task<ServerIdentity?> GetByMessageIdAsync(ulong messageId)
+	public Task<ServerIdentity?> GetByMessageIdAsync(ulong messageId, bool tracked = true)
 	{
-		return DbContext.ServerIdentities
-			.FirstOrDefaultAsync(o => o.messageId == messageId);
+		var queryable = DbContext.ServerIdentities;
+
+		if (!tracked)
+			return queryable.AsNoTracking().FirstOrDefaultAsync(o => o.messageId == messageId);
+		return queryable.FirstOrDefaultAsync(o => o.messageId == messageId);
 	}
-	public Task<ServerIdentity?> GetByProfileNameAsync(string profileName)
+	public Task<ServerIdentity?> GetByProfileNameAsync(string profileName, bool tracked = true)
 	{
 		// The repository is where the specific EF Core call lives
-		return DbContext.ServerIdentities
-			.FirstOrDefaultAsync(o => o.profileName == profileName);
+		var queryable = DbContext.ServerIdentities;
+
+		if (!tracked)
+			return queryable.AsNoTracking().FirstOrDefaultAsync(o => o.profileName == profileName);
+		return queryable.FirstOrDefaultAsync(o => o.profileName == profileName);
 	}
 
 	public Task<int> AddServerIdentityAsync(ServerIdentity identity)
