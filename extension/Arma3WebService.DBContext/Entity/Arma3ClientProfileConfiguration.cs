@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Arma3WebService.DBContext.Schema;
 using Component.DiscordEntity;
@@ -22,7 +23,7 @@ public record struct Arma3ClientProfileConfiguration()
 	public string MessageOfflineTemplate
 	{
 		readonly get => _messageOfflineTemplate.FullName;
-		set => 
+		set =>
 			_messageOfflineTemplate = new(
 				Path.GetFullPath($".profile/MessageOfflineTemplate/{Path.GetFileName(value)}")
 			);
@@ -35,16 +36,42 @@ public record struct Arma3ClientProfileConfiguration()
 			Path.GetFullPath($".profile/MessageActions/{Path.GetFileName(value)}")
 		);
 	}
+	public readonly List<FileInfo> GetTemplateFileList()
+	{
+		List<FileInfo> fileInfoList = [_messageTemplate, _messageOfflineTemplate];
+		if (_messageActions != null) fileInfoList.Add(_messageActions);
+
+		return fileInfoList;
+	}
+
 
 	public readonly ServerInfoTemplate CreateInfoTemplate(ulong messageId)
 	{
-		// ArgumentNullException.ThrowIfNull(MessageOfflineTemplate);
-		return new()
+		ServerInfoTemplate template = new()
 		{
 			messageId = messageId,
-			messageTemplatePath = MessageTemplate,
-			messageOffline = JsonSerializer.Deserialize(MessageOfflineTemplate, MsgPayload_JsonContext.Default.DiscordMessageDto)!,
 			messageActionPath = MessageActions,
 		};
+		if (File.Exists(MessageOfflineTemplate))
+		{
+			var deserializedMsg = JsonSerializer.Deserialize(
+				ReadAllTextShared(MessageOfflineTemplate),
+				MsgPayload_JsonContext.Default.DiscordMessageDto
+			);
+			template.messageOffline = deserializedMsg ?? throw new NullReferenceException("Invalid MessageOfflineTemplate = \"Null\".");
+		}
+		if (File.Exists(MessageTemplate))
+		{
+			template.messageTemplate = ReadAllTextShared(MessageTemplate);
+		}
+
+		return template;
+	}
+
+	private static string ReadAllTextShared(string path)
+	{
+		using FileStream fs = new(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+		using StreamReader sr = new(fs, Encoding.UTF8);
+		return sr.ReadToEnd();
 	}
 }
