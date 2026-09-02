@@ -4,7 +4,7 @@ using Discord;
 
 namespace Component.DiscordEntity;
 
-public class DiscordDto
+public static class DiscordDto
 {
 	public record struct SelectMenuOption(
 		string Label,
@@ -304,12 +304,12 @@ public record DiscordMessageDto : DiscordMessage
 
 	public IEnumerable<EmbedData>? Embeds { get; set; }
 	public List<DiscordDto.ComponentBase> Components { get; set; } = [];
-	
-	[NotMapped]
+
+	[JsonIgnore]
 	public Stream? FileStream { get; set; }
-	[NotMapped]
+	[JsonIgnore]
 	public IEnumerable<FileAttachment>? Attachments { get; set; }
-	[NotMapped]
+	[JsonIgnore]
 	public DiscordDto.PollPropertiesDto? poll { get; set; }
 
 	public MessageComponent? ConvertComponents()
