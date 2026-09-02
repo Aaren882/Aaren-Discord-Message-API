@@ -9,7 +9,7 @@ public interface IServerInfoTemplateRepository
 	ServiceDbContext DbContext { get; }
 
 	Task<ServerInfoTemplate> GetOrCreateTemplateAsync(ulong messageId, Arma3ClientProfileConfiguration configuration);
-	Task<ServerInfoTemplate?> GetByMessageIdAsync(ulong messageId);
+	Task<ServerInfoTemplate?> GetByMessageIdAsync(ulong messageId, bool tracked = true);
 	// Handles the update logic for an existing template
 	Task<int> UpdateTemplateAsync(ServerInfoTemplate existingTemplate, Arma3ClientProfileConfiguration updatedConfiguration);
 	// Handles the creation of a new template
@@ -46,11 +46,14 @@ public class ServerInfoTemplateRepository(ServiceDbContext DbContext) : IServerI
 		}
 	}
 
-	public Task<ServerInfoTemplate?> GetByMessageIdAsync(ulong messageId)
+	public Task<ServerInfoTemplate?> GetByMessageIdAsync(ulong messageId, bool tracked = true)
 	{
 		// The repository is where the specific EF Core call lives
-		return DbContext.ServerInfoList
-			.FirstOrDefaultAsync(o => o.messageId == messageId);
+		var queryable = DbContext.ServerInfoList;
+
+		if (!tracked)
+			return queryable.AsNoTracking().FirstOrDefaultAsync(o => o.messageId == messageId);
+		return queryable.FirstOrDefaultAsync(o => o.messageId == messageId);
 	}
 
 	public Task<int> UpdateTemplateAsync(ServerInfoTemplate existingTemplate, Arma3ClientProfileConfiguration updatedConfiguration)
