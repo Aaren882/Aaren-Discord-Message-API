@@ -27,7 +27,6 @@ namespace Arma3WebService.Models
 		public event Action<WebsocketContextEntity, WebsocketServer> OnConnected = async (entity, connection) =>
 		{
 			var profileName = entity.GetIdentity();
-			await remoteStateManager.GetServerInfoTemplateAsync(profileName);
 			await remoteStateManager.UpdateGameSessionCacheAsync(profileName, connection);
 		};
 
