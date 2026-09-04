@@ -37,12 +37,11 @@ public sealed class DiscordBotRequestHandler(
 				payloadId,
 				binaryPayload,
 				new MemoryStream(),
-				async () =>
+				async (WrittenContent) =>
 				{
+					var (metaData, writeStream, _, _) = WrittenContent;
 					try
 					{
-						// await binaryStreamManager.WaitUntilBinaryStreamFinished(payloadId);
-						binaryStreamManager.TryRemoveBinaryValue(payloadId, out var metaData, out var writeStream);
 						logger.LogDebug("Successfully processed binary file \"{FileName}\" for payload \"{PayloadId}\"", metaData.FileName, payloadId);
 
 						using StreamReader sr = new(writeStream, leaveOpen: true);
@@ -97,10 +96,9 @@ public sealed class DiscordBotRequestHandler(
 				payloadId,
 				binaryPayload,
 				new MemoryStream(),
-				async () =>
+				async (WrittenContent) =>
 				{
-					// await binaryStreamManager.WaitUntilBinaryStreamFinished(payloadId);
-					binaryStreamManager.TryRemoveBinaryValue(payloadId, out var metaData, out var writeStream);
+					var (metaData, writeStream, _, _) = WrittenContent;
 					logger.LogDebug("Successfully processed binary file \"{FileName}\" for payload \"{PayloadId}\"", metaData.FileName, payloadId);
 
 					await modalSocket.RespondWithFileAsync(

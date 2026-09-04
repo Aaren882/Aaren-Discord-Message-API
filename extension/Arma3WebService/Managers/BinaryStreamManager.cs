@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
 using Components.Entity;
-using Arma3WebService.Entity;
 
 namespace Arma3WebService.Managers;
 
@@ -20,14 +19,14 @@ public sealed class BinaryStreamManager
 		Arma3PayloadBinary metaData,
 		Stream writeStream,
 		SemaphoreSlim semaphore,
-		Action? action
+		Action<Content>? action
 	)
 	{
 		public void Deconstruct(
 			out Arma3PayloadBinary MetaData,
 			out Stream WriteStream,
 			out SemaphoreSlim Semaphore,
-			out Action? Action
+			out Action<Content>? Action
 		)
 		{
 			MetaData = metaData;
@@ -48,7 +47,7 @@ public sealed class BinaryStreamManager
 
 		return hasContent;
 	}
-	private bool TryGetBinaryValueInternal(string identifier, out Arma3PayloadBinary metaData, out Stream writeStream, out SemaphoreSlim Semaphore, out Action? Action)
+	private bool TryGetBinaryValueInternal(string identifier, out Arma3PayloadBinary metaData, out Stream writeStream, out SemaphoreSlim Semaphore, out Action<Content>? Action)
 	{
 		var hasContent = ContentDictionary.TryGetValue(identifier, out var content);
 
@@ -59,7 +58,7 @@ public sealed class BinaryStreamManager
 
 		return hasContent;
 	}
-	public bool TryAddBinaryValue(string identifier, Arma3PayloadBinary metaData, Stream writeStream, Action action)
+	public bool TryAddBinaryValue(string identifier, Arma3PayloadBinary metaData, Stream writeStream, Action<Content>? action)
 	{
 		return ContentDictionary.TryAdd(identifier, new(metaData, writeStream, new(0), action));
 	}
@@ -119,7 +118,8 @@ public sealed class BinaryStreamManager
 					{
 						writeStream.Position = 0;
 						semaphore.Release();
-						action?.Invoke();
+						ContentDictionary.Remove(identifier, out var WrittenContent);
+						action?.Invoke(WrittenContent);
 					}
 				}
 			}
