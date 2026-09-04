@@ -48,11 +48,12 @@ public sealed class ServiceActionManager(
 			Path.Combine(DirectoryPrefix ?? ".temp", FileName),
 			FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
 		);
-		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async () =>
+		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async (WrittenContent) =>
 		{
+			var (_, writeStream, _, _) = WrittenContent;
 			try
 			{
-				await fs.DisposeAsync();
+				await writeStream.DisposeAsync();
 				binaryPayloadBroker.Publish(profileName + FileName); //- Invoke subscribed events
 			}
 			catch (Exception ex)
