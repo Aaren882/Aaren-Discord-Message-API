@@ -10,20 +10,20 @@ public class ServiceDbContextFactory : IDesignTimeDbContextFactory<ServiceDbCont
 	{
 		var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? "SQLite";
 		var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "Data Source=data.db";
-		var migrationAssembly = $"Arma3WebService.Migrations.{provider}";
 
-		DbContextOptionsBuilder<ServiceDbContext> optionsBuilder = new ();
+		DbContextOptionsBuilder<ServiceDbContext> optionsBuilder = new();
 
 		switch (provider)
 		{
 			case "MySQL":
-				optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), x => x.MigrationsAssembly(migrationAssembly));
+				var serverVersion = new MySqlServerVersion(new Version(11, 0));
+				optionsBuilder.UseMySql(connectionString, serverVersion, x => x.MigrationsAssembly("Arma3WebService.Migrations.MySQL"));
 				break;
 			case "Npgsql":
-				optionsBuilder.UseNpgsql(connectionString, x => x.MigrationsAssembly(migrationAssembly));
+				optionsBuilder.UseNpgsql(connectionString, x => x.MigrationsAssembly("Arma3WebService.Migrations.NpgSQL"));
 				break;
 			default:
-				optionsBuilder.UseSqlite(connectionString, x => x.MigrationsAssembly(migrationAssembly));
+				optionsBuilder.UseSqlite(connectionString, x => x.MigrationsAssembly("Arma3WebService.Migrations.SQLite"));
 				break;
 		}
 

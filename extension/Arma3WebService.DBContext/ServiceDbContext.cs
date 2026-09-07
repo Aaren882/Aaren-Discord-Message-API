@@ -22,28 +22,29 @@ public class ServiceDbContext : DbContext
 		base.OnModelCreating(modelBuilder);
 
 		// Prevents EF Core from treating external types as DB Entities
-		modelBuilder.Entity<ServerInfoTemplate>(builder =>
+		_ = modelBuilder.Entity<ServerInfoTemplate>(builder =>
 		{
-			var propertyBuilder = builder.Property(c => c.messageOffline)
+			var MessageOfflineBuilder = builder.Property(c => c.messageOffline)
 				.HasColumnName("MessageOffline")
 				.HasConversion(
 					// To: DB
 					v => JsonSerializer.Serialize(v, MsgPayload_JsonContext.Default.DiscordMessageDto),
 					// From: DB
 					v => JsonSerializer.Deserialize(v, MsgPayload_JsonContext.Default.DiscordMessageDto)
-						 ?? new DiscordMessageDto()
+						?? new DiscordMessageDto()
 				);
+
 			if (Database.IsNpgsql()) // PostgreSQL
 			{
-				propertyBuilder.HasColumnType("jsonb");
+				MessageOfflineBuilder.HasColumnType("jsonb");
 			}
 			else if (Database.IsMySql()) // MySQL (Pomelo)
 			{
-				propertyBuilder.HasColumnType("json");
+				MessageOfflineBuilder.HasColumnType("json");
 			}
 			else if (Database.IsSqlite()) // SQLite
 			{
-				propertyBuilder.HasColumnType("TEXT");
+				MessageOfflineBuilder.HasColumnType("TEXT");
 			}
 		});
 
