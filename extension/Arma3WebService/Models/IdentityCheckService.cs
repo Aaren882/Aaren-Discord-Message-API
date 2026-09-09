@@ -2,7 +2,6 @@ using Arma3WebService.Broker;
 using Arma3WebService.DBContext;
 using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity;
-using Arma3WebService.Managers;
 using Components.Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,8 +12,6 @@ public class IdentityCheckService(
 	IServerIdentityRepository identityRepository,
 	IServerInfoTemplateRepository infoRepository,
 	IDiscordBotService discordBotService,
-	RemoteStateManager remoteStateManager,
-	BinaryPayloadBroker binaryPayloadBroker,
 	ILogger<IdentityCheckService> logger
 )
 {

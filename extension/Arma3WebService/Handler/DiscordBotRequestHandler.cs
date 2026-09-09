@@ -1,4 +1,3 @@
-using System.Text;
 using Arma3WebService.Managers;
 using Components.Entity;
 
@@ -60,7 +59,6 @@ public sealed class DiscordBotRequestHandler(
 
 						logger.LogInformation("Received Binary File \"{FileName}\"", metaData.FileName);
 						DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
-						await writeStream.DisposeAsync();
 					}
 					catch (OverflowException ex)
 					{
@@ -109,7 +107,6 @@ public sealed class DiscordBotRequestHandler(
 
 					logger.LogInformation("Received Binary File \"{FileName}\"", metaData.FileName);
 					DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
-					await writeStream.DisposeAsync();
 				}
 			);
 		}
