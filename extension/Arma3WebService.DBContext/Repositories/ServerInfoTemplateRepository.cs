@@ -1,5 +1,6 @@
 using Arma3WebService.DBContext.Entity;
 using Arma3WebService.DBContext.Schema;
+using Components.Entity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.DBContext.Repositories;

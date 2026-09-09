@@ -29,6 +29,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Component.DiscordEntity\Component.DiscordEntity.csproj" />
+      <ProjectReference Include="..\Components\Components.csproj" />
     </ItemGroup>
 
 </Project>

@@ -2,51 +2,15 @@ using System.Text;
 using System.Text.Json;
 using Arma3WebService.DBContext.Schema;
 using Component.DiscordEntity;
+using Components.Entity;
 
 namespace Arma3WebService.DBContext.Entity;
 
-public record struct Arma3ClientProfileConfiguration()
+public static class ClientProfileConfiguration
 {
-	private FileInfo _messageTemplate = new(".profile/MessageTemplate/default.json");
-	private FileInfo _messageOfflineTemplate = new(".profile/MessageOfflineTemplate/default.json");
-	private FileInfo? _messageActions = null;
-
-	public string MessageTemplate
+	public static ServerInfoTemplate CreateInfoTemplate(this Arma3ClientProfileConfiguration configuration, ulong messageId)
 	{
-		readonly get => _messageTemplate.FullName;
-		set =>
-			_messageTemplate = new(
-				Path.GetFullPath($".profile/MessageTemplate/{Path.GetFileName(value)}")
-			);
-	}
-
-	public string MessageOfflineTemplate
-	{
-		readonly get => _messageOfflineTemplate.FullName;
-		set =>
-			_messageOfflineTemplate = new(
-				Path.GetFullPath($".profile/MessageOfflineTemplate/{Path.GetFileName(value)}")
-			);
-	}
-
-	public string? MessageActions
-	{
-		readonly get => _messageActions?.FullName;
-		set => _messageActions = new FileInfo(
-			Path.GetFullPath($".profile/MessageActions/{Path.GetFileName(value)}")
-		);
-	}
-	public readonly List<FileInfo> GetTemplateFileList()
-	{
-		List<FileInfo> fileInfoList = [_messageTemplate, _messageOfflineTemplate];
-		if (_messageActions != null) fileInfoList.Add(_messageActions);
-
-		return fileInfoList;
-	}
-
-
-	public readonly ServerInfoTemplate CreateInfoTemplate(ulong messageId)
-	{
+		var (MessageTemplate, MessageOfflineTemplate, MessageActions) = configuration;
 		ServerInfoTemplate template = new()
 		{
 			messageId = messageId,
@@ -67,7 +31,6 @@ public record struct Arma3ClientProfileConfiguration()
 
 		return template;
 	}
-
 	private static string ReadAllTextShared(string path)
 	{
 		using FileStream fs = new(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
