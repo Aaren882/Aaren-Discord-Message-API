@@ -49,24 +49,7 @@ public class IdentityCheckService(
 					messageId = message.Id;
 				}
 
-				foreach (var templateFileInfo in profileIdentity.Configuration.GetTemplateFileList())
-				{
-					var actionName = profileName + templateFileInfo.Name;
-					binaryPayloadBroker.TryAdd(actionName, async () =>
-					{
-						try
-						{
-							// The repository now tracks the creation/update, but does NOT save it.
-							var infoTemplate = await infoRepository.GetOrCreateTemplateAsync(messageId, profileIdentity.Configuration);
-							remoteStateManager.TryUpdateExistingServerInfoTemplateCache(messageId, infoTemplate);
-							await infoRepository.DbContext.SaveChangesAsync();
-						}
-						finally
-						{
-							binaryPayloadBroker.TryRemove(actionName); //- Remove after message template updated
-						}
-					});
-				}
+				var infoTemplate = await infoRepository.GetOrCreateTemplateAsync(messageId, profileIdentity.Configuration);
 			}
 
 			// Update Identity

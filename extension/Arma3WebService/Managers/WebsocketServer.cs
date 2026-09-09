@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Arma3WebService.Broker;
 using Arma3WebService.Entity;
 using Arma3WebService.Factory;
 using Arma3WebService.Models;
@@ -12,10 +13,12 @@ namespace Arma3WebService.Managers;
 public sealed class WebsocketServer(
 	ILogger<IWebsocketWorker> logger,
 	IArma3ActionManager arma3ActionManager,
+	BinaryPayloadBroker binaryPayloadBroker,
 	IWebSocketService service,
 	WebsocketContextEntityFactory wsContextEntityFactory
 ) : WebsocketWorker
 {
+	public record ActionPayload(WebsocketServer Connection, Arma3Payload Payload);
 	protected override ILogger<IWebsocketWorker> Logger => logger;
 	public required WebsocketContextEntity websocketContext;
 	public override void PostReceived(in Stream assembledStream, WebSocketMessageType messageType)
@@ -35,8 +38,18 @@ public sealed class WebsocketServer(
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
 
+			/* var enqueued = (messageType) switch
+			{
+				WebSocketMessageType.Text => arma3ActionManager.TryEnqueueAction(this, payload),
+				WebSocketMessageType.Binary => binaryPayloadBroker.TryEnqueueAction(this, payload),
+				_ => throw new NotSupportedException($"Unsupported WebSocketMessageType: {messageType}")
+			}; */
 			if (!arma3ActionManager.TryEnqueueAction(this, payload))
 				throw new InvalidOperationException($"Enqueue failed on {websocketContext.GetIdentity()}: \"{payload}\"");
+		}
+		catch (Exception ex) when (ex is InvalidOperationException || ex is NotSupportedException)
+		{
+			Logger.LogWarning(ex, "Failed to process message due to invalid operation or unsupported type.");
 		}
 		catch (JsonException e)
 		{

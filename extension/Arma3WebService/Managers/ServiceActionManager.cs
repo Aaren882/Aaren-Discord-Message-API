@@ -20,8 +20,8 @@ public sealed class ServiceActionManager(
 	IServiceProvider serviceProvider,
 	IDiscordBotService discordBotService,
 	DiscordBotRequestHandler requestHandler,
+	UpdateDBActionBroker updateDBActionBroker,
 	BinaryStreamManager binaryStreamManager,
-	BinaryPayloadBroker binaryPayloadBroker,
 	IServerIdentityRepository identityRepository,
 	IServerInfoTemplateRepository infoRepository
 )
@@ -34,6 +34,7 @@ public sealed class ServiceActionManager(
 	{
 		return connection.SendAsync(payload.ToJsonString(), WebSocketMessageType.Text, true);
 	}
+
 	public ValueTask BinaryAction(WebsocketServer connection, Arma3PayloadBinary payload)
 	{
 		logger.LogInformation("Receiving metaData for binary file '{Payload}'", payload);
@@ -53,8 +54,6 @@ public sealed class ServiceActionManager(
 			var (_, writeStream, _, _) = WrittenContent;
 			try
 			{
-				await writeStream.DisposeAsync();
-				binaryPayloadBroker.Publish(profileName + FileName); //- Invoke subscribed events
 			}
 			catch (Exception ex)
 			{
@@ -73,6 +72,24 @@ public sealed class ServiceActionManager(
 		catch (Exception e)
 		{
 			logger.LogError(e, "\"{Action}\" threw an exception...", nameof(BinaryContentAction));
+			throw;
+		}
+	}
+
+	public async ValueTask UpdateDBAction(WebsocketServer connection, Arma3PayloadUpdateDB payload)
+	{
+		logger.LogInformation("Receiving UpdateDBAction : '{RequestAction}'", payload);
+
+		try
+		{
+			await updateDBActionBroker.AddAsync(connection, payload);
+			// if (!updateDBActionBroker.TryAdd(connection, payload))
+			// 	throw new InvalidOperationException("Action already added to the broker.");
+			// return ValueTask.CompletedTask;
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "\"{Action}\" threw an exception...", nameof(ServiceRequestAction));
 			throw;
 		}
 	}

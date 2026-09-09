@@ -1,10 +1,16 @@
+using System.Collections.Concurrent;
 using System.Security.Claims;
+using System.Threading.Channels;
+using Arma3WebService.Broker;
 using Arma3WebService.Configuration;
 using Arma3WebService.DBContext;
+using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Extensions;
 using Arma3WebService.Factory;
 using Arma3WebService.Handler;
 using Arma3WebService.Identities;
+using Arma3WebService.Managers;
+using Arma3WebService.Models;
 using Components.Entity;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
@@ -12,10 +18,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Net.Http.Headers;
-using Arma3WebService.Models;
-using Arma3WebService.Managers;
-using Arma3WebService.DBContext.Repositories;
-using Arma3WebService.Broker;
+using static Arma3WebService.Managers.BinaryStreamManager;
+using static Arma3WebService.Managers.WebsocketServer;
 
 namespace Arma3WebService
 {
@@ -52,33 +56,44 @@ namespace Arma3WebService
 			builder.Services.AddScoped(sp =>
 				sp.GetRequiredService<IDbContextFactory<ServiceDbContext>>().CreateDbContext());
 
-			// Add services to the container.
-			builder.Services.AddHostedService<DiscordBotService>();
-			//- Register Bot Service -//
-
-			builder.Services.AddHostedService<WebSocketService>();
-			//- Register WebSocket Service -//
+			builder.Services.AddSingleton<Channel<ActionPayload>>(_ => Channel.CreateBounded<ActionPayload>(1000));
+			builder.Services.AddSingleton<Channel<Arma3PayloadBinaryContent>>(_ => Channel.CreateUnbounded<Arma3PayloadBinaryContent>());
+			builder.Services.AddSingleton<ConcurrentDictionary<string, Content>>(_ => new());
 
 			//- Add controllers
 			builder.Services.AddSingleton<AdminConsoleManager>();
 			builder.Services.AddSingleton<DiscordBotRequestHandler>();
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
+			builder.Services.AddSingleton<BinaryStreamManager>();
+			builder.Services.AddSingleton<UpdateDBActionBroker>();
 			builder.Services.AddSingleton<IdentityCheckService>();
+			builder.Services.AddSingleton<BinaryPayloadBroker>();
+			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
 			builder.Services.AddScoped<WebsocketServer>();
 			builder.Services.AddScoped<IServerIdentityRepository, ServerIdentityRepository>();
 			builder.Services.AddScoped<IServerInfoTemplateRepository, ServerInfoTemplateRepository>();
-
 			// builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
 			// builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
 			// builder.Services.AddSingleton<IArma3ActionFactory, Arma3ActionFactory>();
-			builder.Services.AddSingleton<BinaryStreamManager>();
-			builder.Services.AddSingleton<BinaryPayloadBroker>();
-			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
+
 			builder.Services.AddSingleton<WebsocketContextEntityFactory>();
+
+
 			builder.Services.AddSingleton<ServiceActionManager>();
 			builder.Services.AddSingleton<RemoteStateManager>();
 			builder.Services.AddScoped<JwtHelpers>();
+
+			// Add services to the container.
+			builder.Services.AddHostedService<DiscordBotService>();
+			//- Register Bot Service -//
+
+			builder.Services.AddHostedService<WebSocketService>();
+			builder.Services.AddHostedService<BinaryStreamManager>();
+			// builder.Services.AddHostedService<BinaryPayloadBroker>();
+			builder.Services.AddHostedService<Arma3ActionManager>();
+			// builder.Services.AddHostedService<UpdateDBActionBroker>();
+			//- Register Connection Services -//
 
 			builder.Services.AddControllers();
 

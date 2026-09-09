@@ -7,18 +7,20 @@ public enum Arma3PayLoadType
 {
 	Text = 1,
 	Binary = 2,
-	BinaryContent = 8,
 	Command = 3,
 	RptLine = 4,
 	JsonString = 5,
 	FlatJsonString = 6,
 	ServiceRequest = 7,
+	BinaryContent,
+	UpdateDB,
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
 [JsonDerivedType(typeof(Arma3PayloadBinary), (int)Arma3PayLoadType.Binary)]
 [JsonDerivedType(typeof(Arma3PayloadBinaryContent), (int)Arma3PayLoadType.BinaryContent)]
+[JsonDerivedType(typeof(Arma3PayloadUpdateDB), (int)Arma3PayLoadType.UpdateDB)]
 [JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
 [JsonDerivedType(typeof(Arma3PayloadRptLine), (int)Arma3PayLoadType.RptLine)]
 [JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
@@ -49,10 +51,16 @@ public record Arma3PayloadBinary
 ) : Arma3Payload
 {
 	[JsonIgnore]
-	public override Arma3PayLoadType Type => Arma3PayLoadType.BinaryContent;
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
 	public string GetIdentifier(string ConnectionIdentity)
 	{
-		return Convert.ToBase64String(Encoding.UTF8.GetBytes(ConnectionIdentity + FileName + CreatedTime));
+		return Convert.ToBase64String(Encoding.UTF8.GetBytes(
+				ConnectionIdentity +
+				FileSize +
+				FileName +
+				CreatedTime
+			)
+		);
 	}
 };
 public record Arma3PayloadBinaryContent
@@ -63,7 +71,16 @@ public record Arma3PayloadBinaryContent
 ) : Arma3Payload
 {
 	[JsonIgnore]
-	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
+	public override Arma3PayLoadType Type => Arma3PayLoadType.BinaryContent;
+};
+
+public record Arma3PayloadUpdateDB
+(
+	DBConfigAction DBConfigAction
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.UpdateDB;
 };
 
 public record Arma3PayloadRptLine

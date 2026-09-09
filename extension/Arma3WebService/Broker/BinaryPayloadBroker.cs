@@ -1,22 +1,89 @@
-using System.Collections.Concurrent;
+using System.Threading.Channels;
+using Arma3WebService.Managers;
+using Components.Entity;
+using static Arma3WebService.Managers.WebsocketServer;
 
 namespace Arma3WebService.Broker;
 
-public class BinaryPayloadBroker
+public sealed class BinaryPayloadBroker(
+	ILogger<BinaryPayloadBroker> Logger,
+	BinaryStreamManager binaryStreamManager,
+	Channel<ActionPayload> _ActionChannel
+) : BackgroundService
 {
-	private readonly ConcurrentDictionary<string, Action> _subscriber = new();
-	public bool TryAdd(string actionName, Action action)
+	public ValueTask BinaryAction(WebsocketServer connection, Arma3PayloadBinary payload)
 	{
-		return _subscriber.TryAdd(actionName, action);
+		Logger.LogInformation("Receiving metaData for binary file '{Payload}'", payload);
+		var (FileName, _, _, _, DirectoryPrefix) = payload;
+
+		if (DirectoryPrefix != null && !Directory.Exists(payload.DirectoryPrefix))
+			Directory.CreateDirectory(payload.DirectoryPrefix!);
+
+		string? profileName = connection.websocketContext.GetIdentity();
+		var payloadId = payload.GetIdentifier(profileName);
+		FileStream fs = new(
+			Path.Combine(DirectoryPrefix ?? ".temp", FileName),
+			FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
+		);
+		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async (WrittenContent) =>
+		{
+			var (_, writeStream, _, _) = WrittenContent;
+			try
+			{
+			}
+			catch (Exception ex)
+			{
+				Logger.LogWarning(ex, "[{profileName}] having trouble with \"{FileName}\".", profileName, FileName);
+			}
+		});
+
+		return ValueTask.CompletedTask;
 	}
-	public bool TryRemove(string actionName)
+	public async ValueTask BinaryContentAction(WebsocketServer connection, Arma3PayloadBinaryContent payload)
 	{
-		return _subscriber.TryRemove(actionName, out _);
+		try
+		{
+			await binaryStreamManager.PushBinaryContentAsync(payload);
+		}
+		catch (Exception e)
+		{
+			Logger.LogError(e, "\"{Action}\" threw an exception...", nameof(BinaryContentAction));
+			throw;
+		}
 	}
-	public void Publish(string actionName)
+	public bool TryEnqueueAction(WebsocketServer connection, Arma3Payload payload)
 	{
-		if (!_subscriber.TryGetValue(actionName, out var action))
-			throw new ArgumentOutOfRangeException(nameof(actionName));
-		action.Invoke();
+		Logger.LogTrace("[Writer] Start writing Channel. Channel Hash: {Hash}", _ActionChannel.GetHashCode());
+		var success = _ActionChannel.Writer.TryWrite(new(connection, payload));
+		Logger.LogTrace("[Writer] TryWrite Result: {Success}。Item Counts: {Count}", success, _ActionChannel.Reader.Count);
+		return success;
+	}
+	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+	{
+		Logger.LogInformation("{Service} service started. HashCode : {HashCode}, Thread : {ThreadID}", nameof(BinaryPayloadBroker), _ActionChannel.GetHashCode(), Environment.CurrentManagedThreadId);
+		try
+		{
+			await foreach (var actionPayload in _ActionChannel.Reader.ReadAllAsync(stoppingToken))
+			{
+				var (connection, payload) = actionPayload;
+				var action = (payload) switch
+				{
+					Arma3PayloadBinary payloadBinary =>
+						BinaryAction(connection, payloadBinary),
+					Arma3PayloadBinaryContent payloadBinary =>
+						BinaryContentAction(connection, payloadBinary),
+					_ => throw new ArgumentOutOfRangeException(nameof(payload.Type), payload.Type, null)
+				};
+				await action;
+			}
+		}
+		catch (ArgumentOutOfRangeException ex)
+		{
+			Logger.LogWarning(ex, "Unhandled payload type in BinaryPayloadBroker.");
+		}
+		catch (Exception e)
+		{
+			Logger.LogError(e, "An unexpected error occurred in BinaryPayloadBroker.");
+		}
 	}
 }
