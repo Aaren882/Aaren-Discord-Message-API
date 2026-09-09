@@ -3,36 +3,34 @@ using System;
 using Arma3WebService.DBContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Arma3WebService.Migrations.MySQL.Migrations
+namespace Arma3WebService.Migrations.SQLite.Migrations
 {
     [DbContext(typeof(ServiceDbContext))]
-    partial class ServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260909141233_JsonMessageTemplete")]
+    partial class JsonMessageTemplete
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.19")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
-
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.19");
 
             modelBuilder.Entity("Arma3WebService.DBContext.Schema.InternalManagement", b =>
                 {
                     b.Property<int>("managementType")
-                        .HasColumnType("int")
+                        .HasColumnType("INTEGER")
                         .HasColumnOrder(0);
 
                     b.Property<string>("description")
-                        .HasColumnType("longtext");
+                        .HasColumnType("TEXT");
 
                     b.Property<ulong>("messageId")
-                        .HasColumnType("bigint unsigned")
+                        .HasColumnType("INTEGER")
                         .HasColumnOrder(1);
 
                     b.HasKey("managementType");
@@ -43,19 +41,19 @@ namespace Arma3WebService.Migrations.MySQL.Migrations
             modelBuilder.Entity("Arma3WebService.DBContext.Schema.ServerIdentity", b =>
                 {
                     b.Property<string>("profileName")
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset>("lastUpdate")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("TEXT");
 
                     b.Property<ulong>("messageId")
-                        .HasColumnType("bigint unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<ulong?>("modListMessageId")
-                        .HasColumnType("bigint unsigned");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("profileStateStamp")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("profileName");
 
@@ -66,24 +64,22 @@ namespace Arma3WebService.Migrations.MySQL.Migrations
                 {
                     b.Property<ulong>("messageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint unsigned");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("messageId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset>("lastUpdate")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("messageActionPath")
-                        .HasColumnType("longtext");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("messageOffline")
                         .IsRequired()
-                        .HasColumnType("json")
+                        .HasColumnType("TEXT")
                         .HasColumnName("MessageOffline");
 
                     b.Property<string>("messageTemplate")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("messageId");
 

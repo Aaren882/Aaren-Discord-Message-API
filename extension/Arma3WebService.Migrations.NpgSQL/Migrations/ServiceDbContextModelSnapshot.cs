@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Arma3WebService.Migrations.NpgSQL.Models
+namespace Arma3WebService.Migrations.NpgSQL.Migrations
 {
     [DbContext(typeof(ServiceDbContext))]
     partial class ServiceDbContextModelSnapshot : ModelSnapshot
@@ -17,12 +17,12 @@ namespace Arma3WebService.Migrations.NpgSQL.Models
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.17")
+                .HasAnnotation("ProductVersion", "9.0.19")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Arma3WebService.DBContext.InternalManagement", b =>
+            modelBuilder.Entity("Arma3WebService.DBContext.Schema.InternalManagement", b =>
                 {
                     b.Property<int>("managementType")
                         .HasColumnType("integer")
@@ -32,7 +32,7 @@ namespace Arma3WebService.Migrations.NpgSQL.Models
                         .HasColumnType("text");
 
                     b.Property<decimal>("messageId")
-                        .HasColumnType("numeric(20,0)")
+                        .HasColumnType("numeric(20, 0)")
                         .HasColumnOrder(1);
 
                     b.HasKey("managementType");
@@ -40,7 +40,7 @@ namespace Arma3WebService.Migrations.NpgSQL.Models
                     b.ToTable("InternalManagement");
                 });
 
-            modelBuilder.Entity("Arma3WebService.DBContext.ServerIdentity", b =>
+            modelBuilder.Entity("Arma3WebService.DBContext.Schema.ServerIdentity", b =>
                 {
                     b.Property<string>("profileName")
                         .HasColumnType("text");
@@ -62,7 +62,7 @@ namespace Arma3WebService.Migrations.NpgSQL.Models
                     b.ToTable("ServerIdentities");
                 });
 
-            modelBuilder.Entity("Arma3WebService.DBContext.ServerInfoTemplate", b =>
+            modelBuilder.Entity("Arma3WebService.DBContext.Schema.ServerInfoTemplate", b =>
                 {
                     b.Property<decimal>("messageId")
                         .ValueGeneratedOnAdd()
@@ -74,10 +74,13 @@ namespace Arma3WebService.Migrations.NpgSQL.Models
                     b.Property<string>("messageActionPath")
                         .HasColumnType("text");
 
-                    b.Property<string>("messageOfflinePath")
-                        .HasColumnType("text");
+                    b.Property<string>("messageOffline")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("MessageOffline");
 
-                    b.Property<string>("messageTemplatePath")
+                    b.Property<string>("messageTemplate")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("messageId");

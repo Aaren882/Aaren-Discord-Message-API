@@ -15,9 +15,9 @@ namespace Arma3WebService.Migrations.SQLite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.17");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.19");
 
-            modelBuilder.Entity("Arma3WebService.DBContext.InternalManagement", b =>
+            modelBuilder.Entity("Arma3WebService.DBContext.Schema.InternalManagement", b =>
                 {
                     b.Property<int>("managementType")
                         .HasColumnType("INTEGER")
@@ -35,7 +35,7 @@ namespace Arma3WebService.Migrations.SQLite.Migrations
                     b.ToTable("InternalManagement");
                 });
 
-            modelBuilder.Entity("Arma3WebService.DBContext.ServerIdentity", b =>
+            modelBuilder.Entity("Arma3WebService.DBContext.Schema.ServerIdentity", b =>
                 {
                     b.Property<string>("profileName")
                         .HasColumnType("TEXT");
@@ -57,7 +57,7 @@ namespace Arma3WebService.Migrations.SQLite.Migrations
                     b.ToTable("ServerIdentities");
                 });
 
-            modelBuilder.Entity("Arma3WebService.DBContext.ServerInfoTemplate", b =>
+            modelBuilder.Entity("Arma3WebService.DBContext.Schema.ServerInfoTemplate", b =>
                 {
                     b.Property<ulong>("messageId")
                         .ValueGeneratedOnAdd()
@@ -69,10 +69,13 @@ namespace Arma3WebService.Migrations.SQLite.Migrations
                     b.Property<string>("messageActionPath")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("messageOfflinePath")
-                        .HasColumnType("TEXT");
+                    b.Property<string>("messageOffline")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("MessageOffline");
 
-                    b.Property<string>("messageTemplatePath")
+                    b.Property<string>("messageTemplate")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("messageId");
