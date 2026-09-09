@@ -50,18 +50,24 @@ public sealed class WebsocketClient(
 		}
 
 		Logger.LogInformation("Sending Binary: \n File: {File} \n Header: {header}", filePath, payloadBinary);
+		var totalChunks = payloadBinary.TotalChunks;
+		if (totalChunks < 0)
+		{
+			FileInfo fileInfo = new(filePath);
+			totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+		}
 		// Send Chunks (as binary messages)
 		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, chunkSize))
 		{
 			var readBuffer = (new byte[chunkSize]).AsMemory<byte>();
 			var identifier = payloadBinary.GetIdentifier(accessName);
 
-			for (var i = 1; i < payloadBinary.TotalChunks + 1; i++)
+			for (var i = 1; i < totalChunks + 1; i++)
 			{
 				int readLength = await fs.ReadAsync(readBuffer, CancellationToken.None);
-				Arma3PayloadBinaryContent content = new(identifier, readBuffer[..readLength].ToArray(), i == payloadBinary.TotalChunks);
+				Arma3PayloadBinaryContent content = new(identifier, readBuffer[..readLength].ToArray(), i == totalChunks);
 
-				Logger.LogDebug("SendBinaryAsync (Progress): {i}/{TotalChunks}", i, payloadBinary.TotalChunks);
+				Logger.LogDebug("SendBinaryAsync (Progress): {i}/{TotalChunks}", i, totalChunks);
 				var payload = JsonSerializer.SerializeToUtf8Bytes(
 					content,
 					Arma3PayloadJsonSerializerContext.Default.Arma3Payload

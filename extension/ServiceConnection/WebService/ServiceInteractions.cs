@@ -92,6 +92,30 @@ public sealed class ServiceInteractions
 		foreach (var (directoryPrefix, filePath) in binaryDict)
 			SendWebSocketBinary(filePath, directoryPrefix, chunkSize);
 	}
+	public void SendWebSocketUpdateAndSaveProfile(Arma3ClientProfileConfiguration configuration, int chunkSize = 64 * 1024)
+	{
+		Logger(null, "INFO: Sending profileConfig");
+
+		Task.Run(async () =>
+		{
+			var fileList = configuration.GetTemplateFileList();
+			var payloadBinaries = configuration.ToPayloadBinaryList();
+			Arma3PayloadUpdateDB payloadUpdateDB = new(
+			   new UpdateAndSaveProfile(payloadBinaries, configuration)
+		   	);
+
+			var configStr = JsonSerializer.Serialize(payloadUpdateDB, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			await WsClient.SendAsync(configStr, WebSocketMessageType.Text, true);
+
+			foreach (var (payloadBinary, index) in payloadBinaries.Select((v, i) => (v, i)))
+			{
+				var filePath = fileList[index];
+				// var bytes = JsonSerializer.SerializeToUtf8Bytes(payloadBinary, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+				// await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
+				await WsClient.SendBinaryAsync(AccessName, filePath, payloadBinary, chunkSize);
+			}
+		});
+	}
 
 	public void SendWebSocketRptLines(string filePath, int linesCount)
 	{
