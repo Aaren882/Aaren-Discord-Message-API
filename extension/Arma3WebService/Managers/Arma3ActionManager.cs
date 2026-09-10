@@ -51,10 +51,6 @@ public sealed class Arma3ActionManager(
 			{
 				Arma3PayloadText payloadText =>
 					ServiceAction.TextAction(connection, payloadText),
-				Arma3PayloadBinary payloadBinary =>
-					ServiceAction.BinaryAction(connection, payloadBinary),
-				Arma3PayloadBinaryContent payloadBinary =>
-					ServiceAction.BinaryContentAction(connection, payloadBinary),
 				Arma3PayloadCallBack payloadCallBack =>
 					ServiceAction.CallBackAction(connection, payloadCallBack),
 				Arma3PayloadUpdateDB payloadUpdateDB =>
@@ -66,7 +62,7 @@ public sealed class Arma3ActionManager(
 				Arma3PayloadFlatJsonString payloadFlatJsonString =>
 					ServiceAction.FlatJsonStringAction(connection, payloadFlatJsonString),
 
-				_ => throw new ArgumentOutOfRangeException(nameof(payload.Type), payload.Type, null)
+				_ => throw new NotSupportedException($"Unsupported payload type encountered: {payload.GetType().Name}")
 			};
 			await result;
 		}
