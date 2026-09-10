@@ -96,27 +96,8 @@ namespace DiscordMessageAPI
 			{
 				if (!isDifferent) return;
 				//- Send Templates
-				var config = profile["Configuration"]
-					.ToObject<Dictionary<string, string>>()
-					.ToDictionary(
-						v => $".profile/{v.Key}",
-						v => v.Value
-					);
-				serviceInteractions.SendWebSocketBinaries(config);
-
-				//- Update DB
-				var jsonString = new JObject
-				{
-					["ProcessType"] = 3,
-					["MessageId"] = returnMessageId,
-					["Configuration"] = profile["Configuration"],
-				}.ToString();
-
-				var payload = new Arma3PayloadJson(jsonString);
-				var message = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-
-				Console.WriteLine("DB data Updated !!");
-				ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);
+				var config = profile["Configuration"].ToObject<Arma3ClientProfileConfiguration>();
+				serviceInteractions.SendWebSocketUpdateAndSaveProfile(config);
 			};
 
 
@@ -176,13 +157,13 @@ namespace DiscordMessageAPI
 			var message = JsonSerializer.Deserialize(
 				array, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);*/
 
-			/*var payload = new Arma3PayloadFlatJsonString(new Dictionary<string, string>
+			Arma3PayloadFlatJsonString payload = new(new Dictionary<string, string>
 			{
-				{ "{MISSION_NAME}", "Nigga" }
-			});*/
-			/*var payload = new Arma3PayloadJson(jsonObj.ToString());
+				{ "{MISSION_NAME}", "Mission Name" }
+			});
+			// var payload = new Arma3PayloadJson(jsonObj.ToString());
 			var message = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-			await ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);*/
+			ServiceStartup.serviceInteractions!.SendWebSocketMessage(message);
 
 
 			// var payload = new Arma3PayloadText("msg");
