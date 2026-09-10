@@ -57,8 +57,11 @@ namespace Arma3WebService
 				sp.GetRequiredService<IDbContextFactory<ServiceDbContext>>().CreateDbContext());
 
 			builder.Services.AddSingleton<Channel<ActionPayload>>(_ => Channel.CreateBounded<ActionPayload>(1000));
+			builder.Services.AddSingleton<Channel<BinaryPayload>>(_ => Channel.CreateBounded<BinaryPayload>(100));
+
 			builder.Services.AddSingleton<Channel<Arma3PayloadBinaryContent>>(_ => Channel.CreateUnbounded<Arma3PayloadBinaryContent>());
 			builder.Services.AddSingleton<ConcurrentDictionary<string, Content>>(_ => new());
+			builder.Services.AddSingleton<ConcurrentDictionary<string, Channel<Arma3PayloadBinaryContent>>>(_ => new());
 
 			//- Add controllers
 			builder.Services.AddSingleton<AdminConsoleManager>();
@@ -90,9 +93,8 @@ namespace Arma3WebService
 
 			builder.Services.AddHostedService<WebSocketService>();
 			builder.Services.AddHostedService<BinaryStreamManager>();
-			// builder.Services.AddHostedService<BinaryPayloadBroker>();
+			builder.Services.AddHostedService<BinaryPayloadBroker>();
 			builder.Services.AddHostedService<Arma3ActionManager>();
-			// builder.Services.AddHostedService<UpdateDBActionBroker>();
 			//- Register Connection Services -//
 
 			builder.Services.AddControllers();
