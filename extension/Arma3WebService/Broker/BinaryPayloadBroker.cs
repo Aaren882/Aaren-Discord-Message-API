@@ -8,7 +8,7 @@ namespace Arma3WebService.Broker;
 public sealed class BinaryPayloadBroker(
 	ILogger<BinaryPayloadBroker> Logger,
 	BinaryStreamManager binaryStreamManager,
-	Channel<ActionPayload> _ActionChannel
+	Channel<BinaryPayload> _BinaryChannel
 ) : BackgroundService
 {
 	public ValueTask BinaryAction(WebsocketServer connection, Arma3PayloadBinary payload)
@@ -27,7 +27,7 @@ public sealed class BinaryPayloadBroker(
 		);
 		binaryStreamManager.TryAddBinaryValue(payloadId, payload, fs, async (WrittenContent) =>
 		{
-			var (_, writeStream, _, _) = WrittenContent;
+			var (_, writeStream, _) = WrittenContent;
 			try
 			{
 			}
@@ -53,17 +53,17 @@ public sealed class BinaryPayloadBroker(
 	}
 	public bool TryEnqueueAction(WebsocketServer connection, Arma3Payload payload)
 	{
-		Logger.LogTrace("[Writer] Start writing Channel. Channel Hash: {Hash}", _ActionChannel.GetHashCode());
-		var success = _ActionChannel.Writer.TryWrite(new(connection, payload));
-		Logger.LogTrace("[Writer] TryWrite Result: {Success}。Item Counts: {Count}", success, _ActionChannel.Reader.Count);
+		Logger.LogTrace("[Writer] Start writing Channel. Channel Hash: {Hash}", _BinaryChannel.GetHashCode());
+		var success = _BinaryChannel.Writer.TryWrite(new(connection, payload));
+		Logger.LogTrace("[Writer] TryWrite Result: {Success}。Item Counts: {Count}", success, _BinaryChannel.Reader.Count);
 		return success;
 	}
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		Logger.LogInformation("{Service} service started. HashCode : {HashCode}, Thread : {ThreadID}", nameof(BinaryPayloadBroker), _ActionChannel.GetHashCode(), Environment.CurrentManagedThreadId);
+		Logger.LogInformation("{Service} service started. HashCode : {HashCode}, Thread : {ThreadID}", nameof(BinaryPayloadBroker), _BinaryChannel.GetHashCode(), Environment.CurrentManagedThreadId);
 		try
 		{
-			await foreach (var actionPayload in _ActionChannel.Reader.ReadAllAsync(stoppingToken))
+			await foreach (var actionPayload in _BinaryChannel.Reader.ReadAllAsync(stoppingToken))
 			{
 				var (connection, payload) = actionPayload;
 				var action = (payload) switch

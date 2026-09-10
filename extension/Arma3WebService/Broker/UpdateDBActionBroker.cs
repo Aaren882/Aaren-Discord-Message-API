@@ -11,8 +11,6 @@ public class UpdateDBActionBroker(
 	IServerInfoTemplateRepository infoRepository
 )
 {
-	public record RequestContent(WebsocketServer connection, Arma3PayloadUpdateDB PayloadUpdate);
-	// private readonly Channel<RequestContent> _channel = Channel.CreateBounded<RequestContent>(100);
 	public async Task AddAsync(WebsocketServer connection, Arma3PayloadUpdateDB PayloadUpdate)
 	{
 		var DBConfigAction = PayloadUpdate.DBConfigAction;
@@ -23,37 +21,7 @@ public class UpdateDBActionBroker(
 		};
 		await task;
 	}
-	/* protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-	{
-		Logger.LogInformation("\"{Service}\" start Serving.", nameof(UpdateDBActionBroker));
-		try
-		{
-			while (await _channel.Reader.WaitToReadAsync(stoppingToken))
-			{
-				while (_channel.Reader.TryRead(out var item))
-				{
-					var (connection, PayloadUpdate) = item;
-					var DBConfigAction = PayloadUpdate.DBConfigAction;
-					var task = (DBConfigAction) switch
-					{
-						UpdateAndSaveProfile ActionPayload => UpdateAndSaveProfile(connection, ActionPayload),
-						_ => throw new IndexOutOfRangeException(nameof(DBConfigAction))
-					};
-					await task;
-				}
-			}
-		}
-		catch (OperationCanceledException) { }
-		catch (Exception ex)
-		{
-			Logger.LogError(ex, "An unexpected error occurred while processing the DB update action.");
-		}
-		finally
-		{
-			Logger.LogCritical("DB update action processing terminated.");
-		}
-	} */
-	private Task UpdateAndSaveProfile(WebsocketServer connection, UpdateAndSaveProfile ActionPayload)
+	private async Task UpdateAndSaveProfile(WebsocketServer connection, UpdateAndSaveProfile ActionPayload)
 	{
 		try
 		{
@@ -75,66 +43,43 @@ public class UpdateDBActionBroker(
 				MessageActions = nativeFileDirectories[2]
 			};
 
-			/* var contentsAsyncEnumerable = metaDataList
-				.Select(binaryPayload =>
+			var contentsAsyncEnumerable = metaDataList
+				.Select((binaryPayload, i) =>
 				{
 					var payloadId = binaryPayload.GetIdentifier(profileName);
 					var (FileName, _, _, _, _) = binaryPayload;
-
-					const string DirectoryPrefix = ".profile";
-
-					if (!Directory.Exists(DirectoryPrefix))
-						Directory.CreateDirectory(DirectoryPrefix);
 
 					return binaryStreamManager.AddBinaryAsync(
 						payloadId,
 						binaryPayload,
 						new FileStream(
-							Path.Combine(DirectoryPrefix, FileName),
+							nativeFileDirectories[i],
 							FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
 						)
 					);
-				}); */
+				});
 
-			var Last = metaDataList.Last();
-			foreach (var (binaryPayload, index) in metaDataList.Select((v, i) => (v, i)))
+			await foreach (var item in Task.WhenEach(contentsAsyncEnumerable))
 			{
-				var payloadId = binaryPayload.GetIdentifier(profileName);
-				var (FileName, _, _, _, _) = binaryPayload;
-
-				binaryStreamManager.TryAddBinaryValue(
-					payloadId,
-					binaryPayload,
-					new FileStream(
-						nativeFileDirectories[index],
-						FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
-					),
-					async (writtenContent) =>
-					{
-						if (Last != binaryPayload) return;
-						Logger.LogInformation("BinaryAction finished DB Request for {profileName} : ID = {payloadId}", profileName, payloadId);
-
-						var identity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
-						ArgumentNullException.ThrowIfNull(identity);
-
-						var infoTemplate = await infoRepository.GetByMessageIdAsync(identity.messageId);
-
-						//- Create/Update Database value
-						if (infoTemplate is null)
-							await infoRepository.AddTemplateAsync(identity.messageId, newConfiguration);
-						else
-							await infoRepository.UpdateTemplateAsync(infoTemplate, newConfiguration);
-
-						await infoRepository.DbContext.SaveChangesAsync();
-					}
-				);
+				var (identifier, writtenContent) = await item;
+				Logger.LogInformation("BinaryAction finished DB Request for {profileName} : ID = {identifier}", profileName, identifier);
 			}
-			return Task.CompletedTask;
+			var identity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
+			ArgumentNullException.ThrowIfNull(identity);
+
+			var infoTemplate = await infoRepository.GetByMessageIdAsync(identity.messageId);
+
+			//- Create/Update Database value
+			if (infoTemplate is null)
+				await infoRepository.AddTemplateAsync(identity.messageId, newConfiguration);
+			else
+				await infoRepository.UpdateTemplateAsync(infoTemplate, newConfiguration);
+
+			await infoRepository.DbContext.SaveChangesAsync();
 		}
 		catch (ArgumentNullException ex)
 		{
 			Logger.LogError(ex, "Argument null exception occurred during UpdateAndSaveProfile.");
-			return Task.CompletedTask;
 		}
 		catch (Exception)
 		{
