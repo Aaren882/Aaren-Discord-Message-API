@@ -19,6 +19,7 @@ public sealed class WebsocketServer(
 ) : WebsocketWorker
 {
 	public record ActionPayload(WebsocketServer Connection, Arma3Payload Payload);
+	public record BinaryPayload(WebsocketServer Connection, Arma3Payload Payload);
 	protected override ILogger<IWebsocketWorker> Logger => logger;
 	public required WebsocketContextEntity websocketContext;
 	public override void PostReceived(in Stream assembledStream, WebSocketMessageType messageType)
@@ -38,13 +39,13 @@ public sealed class WebsocketServer(
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
 
-			/* var enqueued = (messageType) switch
+			var enqueued = (messageType) switch
 			{
 				WebSocketMessageType.Text => arma3ActionManager.TryEnqueueAction(this, payload),
 				WebSocketMessageType.Binary => binaryPayloadBroker.TryEnqueueAction(this, payload),
 				_ => throw new NotSupportedException($"Unsupported WebSocketMessageType: {messageType}")
-			}; */
-			if (!arma3ActionManager.TryEnqueueAction(this, payload))
+			};
+			if (!enqueued)
 				throw new InvalidOperationException($"Enqueue failed on {websocketContext.GetIdentity()}: \"{payload}\"");
 		}
 		catch (Exception ex) when (ex is InvalidOperationException || ex is NotSupportedException)
