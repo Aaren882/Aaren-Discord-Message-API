@@ -34,10 +34,9 @@ namespace DiscordMessageAPI
 
 			await using var serviceProvider = services.BuildServiceProvider();
 
-			ServiceStartup.InitConfiguration(
+			serviceProvider.InitConfiguration(
 				LoggerBase.Trace,
-				LoggerBase.Log,
-				serviceProvider
+				LoggerBase.Log
 			);
 
 			const string jsonProfile = "Discord_Message_API/profiles/default.json";

@@ -15,9 +15,9 @@ public static class ServiceStartup
 	public static ServiceInteractions? ServiceInteractions { get; private set; }
 
 	public static void InitConfiguration(
+		this IServiceProvider serviceProvider,
 		Action<string, string> tracer,
-		Action<Exception?, string> logger,
-		IServiceProvider serviceProvider
+		Action<Exception?, string> logger
 	)
 	{
 		ExtensionStartup.SetDefaultLoggers(tracer, logger); //- Init Default Logger

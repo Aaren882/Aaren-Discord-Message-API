@@ -88,7 +88,7 @@ public sealed class DllEntry
 		version = version[..(version.LastIndexOf('+') + 9)];
 
 		// Centralize configuration and initialization via the shared components startup class
-		InitConfiguration(serviceProvider);
+		serviceProvider.InitConfiguration(LoggerBase.Trace, LoggerBase.Log);
 
 		LoggerBase.Log(null, $"Extension Version : [{version}]");
 		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
