@@ -26,15 +26,19 @@ public sealed class ServiceInteractions
 		Util.CallExtensionCallback(Callback, callBack);
 	};
 	public WebsocketClient WsClient { get; init; }
-	// public readonly WebSocketLocalWorker SocketLocalWorker = new();
 
-	public string? RPTDirectory { get; internal set; }
+	private string? _RPTFileDirectory { get; set; }
+	public string RPTFileDirectory
+	{
+		get => _RPTFileDirectory ?? throw new DirectoryNotFoundException("It seems \"RPTDirectory\" didn't get initiate correctly.");
+		internal set => _RPTFileDirectory = value;
+	}
 
 	public ServiceInteractions(WebsocketClient websocket)
 	{
 		ServiceSecret = GetServiceSecret();
 		if (ServiceSecret.RPT_Directory != null)
-			RPTDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
+			RPTFileDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
 
 		WsClient = websocket;
 		WsClient.Connected += () =>

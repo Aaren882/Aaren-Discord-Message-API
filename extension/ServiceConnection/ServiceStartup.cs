@@ -10,7 +10,12 @@ public static class ServiceStartup
 {
 	public static bool ExtensionInit { get; private set; }
 	internal static DateTime ExtensionInitTime = DateTime.Now; //- must be static
-	public static string? RptFileDirectory { get; set; }
+	private static string? _RptFileDirectory { get; set; }
+	public static string RptFileDirectory
+	{
+		get => _RptFileDirectory ?? throw new NullReferenceException($"{nameof(RptFileDirectory)} has not been set.");
+		set => _RptFileDirectory = value;
+	}
 
 	public static ServiceInteractions? ServiceInteractions { get; private set; }
 
