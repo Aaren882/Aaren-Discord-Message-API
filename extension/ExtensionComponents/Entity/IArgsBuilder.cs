@@ -4,14 +4,14 @@ namespace ExtensionComponents.Entity;
 
 public interface IArgsBuilder
 {
-	public nint SourcePtr { get; set; }
-	public int ArgCount { get; set; }
+	public nint SourcePtr { get; init; }
+	public int ArgCount { get; init; }
 	public string[] GetArgsStringArray();
 }
 
-public record struct ArgsBuilder(nint SourcePtr, int ArgCount) : IArgsBuilder
+public readonly record struct ArgsBuilder(nint SourcePtr, int ArgCount) : IArgsBuilder
 {
-	public readonly unsafe string[] GetArgsStringArray()
+	public unsafe string[] GetArgsStringArray()
 	{
 		if (SourcePtr == nint.Zero) return [];
 
