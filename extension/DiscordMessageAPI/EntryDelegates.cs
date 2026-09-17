@@ -10,10 +10,9 @@ namespace DiscordMessageAPI;
 
 public sealed class EntryDelegates : EntryDelegatesBase
 {
-	public EntryDelegates(ILogger<EntryDelegates> logger)
+	public EntryDelegates(ILogger<EntryDelegates> logger) : base(logger)
 	{
-		Logger = logger;
-		ActionsDict = GetActionsMap(typeof(EntryDelegates));
+		ActionsDict = GetActionsMap<EntryDelegates>();
 	}
 
 	/// <summary>

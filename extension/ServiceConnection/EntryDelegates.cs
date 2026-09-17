@@ -10,10 +10,9 @@ namespace ServiceConnection;
 
 public sealed class EntryDelegates : EntryDelegatesBase
 {
-	public EntryDelegates(ILogger<EntryDelegates> logger)
+	public EntryDelegates(ILogger<EntryDelegates> logger) : base(logger)
 	{
-		Logger = logger;
-		ActionsDict = GetActionsMap(typeof(EntryDelegates));
+		ActionsDict = GetActionsMap<EntryDelegates>();
 	}
 
 	internal static int GetDirectoryFileNames(IOutputBuilder output, string[] args, int argCount)
@@ -39,10 +38,10 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	}
 	internal static int UpdateRptDirectory(IOutputBuilder output, string[] args, int argCount)
 	{
-		var dir = args[0];
-		ServiceInteractions.RPTDirectory = dir;
+		var dir = args[0] ?? throw new NullReferenceException("Argument \"Directory path\" cannot be null.");
+		ServiceStartup.RptFileDirectory = dir;
 		RptFileDirectory = ServiceConnectionUtil.GetCurrentRpt();
-		LoggerBase.Log(null, $"Update RPT File : {RptFileDirectory}");
+		Logger.LogInformation("Update RPT File : {RptFileDirectory}", RptFileDirectory);
 
 		return 1;
 	}

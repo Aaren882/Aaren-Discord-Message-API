@@ -3,19 +3,21 @@ using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using EILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace ExtensionComponents.Entity;
 
 public abstract class EntryDelegatesBase
 {
-	protected static EILogger Logger { get; set; } = NullLogger.Instance;
+	protected static ILogger<EntryDelegatesBase> Logger { get; set; } = NullLogger<EntryDelegatesBase>.Instance;
+	protected EntryDelegatesBase(ILogger<EntryDelegatesBase> logger)
+	{
+		Logger = logger;
+	}
 	public required Dictionary<byte[], nint>.AlternateLookup<ReadOnlySpan<byte>> ActionsDict;
 
-	public Dictionary<byte[], nint>.AlternateLookup<ReadOnlySpan<byte>> GetActionsMap(
-		[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicMethods)] Type actionType
-	)
+	public Dictionary<byte[], nint>.AlternateLookup<ReadOnlySpan<byte>> GetActionsMap<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.NonPublicMethods)] T>() where T : EntryDelegatesBase
 	{
+		var actionType = typeof(T);
 		var methods = actionType.GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
 			.Where(m => m.ReturnType == typeof(int));
 
