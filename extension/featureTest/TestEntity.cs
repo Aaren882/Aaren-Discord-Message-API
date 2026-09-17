@@ -2,7 +2,7 @@ using ExtensionComponents.Entity;
 
 namespace featureTest;
 
-public record struct TestOutputBuilder(nint DestinationPtr, int OutputSize) : IOutputBuilder
+public readonly record struct TestOutputBuilder(nint DestinationPtr, int OutputSize) : IOutputBuilder
 {
 	/// <summary>
 	/// Construct output buffer for Arma
