@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Threading.Channels;
 using ExtensionComponents.Entity;
 using ExtensionComponents.Tools;
 using Microsoft.Extensions.Logging;
@@ -10,9 +11,23 @@ namespace ServiceConnection;
 
 public sealed class EntryDelegates : EntryDelegatesBase
 {
+	private static readonly Channel<Func<Task>> channel = Channel.CreateBounded<Func<Task>>(100);
 	public EntryDelegates(ILogger<EntryDelegates> logger) : base(logger)
 	{
 		ActionsDict = GetActionsMap<EntryDelegates>();
+		Task.Run(() => ChannelExecuteLoopAsync());
+	}
+
+	private static async Task ChannelExecuteLoopAsync()
+	{
+		await foreach (var item in channel.Reader.ReadAllAsync())
+		{
+			await item();
+		}
+	}
+	private static bool TryAddTask(Func<Task> action)
+	{
+		return channel.Writer.TryWrite(action);
 	}
 
 	internal static int GetDirectoryFileNames(IOutputBuilder output, string[] args, int argCount)
@@ -66,9 +81,11 @@ public sealed class EntryDelegates : EntryDelegatesBase
 		if (string.IsNullOrEmpty(accessName))
 			throw new Exception("NO ACCESS NAME PROVIDED.");
 
-		_ = InitializeAsync(accessName, profilePayload);
-
-		return 1;
+		if (TryAddTask(() => InitializeAsync(accessName, profilePayload)))
+		{
+			return 1;
+		}
+		return -1;
 	}
 	/// <summary>
 	/// Disrupt current WebSocket connection
@@ -79,8 +96,11 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	/// <returns></returns>
 	internal static int DisconnectWebSocket(IOutputBuilder output, string[] args, int argCount)
 	{
-		_ = ShutdownAsync();
-		return 1;
+		if (TryAddTask(() => ShutdownAsync()))
+		{
+			return 1;
+		}
+		return -1;
 	}
 	/// <summary>
 	/// Reconnect Websocket relay
@@ -93,8 +113,11 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	{
 		var profilePayload = args[0];
 
-		_ = ServiceInteractions?.ReconnectWebSocket(profilePayload);
-		return 1;
+		if (TryAddTask(() => ServiceInteractions.ReconnectWebSocket(profilePayload)))
+		{
+			return 1;
+		}
+		return -1;
 	}
 
 	/// <summary>
@@ -108,9 +131,11 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	{
 		var message = args[0];
 
-		ServiceInteractions?.SendWebSocketMessage(message);
-
-		return 1;
+		if (TryAddTask(async () => await ServiceInteractions.SendWebSocketMessage(message)))
+		{
+			return 1;
+		}
+		return -1;
 	}
 	/*internal static int SendWebSocketRPT(IOutputBuilder output, string[] args, int argCount)
 	{
@@ -124,32 +149,41 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	}*/
 	internal static int SendWebSocketBinaries(IOutputBuilder output, string[] args, int argCount)
 	{
-		var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
-		ServiceInteractions?.SendWebSocketBinaries(binaryDict!);
+		if (string.IsNullOrEmpty(args[0]))
+		{
+			throw new NullReferenceException("Argument [0] cannot be null or empty.");
+		}
 
-		return 1;
+		var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString)
+			?? throw new NullReferenceException("Binary dictionary is null");
+
+		if (TryAddTask(() => ServiceInteractions.SendWebSocketBinaries(binaryDict)))
+		{
+			return 1;
+		}
+		return -1;
 	}
 	internal static int SendWebSocketRptLines(IOutputBuilder output, string[] args, int argCount)
 	{
 		if (!int.TryParse(args[0], out var linesCount))
 			throw new Exception("INCORRECT NUMBER OF ARGUMENTS");
 
-		ServiceInteractions?.SendWebSocketRptLines(RptFileDirectory, linesCount);
+		ServiceInteractions.SendWebSocketRptLines(RptFileDirectory, linesCount);
 
 		return 1;
 	}
 	internal static int SendWebSocketBinariesFromAssemblyDirectory(IOutputBuilder output, string[] args, int argCount)
 	{
-		var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString);
-
-		if (binaryDict is null)
-			throw new Exception("INVALID ARGUMENT. (Dictionary for binaries is null)");
+		var binaryDict = JsonSerializer.Deserialize(args[0], ExtensionSerializable.Default.DictionaryStringString)
+			?? throw new Exception("INVALID ARGUMENT. (Dictionary for binaries is null)");
 
 		foreach (var (key, value) in binaryDict)
 			binaryDict[key] = Path.Combine(Util.AssemblyPath, value);
 
-		ServiceInteractions?.SendWebSocketBinaries(binaryDict);
-
-		return 1;
+		if (TryAddTask(() => ServiceInteractions.SendWebSocketBinaries(binaryDict)))
+		{
+			return 1;
+		}
+		return -1;
 	}
 }

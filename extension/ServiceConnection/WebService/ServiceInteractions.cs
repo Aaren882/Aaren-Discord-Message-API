@@ -6,6 +6,7 @@ using System.Text.Json;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
 using ExtensionComponents.Tools;
+using Microsoft.Extensions.Logging;
 using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
@@ -13,6 +14,7 @@ namespace ServiceConnection.WebService;
 public sealed class ServiceInteractions
 {
 	private const string Secret = "secret.json";
+	private readonly ILogger<ServiceInteractions> Logger;
 	private readonly Arma3ServiceSecret ServiceSecret;
 
 	internal string AccessName { get; private set; } = "";
@@ -34,8 +36,9 @@ public sealed class ServiceInteractions
 		internal set => _RPTFileDirectory = value;
 	}
 
-	public ServiceInteractions(WebsocketClient websocket)
+	public ServiceInteractions(ILogger<ServiceInteractions> logger, WebsocketClient websocket)
 	{
+		Logger = logger;
 		ServiceSecret = GetServiceSecret();
 		if (ServiceSecret.RPT_Directory != null)
 			RPTFileDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
@@ -84,21 +87,25 @@ public sealed class ServiceInteractions
 		await DisconnectWebSocket("Client Reconnecting");
 		await EstablishWebSocketConnection(AccessName, profilePayload);
 	}
-	public void SendWebSocketMessage(string messageJson)
-		=> Task.Run(async () => await SendWebSocketMessageAsync(messageJson));
+	public ValueTask SendWebSocketMessage(string messageJson)
+		=> SendWebSocketMessageAsync(messageJson);
 
 	internal ValueTask SendWebSocketMessageAsync(string messageJson)
 		=> WsClient.SendAsync(messageJson, WebSocketMessageType.Text, true);
 
-	public void SendWebSocketBinaries(Dictionary<string, string> binaryDict, int chunkSize = 64 * 1024)
+	public async Task SendWebSocketBinaries(Dictionary<string, string> binaryDict, int chunkSize = 64 * 1024)
 	{
-		Logger(null, "INFO: Sending binaries");
+		Logger.LogInformation("Start Sending binaries.");
 		foreach (var (directoryPrefix, filePath) in binaryDict)
-			SendWebSocketBinary(filePath, directoryPrefix, chunkSize);
+		{
+			Logger.LogInformation("Binary : [Prefix - {Prefix}, {Path}]", directoryPrefix, filePath);
+			await SendWebSocketBinary(filePath, directoryPrefix, chunkSize);
+		}
+		Logger.LogInformation("End of Sending binaries.");
 	}
 	public void SendWebSocketUpdateAndSaveProfile(Arma3ClientProfileConfiguration configuration, int chunkSize = 64 * 1024)
 	{
-		Logger(null, "INFO: Sending profileConfig");
+		Logger.LogInformation("Sending profileConfig.");
 
 		Task.Run(async () =>
 		{
@@ -123,7 +130,7 @@ public sealed class ServiceInteractions
 
 	public void SendWebSocketRptLines(string filePath, int linesCount)
 	{
-		Logger(null, $"INFO: Sending RPT \"{linesCount}\" lines");
+		Logger.LogInformation("Sending RPT \"{LinesNum}\" lines", linesCount);
 		var fileInfo = new FileInfo(filePath);
 		var metadata = new Arma3PayloadRptLine
 		(
@@ -136,11 +143,11 @@ public sealed class ServiceInteractions
 			() => WsClient.SendRptLinesAsync(filePath, linesCount)
 		); */
 	}
-	public void SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
+	public async Task SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
 	{
 		FileInfo fileInfo = new(filePath);
 		var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
-		Logger(null, $"INFO: Sending binary file \"{fileInfo.Name}\"");
+		Logger.LogInformation("Sending binary file \"{FileName}\"", fileInfo.Name);
 
 		// Send Metadata (as text message)
 		Arma3PayloadBinary metadata = new
@@ -152,12 +159,12 @@ public sealed class ServiceInteractions
 			directoryPrefix
 		);
 
-		Task.Run(async () =>
-		{
-			var bytes = JsonSerializer.SerializeToUtf8Bytes(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-			await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
-			await WsClient.SendBinaryAsync(AccessName, filePath, metadata, chunkSize);
-		});
+		// Task.Run(async () =>
+		// {
+		var bytes = JsonSerializer.SerializeToUtf8Bytes(metadata, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
+		await WsClient.SendBinaryAsync(AccessName, filePath, metadata, chunkSize);
+		// });
 
 		/* SocketLocalWorker.WebSocketTrafficWriter(
 			metadata,
@@ -177,7 +184,7 @@ public sealed class ServiceInteractions
 
 			if (profilePayload is null)
 			{
-				throw new Exception("INFO: No profile found.");
+				throw new Exception("No profile found.");
 			}
 
 			//- Send Request for access token
@@ -214,7 +221,7 @@ public sealed class ServiceInteractions
 				result,
 				IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesReturnPayload
 			)!;
-			Tracer("Token Manager (result)", authTokenPayload.ToString());
+			Logger.LogTrace("Token Manager (result) : {TokenPayload}", authTokenPayload);
 
 			/*if (authTokenPayload is { AuthToken: null })
 				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");*/
@@ -226,7 +233,7 @@ public sealed class ServiceInteractions
 		}
 		catch (Exception e)
 		{
-			Logger(e, "");
+			Logger.LogError(e, "An error occurred during service interaction: {Message}", e.Message);
 			throw;
 		}
 	}
@@ -238,7 +245,7 @@ public sealed class ServiceInteractions
 			Arma3PayloadJsonSerializerContext.Default.Arma3ServiceSecret
 		)!;
 
-		Tracer("GetServiceSecret", secretString);
+		Logger.LogTrace("GetServiceSecret : {Secret}", secretString);
 		return tokenPayload;
 	}
 	private static string GetBasicAuthenticationBearer(Arma3ServiceSecret serviceSecret)
