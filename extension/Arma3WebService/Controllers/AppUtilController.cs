@@ -15,9 +15,9 @@ namespace Arma3WebService.Controllers
 		private readonly ILogger _logger = logger;
 
 		[HttpPost]
-		public IActionResult GenToken(IdentityRolesPayload payload)
+		public async Task<IActionResult> GenToken(IdentityRolesPayload payload)
 		{
-			return Ok(jwtHelpers.GenerateToken(payload));
+			return Ok(await jwtHelpers.GenerateToken(payload));
 		}
 
 		[HttpGet]

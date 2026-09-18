@@ -70,9 +70,9 @@ namespace Arma3WebService
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 			builder.Services.AddSingleton<BinaryStreamManager>();
 			builder.Services.AddSingleton<UpdateDBActionBroker>();
-			builder.Services.AddSingleton<IdentityCheckService>();
 			builder.Services.AddSingleton<BinaryPayloadBroker>();
 			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
+			builder.Services.AddScoped<IdentityCheckService>();
 			builder.Services.AddScoped<WebsocketServer>();
 			builder.Services.AddScoped<IServerIdentityRepository, ServerIdentityRepository>();
 			builder.Services.AddScoped<IServerInfoTemplateRepository, ServerInfoTemplateRepository>();
