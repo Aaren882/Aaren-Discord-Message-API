@@ -44,7 +44,7 @@ public class LocalServices(ILogger<LocalServices> Logger, EntryDelegatesBase ent
 		for (var i = 0; i < argCount; i++)
 		{
 			var rawString = Marshal.PtrToStringUTF8(sourceSpan[i]) ?? string.Empty;
-			Logger.LogDebug("{nameof}: {rawString}", nameof(rawString), rawString);
+			Logger.LogTrace("{GetCallContext} {VarName}: {rawString}", nameof(GetCallContext), nameof(rawString), rawString);
 			result[i] = rawString;
 		}
 

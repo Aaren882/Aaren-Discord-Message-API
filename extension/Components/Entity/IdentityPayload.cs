@@ -32,4 +32,3 @@ public readonly record struct IdentityRolesPayload(
 [JsonSerializable(typeof(IdentityRolesPayload))]
 [JsonSerializable(typeof(IdentityRolesReturnPayload))]
 public sealed partial class IdentityRolesPayloadJsonSerializerContext : JsonSerializerContext;
-

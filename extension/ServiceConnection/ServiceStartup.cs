@@ -87,7 +87,7 @@ public static class ServiceStartup
 		}
 
 		ExtensionStartup.Logger(null, "Shutting down WebSocket Connection");
-		await ServiceInteractions.DisconnectWebSocket("Extension Shutting Down");
+		await ServiceInteractions.DisconnectWebSocket();
 		ExtensionInit = false;
 	}
 }

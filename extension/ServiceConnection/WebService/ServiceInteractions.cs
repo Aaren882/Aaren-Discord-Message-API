@@ -85,13 +85,13 @@ public sealed class ServiceInteractions
 			await SendWebSocketUpdateAndSaveProfile(ProfileConfig.Configuration);
 		}
 	}
-	public Task DisconnectWebSocket(string description = "Client disconnect")
+	public Task DisconnectWebSocket()
 	{
 		return WsClient.CloseAsync();
 	}
 	public async Task ReconnectWebSocket(string profilePayload)
 	{
-		await DisconnectWebSocket("Client Reconnecting");
+		await DisconnectWebSocket();
 		await EstablishWebSocketConnection(AccessName, profilePayload);
 	}
 	public ValueTask SendWebSocketMessage(string messageJson)
