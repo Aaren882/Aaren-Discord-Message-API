@@ -120,7 +120,7 @@ public sealed class ServiceInteractions
 			new UpdateAndSaveProfile(payloadBinaries, configuration)
 		);
 
-		var configStr = JsonSerializer.Serialize(payloadUpdateDB, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		var configStr = payloadUpdateDB.ToJsonString();
 		await WsClient.SendAsync(configStr, WebSocketMessageType.Text, true);
 
 		foreach (var (payloadBinary, index) in payloadBinaries.Select((v, i) => (v, i)))

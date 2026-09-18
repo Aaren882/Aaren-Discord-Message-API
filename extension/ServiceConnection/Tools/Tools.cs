@@ -70,7 +70,7 @@ public static class Util
 
 	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)
 	{
-		var data = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		var data = payload.ToJsonString();
 		return extensionCallback("DISCORD_API", ((int)payload.Type).ToString(), data);
 	}
 }

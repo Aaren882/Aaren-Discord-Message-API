@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Components.Entity;
@@ -29,7 +30,10 @@ public enum Arma3PayLoadType
 public abstract record Arma3Payload
 {
 	public abstract Arma3PayLoadType Type { get; }
-	public static DateTime Timestamp => DateTime.Now;
+	public string ToJsonString()
+		=> JsonSerializer.Serialize(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+	public byte[] ToJsonBytes()
+		=> JsonSerializer.SerializeToUtf8Bytes(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 }
 
 public record Arma3PayloadJson

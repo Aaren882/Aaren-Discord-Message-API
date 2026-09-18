@@ -61,10 +61,7 @@ public sealed class ServiceRequestHandler
 		Logger(null, $"{nameof(ServiceRequestHandler)}.{nameof(GetRespond)} : \nrequest = {request}");
 
 		//- Send MetaData
-		var payload = JsonSerializer.SerializeToUtf8Bytes(
-			request,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		)!;
+		var payload = request.ToJsonBytes();
 		await serviceInteractions.WsClient.SendAsync(payload, WebSocketMessageType.Binary, true);
 		await task.Invoke();
 	}
