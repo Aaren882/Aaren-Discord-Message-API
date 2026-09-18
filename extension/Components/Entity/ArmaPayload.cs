@@ -55,7 +55,7 @@ public record Arma3PayloadBinary
 {
 	[JsonIgnore]
 	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
-	public int TotalChunks { get; set; }
+	public int TotalChunks { get; set; } = 0;
 
 	public string GetIdentifier(string ConnectionIdentity)
 	{

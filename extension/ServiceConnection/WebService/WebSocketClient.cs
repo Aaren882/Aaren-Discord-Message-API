@@ -51,7 +51,7 @@ public sealed class WebsocketClient(
 
 		Logger.LogInformation("Sending Binary: \n File: {File} \n Header: {header}", filePath, payloadBinary);
 		var totalChunks = payloadBinary.TotalChunks;
-		if (totalChunks < 0)
+		if (totalChunks < 1)
 		{
 			FileInfo fileInfo = new(filePath);
 			totalChunks = payloadBinary.TotalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
