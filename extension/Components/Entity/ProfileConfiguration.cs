@@ -18,7 +18,7 @@ public readonly record struct ProfileConfiguration(
 	public ProfileConfigurationDateOffsets GetDateOffsets()
 	{
 		var paths = Configuration.GetTemplateFileList();
-		List<long> dateOffSets = [..paths.Select(path =>
+		long[] dateOffSets = [..paths.Select(path =>
 		{
 			FileInfo fileInfo = new(Path.Combine(Directory, path + ".json"));
 			return ((DateTimeOffset)fileInfo.LastWriteTime).ToUnixTimeSeconds();
@@ -30,7 +30,7 @@ public readonly record struct ProfileConfiguration(
 
 public readonly record struct ProfileConfigurationDateOffsets(
 	string? MessageId,
-	List<long> ProfileDateOffsets,
+	long[] ProfileDateOffsets,
 	Arma3ClientProfileConfiguration Configuration
 );
 

@@ -8,16 +8,23 @@ public readonly record struct Arma3ClientProfileConfiguration(
 	string? MessageActions = null
 )
 {
-	public List<string> GetTemplateFileList()
+	public string[] GetTemplateFileList(string prefix = "")
 	{
-		List<string> fileInfoList = [MessageTemplate, MessageOfflineTemplate];
-		if (MessageActions != null) fileInfoList.Add(MessageActions);
+		string[] fileInfos;
+		if (MessageActions == null)
+		{
+			fileInfos = [MessageTemplate, MessageOfflineTemplate];
+		}
+		else
+		{
+			fileInfos = [MessageTemplate, MessageOfflineTemplate, MessageActions];
+		}
 
-		return fileInfoList;
+		return [.. fileInfos.Select(x => Path.Combine(prefix, x))];
 	}
-	public List<Arma3PayloadBinary> ToPayloadBinaryList()
+	public Arma3PayloadBinary[] ToPayloadBinaryList(string prefix = "")
 	{
-		return [..GetTemplateFileList().Select(x =>
+		return [..GetTemplateFileList(prefix).Select(x =>
 				{
 					FileInfo _fileInfo = new(x);
 					Arma3PayloadBinary payload = new(
@@ -44,7 +51,7 @@ public abstract record DBConfigAction
 };
 
 public record UpdateAndSaveProfile(
-	List<Arma3PayloadBinary> MetaDataList,
+	Arma3PayloadBinary[] MetaDataList,
 	Arma3ClientProfileConfiguration Configuration
 ) : DBConfigAction
 {

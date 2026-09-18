@@ -1,8 +1,10 @@
 using System.Text.Json;
 using System.Threading.Channels;
+using Components.Entity;
 using ExtensionComponents.Entity;
 using ExtensionComponents.Tools;
 using Microsoft.Extensions.Logging;
+using static ExtensionComponents.ExtensionStartup;
 using static ServiceConnection.ServiceStartup;
 using ServiceConnectionUtil = ServiceConnection.Tools.Util;
 
@@ -53,10 +55,27 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	}
 	internal static int UpdateRptDirectory(IOutputBuilder output, string[] args, int argCount)
 	{
-		var dir = args[0] ?? throw new NullReferenceException("Argument \"Directory path\" cannot be null.");
-		ServiceStartup.RptFileDirectory = dir;
+		var profileName = args[0] ?? throw new NullReferenceException("");
+		var profileConfig = ServiceInteractions.GetServiceProfile(profileName);
+
+		var rptDir = profileConfig.RPT_Directory
+			?? throw new NullReferenceException("RPT_Directory is not defined in the profile configuration.");
+
+		ServiceStartup.RptFileDirectory = rptDir;
 		RptFileDirectory = ServiceConnectionUtil.GetCurrentRpt();
 		Logger.LogInformation("Update RPT File : {RptFileDirectory}", RptFileDirectory);
+
+		//- Callback
+		var configString = JsonSerializer.Serialize(
+			profileConfig,
+			ProfileConfigurationJsonSerializerContext.Default.ProfileConfiguration
+		);
+
+		Arma3PayloadCallBack profileUpdated = new(
+			Function: "RptDirectoryUpdated",
+			Data: configString
+		);
+		Util.CallExtensionCallback(Callback, profileUpdated);
 
 		return 1;
 	}
@@ -77,11 +96,12 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	internal static int ConnectWebSocket(IOutputBuilder output, string[] args, int argCount)
 	{
 		var accessName = args[0];
-		var profilePayload = args[1];
-		if (string.IsNullOrEmpty(accessName))
-			throw new Exception("NO ACCESS NAME PROVIDED.");
+		var profileName = args[1];
 
-		if (TryAddTask(() => InitializeAsync(accessName, profilePayload)))
+		ArgumentNullException.ThrowIfNull(accessName);
+		ArgumentNullException.ThrowIfNull(profileName);
+
+		if (TryAddTask(() => InitializeAsync(accessName, profileName)))
 		{
 			return 1;
 		}

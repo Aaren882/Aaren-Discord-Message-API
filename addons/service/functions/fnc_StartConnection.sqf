@@ -20,30 +20,7 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
+private _params = [call FUNC(GetProfileName), GVAR(Profiles)];
+INFO_1("Try to Connect : %1",_params);
 
-private _profile = call FUNC(GetProfileConfiguration);
-
-private _messageId = _profile getOrDefault ["MessageId", ""];
-private _configuration = _profile getOrDefault ["Configuration", createHashMap];
-
-private _map = createHashMap;
-_map set ["type", 2]; //- payload type "GameServer"
-_map set ["MessageId", _messageId];
-
-//- Get timeStamp from the "profile.Configuration"
-if (count _configuration > 0) then {
-  private _dateTimes = "DiscordMessageAPIService" callExtension [
-    "GetDirectoryFilesDateTime",
-    values _configuration
-  ];
-
-  //- Get DateOffset in UNIX format
-  _map set [
-    "ProfileDateOffsets",
-    _dateTimes call DiscordAPI_fnc_Deserialize_ExtensionOutput
-  ];
-};
-
-TRACE_1("fnc_StartConnection",_map);
-
-"DiscordMessageAPIService" callExtension ["ConnectWebSocket", [call FUNC(GetProfileName), toJSON _map]];
+"DiscordMessageAPIService" callExtension ["ConnectWebSocket", _params];

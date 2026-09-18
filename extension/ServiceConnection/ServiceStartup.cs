@@ -54,8 +54,10 @@ public static class ServiceStartup
 		}
 	}
 
-	public static async Task InitializeAsync(string accessName, string? profilName = null)
+	public static async Task InitializeAsync(string accessName, string profilName)
 	{
+		ArgumentNullException.ThrowIfNull(accessName);
+		ArgumentNullException.ThrowIfNull(profilName);
 		if (ServiceInteractions == null)
 		{
 			throw new InvalidOperationException("ServiceInteractions not initialized. Call InitConfiguration first.");
@@ -67,7 +69,7 @@ public static class ServiceStartup
 		try
 		{
 			ExtensionStartup.Logger(null, "Initializing WebSocket Connection");
-			await ServiceInteractions.EstablishWebSocketConnection(accessName, profilName ?? string.Empty);
+			await ServiceInteractions.EstablishWebSocketConnection(accessName, profilName);
 		}
 		catch (Exception e) when (e is SocketException or HttpRequestException)
 		{
