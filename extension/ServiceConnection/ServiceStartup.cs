@@ -17,7 +17,12 @@ public static class ServiceStartup
 		set => _RptFileDirectory = value;
 	}
 
-	public static ServiceInteractions? ServiceInteractions { get; private set; }
+	private static ServiceInteractions? _ServiceInteractions { get; set; }
+	public static ServiceInteractions ServiceInteractions
+	{
+		get => _ServiceInteractions ?? throw new NullReferenceException("ServiceInteractions has not been set.");
+		private set => _ServiceInteractions = value;
+	}
 
 	public static void InitConfiguration(
 		this IServiceProvider serviceProvider,
@@ -27,7 +32,7 @@ public static class ServiceStartup
 	{
 		ExtensionStartup.SetDefaultLoggers(tracer, logger); //- Init Default Logger
 		ExtensionStartup.InitConfiguration(serviceProvider); //- Init Extension Configuration
-		ServiceInteractions = serviceProvider.GetService<ServiceInteractions>();
+		_ServiceInteractions = serviceProvider.GetService<ServiceInteractions>();
 
 		try
 		{
