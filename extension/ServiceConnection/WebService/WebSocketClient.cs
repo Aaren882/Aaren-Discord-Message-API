@@ -54,7 +54,7 @@ public sealed class WebsocketClient(
 		if (totalChunks < 0)
 		{
 			FileInfo fileInfo = new(filePath);
-			totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+			totalChunks = payloadBinary.TotalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
 		}
 		// Send Chunks (as binary messages)
 		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, chunkSize))

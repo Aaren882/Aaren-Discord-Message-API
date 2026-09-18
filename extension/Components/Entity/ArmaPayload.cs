@@ -50,12 +50,13 @@ public record Arma3PayloadBinary
 	string FileName,
 	long FileSize,
 	DateTime CreatedTime,
-	int TotalChunks = -1,
 	string? DirectoryPrefix = null
 ) : Arma3Payload
 {
 	[JsonIgnore]
 	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
+	public int TotalChunks { get; set; }
+
 	public string GetIdentifier(string ConnectionIdentity)
 	{
 		return Convert.ToBase64String(Encoding.UTF8.GetBytes(

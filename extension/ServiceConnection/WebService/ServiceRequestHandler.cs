@@ -46,10 +46,11 @@ public sealed class ServiceRequestHandler
 				(
 					RPTFileInfo.Name,
 					RPTFileInfo.Length,
-					RPTFileInfo.CreationTime,
-					totalChunks,
-					null
-				);
+					RPTFileInfo.CreationTime
+				)
+				{
+					TotalChunks = totalChunks
+				};
 
 				request = request with { Payload = BinaryMetaData };
 				task = () => serviceInteractions.WsClient.SendBinaryAsync(serviceInteractions!.AccessName, RptFileDirectory, BinaryMetaData, chunkSize);
