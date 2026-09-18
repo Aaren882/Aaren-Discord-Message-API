@@ -63,7 +63,7 @@ public sealed class ServiceRequestHandler
 
 		//- Send MetaData
 		var payload = request.ToJsonBytes();
-		await serviceInteractions.WsClient.SendAsync(payload, WebSocketMessageType.Binary, true);
+		await serviceInteractions.WsClient.SendAsync(payload, WebSocketMessageType.Text, true);
 		await task.Invoke();
 	}
 }
