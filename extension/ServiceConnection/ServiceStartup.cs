@@ -54,7 +54,7 @@ public static class ServiceStartup
 		}
 	}
 
-	public static async Task InitializeAsync(string accessName, string? profilePayload = null)
+	public static async Task InitializeAsync(string accessName, string? profilName = null)
 	{
 		if (ServiceInteractions == null)
 		{
@@ -67,7 +67,7 @@ public static class ServiceStartup
 		try
 		{
 			ExtensionStartup.Logger(null, "Initializing WebSocket Connection");
-			await ServiceInteractions.EstablishWebSocketConnection(accessName, profilePayload ?? string.Empty);
+			await ServiceInteractions.EstablishWebSocketConnection(accessName, profilName ?? string.Empty);
 		}
 		catch (Exception e) when (e is SocketException or HttpRequestException)
 		{

@@ -15,19 +15,20 @@ public sealed class ServiceInteractions
 {
 	private const string Secret = "secret.json";
 	private readonly ILogger<ServiceInteractions> Logger;
+	public readonly WebsocketClient WsClient;
 	private readonly Arma3ServiceSecret ServiceSecret;
+	internal ProfileConfiguration ProfileConfig;
 
 	internal string AccessName { get; private set; } = "";
 
-	public event Action<IdentityRolesReturnPayload>? ServiceAccessResult = (authTokenPayload) =>
+	public event Action<ProfileConfiguration, IdentityRolesReturnPayload>? ServiceAccessResult = (configuration, authTokenPayload) =>
 	{
 		Arma3PayloadCallBack callBack = new(
 			Function: "ServiceAccessResult",
-			Data: $"[{authTokenPayload is not { AuthToken: null }},{authTokenPayload.AdditionalPayload ?? "[]"}]"
+			Data: $"[{authTokenPayload is not { AuthToken: null }},{configuration}]"
 		);
 		Util.CallExtensionCallback(Callback, callBack);
 	};
-	public WebsocketClient WsClient { get; init; }
 
 	private string? _RPTFileDirectory { get; set; }
 	public string RPTFileDirectory
@@ -77,6 +78,12 @@ public sealed class ServiceInteractions
 
 		var tokenPayload = await GetAccessToken(accessName, profilePayload);
 		await WsClient.StartAsync(ServiceSecret.WebSocketServiceUri, tokenPayload.AuthToken);
+
+		//- Send Profile Configs
+		if (tokenPayload.IsDifferent || tokenPayload.IsDifferent)
+		{
+			await SendWebSocketUpdateAndSaveProfile(ProfileConfig.Configuration);
+		}
 	}
 	public Task DisconnectWebSocket(string description = "Client disconnect")
 	{
@@ -103,29 +110,27 @@ public sealed class ServiceInteractions
 		}
 		Logger.LogInformation("End of Sending binaries.");
 	}
-	public void SendWebSocketUpdateAndSaveProfile(Arma3ClientProfileConfiguration configuration, int chunkSize = 64 * 1024)
+	private async Task SendWebSocketUpdateAndSaveProfile(Arma3ClientProfileConfiguration configuration, int chunkSize = 64 * 1024)
 	{
 		Logger.LogInformation("Sending profileConfig.");
 
-		Task.Run(async () =>
+		var fileList = configuration.GetTemplateFileList();
+		var payloadBinaries = configuration.ToPayloadBinaryList();
+		Arma3PayloadUpdateDB payloadUpdateDB = new(
+			new UpdateAndSaveProfile(payloadBinaries, configuration)
+		);
+
+		var configStr = JsonSerializer.Serialize(payloadUpdateDB, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		await WsClient.SendAsync(configStr, WebSocketMessageType.Text, true);
+
+		foreach (var (payloadBinary, index) in payloadBinaries.Select((v, i) => (v, i)))
 		{
-			var fileList = configuration.GetTemplateFileList();
-			var payloadBinaries = configuration.ToPayloadBinaryList();
-			Arma3PayloadUpdateDB payloadUpdateDB = new(
-			   new UpdateAndSaveProfile(payloadBinaries, configuration)
-		   	);
-
-			var configStr = JsonSerializer.Serialize(payloadUpdateDB, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-			await WsClient.SendAsync(configStr, WebSocketMessageType.Text, true);
-
-			foreach (var (payloadBinary, index) in payloadBinaries.Select((v, i) => (v, i)))
-			{
-				var filePath = fileList[index];
-				// var bytes = JsonSerializer.SerializeToUtf8Bytes(payloadBinary, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-				// await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
-				await WsClient.SendBinaryAsync(AccessName, filePath, payloadBinary, chunkSize);
-			}
-		});
+			var filePath = fileList[index];
+			// var bytes = JsonSerializer.SerializeToUtf8Bytes(payloadBinary, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			// await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
+			await WsClient.SendBinaryAsync(AccessName, filePath, payloadBinary, chunkSize);
+		}
+		Logger.LogInformation("profileConfig Sent.");
 	}
 
 	public void SendWebSocketRptLines(string filePath, int linesCount)
@@ -175,17 +180,14 @@ public sealed class ServiceInteractions
 	/// <summary>
 	/// This method securely authenticates with a backend service using credentials from a configuration file to obtain a temporary access token for making further API calls.
 	/// </summary>
-	private async Task<IdentityRolesReturnPayload> GetAccessToken(string accessName, string profilePayload)
+	private async Task<IdentityRolesReturnPayload> GetAccessToken(string accessName, string profileName)
 	{
 		try
 		{
 			if (string.IsNullOrEmpty(AccessName) || accessName != AccessName)
 				AccessName = accessName;
 
-			if (profilePayload is null)
-			{
-				throw new Exception("No profile found.");
-			}
+			ProfileConfig = GetServiceProfile(profileName);
 
 			//- Send Request for access token
 			var payload = new IdentityRolesPayload
@@ -196,7 +198,7 @@ public sealed class ServiceInteractions
 					Role = Role.GameServer
 				},
 				ExpireMinute = 15,
-				AdditionalPayload = profilePayload
+				ProfileDateOffsets = ProfileConfig.GetDateOffsets()
 			};
 			var jsonPayload = JsonSerializer.Serialize(
 				payload,
@@ -223,11 +225,8 @@ public sealed class ServiceInteractions
 			)!;
 			Logger.LogTrace("Token Manager (result) : {TokenPayload}", authTokenPayload);
 
-			/*if (authTokenPayload is { AuthToken: null })
-				throw new NullReferenceException($"{nameof(authTokenPayload)} is null.");*/
-
 			//- Established Socket Connection
-			ServiceAccessResult?.Invoke(authTokenPayload);
+			ServiceAccessResult?.Invoke(ProfileConfig, authTokenPayload);
 
 			return authTokenPayload;
 		}
@@ -237,7 +236,21 @@ public sealed class ServiceInteractions
 			throw;
 		}
 	}
-	private static Arma3ServiceSecret GetServiceSecret()
+	public ProfileConfiguration GetServiceProfile(string profileName)
+	{
+		var fileName = Path.Combine("profiles", profileName + ".json");
+		var profileString = Util.ParseJson(fileName)
+			?? throw new FileNotFoundException($"Profile file '{Path.Combine("profile", profileName + ".json")}' not found or could not be parsed.");
+
+		var profileConfiguration = JsonSerializer.Deserialize(
+			profileString,
+			ProfileConfigurationJsonSerializerContext.Default.ProfileConfiguration
+		);
+
+		Logger.LogTrace("UpdateServiceProfile : {Profile}", profileString);
+		return profileConfiguration;
+	}
+	private Arma3ServiceSecret GetServiceSecret()
 	{
 		var secretString = Util.ParseJson(Secret);
 		var tokenPayload = JsonSerializer.Deserialize(
