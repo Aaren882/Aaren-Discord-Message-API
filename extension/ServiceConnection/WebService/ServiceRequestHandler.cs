@@ -1,5 +1,4 @@
 using System.Net.WebSockets;
-using System.Text.Json;
 using Components.Entity;
 using static ExtensionComponents.ExtensionStartup;
 using static ServiceConnection.ServiceStartup;
@@ -8,7 +7,6 @@ namespace ServiceConnection.WebService;
 
 public sealed class ServiceRequestHandler
 {
-	// private ConcurrentDictionary<Arma3PayloadServiceRequest, Task> _requestHandler = new(); 
 	internal async ValueTask RespondRequest(Arma3PayloadServiceRequest request)
 	{
 		var serviceInteractions = ServiceStartup.ServiceInteractions;
