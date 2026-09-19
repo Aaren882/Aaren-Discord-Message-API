@@ -2,8 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using Arma3WebService.Entity;
+using Arma3WebService.Models;
 using Components.Entity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +13,7 @@ namespace Arma3WebService.Identities;
 public sealed class JwtHelpers(
 	IConfiguration configuration,
 	IServiceProvider serviceProvider,
+	IdentityCheckService identityCheckService,
 	ILogger<JwtHelpers> logger
 )
 {
@@ -21,67 +21,63 @@ public sealed class JwtHelpers(
 	private readonly string audience = configuration["Jwt:Audience"]!;
 	private readonly string signKey = Environment.GetEnvironmentVariable("Jwt_Secret") ?? configuration["Jwt:Secret"]!;
 
-	public IdentityRolesReturnPayload GenerateToken(IdentityRolesPayload payload)
+	public async Task<IdentityRolesReturnPayload> GenerateToken(IdentityRolesPayload payload)
 	{
-		var accessName = payload.Identity.AccessName;
-		var roleName = GetIdentityRole(payload.Identity);
-		var userClaimsIdentity = CreateClaimsIdentity(payload.Identity);
+		var (Identity, ExpireMinute, _, ProfileDateOffsets) = payload;
+		var accessName = Identity.AccessName;
+		var roleName = GetIdentityRole(Identity);
+		var userClaimsIdentity = CreateClaimsIdentity(Identity);
 
 		// Symmetric Key for Credential
 		var secret = GenerateHashSecret(signKey);
 		var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 
 		// HmacSha256 MUST be larger than 128 bits, so the key can't be too short. At least 16 and more characters.
-		var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
+		SigningCredentials signingCredentials = new(securityKey, SecurityAlgorithms.HmacSha256Signature);
 
 		// Create SecurityTokenDescriptor
-		var tokenDescriptor = new SecurityTokenDescriptor
+		SecurityTokenDescriptor tokenDescriptor = new()
 		{
 			Issuer = issuer,
 			Audience = roleName,
 			Subject = userClaimsIdentity,
 
-			Expires = payload.ExpireMinute is null
+			Expires = ExpireMinute is null
 				? null
-				: DateTime.Now.AddMinutes((int)payload.ExpireMinute!),
+				: DateTime.Now.AddMinutes((int)ExpireMinute!),
 
 			SigningCredentials = signingCredentials
 		};
 
 		// Create Token
-		var tokenHandler = new JwtSecurityTokenHandler();
+		JwtSecurityTokenHandler tokenHandler = new();
 		var securityToken = tokenHandler.CreateToken(tokenDescriptor);
 		var serializeToken = tokenHandler.WriteToken(securityToken);
 
 		logger.LogInformation("\"{accessName}\" is using JWT.", accessName);
 
 		//- Get additional info in database
-		if (string.IsNullOrEmpty(payload.AdditionalPayload))
+		/* if (AdditionalPayload == null)
 		{
 			return new IdentityRolesReturnPayload
 			{
-				Identity = payload.Identity,
+				Identity = Identity,
 				RoleName = roleName,
 				AuthToken = serializeToken,
 			};
-		}
+		} */
 
-		var identityPayload = JsonSerializer.Deserialize(
-			payload.AdditionalPayload,
-			IdentityEntityJsonSerializerContext.Default.IdentityEntity
-		);
+		var (returnPayload, isNewIdentity, isDifferent) = await identityCheckService.ProcessProfileCheckAsync(payload, ProfileDateOffsets);
 
-		var additionalPayload = identityPayload?.Run(payload, serviceProvider)
-			.GetAwaiter().GetResult();
-
-		logger.LogInformation("Additional Payload (Result) : \"{additionalPayload}\"", additionalPayload);
+		logger.LogInformation("Additional Payload (Result) : \"{ReturnPayload}\"", returnPayload);
 
 		return new IdentityRolesReturnPayload
 		{
-			Identity = payload.Identity,
+			Identity = Identity,
 			RoleName = roleName,
 			AuthToken = serializeToken,
-			AdditionalPayload = additionalPayload
+			IsNewIdentity = isNewIdentity,
+			IsDifferent = isDifferent
 		};
 	}
 

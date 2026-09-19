@@ -14,7 +14,7 @@ public sealed class BinaryPayloadBroker(
 	public ValueTask BinaryAction(WebsocketServer connection, Arma3PayloadBinary payload)
 	{
 		Logger.LogInformation("Receiving metaData for binary file '{Payload}'", payload);
-		var (FileName, _, _, _, DirectoryPrefix) = payload;
+		var (FileName, _, _, DirectoryPrefix) = payload;
 
 		if (DirectoryPrefix != null && !Directory.Exists(payload.DirectoryPrefix))
 			Directory.CreateDirectory(payload.DirectoryPrefix!);

@@ -4,7 +4,7 @@ using ZLogger;
 
 namespace ExtensionComponents.Tools;
 
-public static class LoggerBase// : ILoggerInternal
+public static class LoggerBase
 {
 	private const int LogLimitCount = 10;
 	private static readonly string ExtFilePath = Util.AssemblyPath!;
@@ -24,7 +24,7 @@ public static class LoggerBase// : ILoggerInternal
 				options.UsePlainTextFormatter(formatter =>
 				{
 					formatter.SetPrefixFormatter($"{0} ({2}) [{1:short}] ", (in MessageTemplate template, in LogInfo info) => template.Format($"{info.Timestamp.Local.DateTime:HH-mm-ss}", info.LogLevel, info.Category));
-					formatter.SetExceptionFormatter((writer, ex) => Utf8StringInterpolation.Utf8String.Format(writer, $"{ex.Message}"));
+					formatter.SetExceptionFormatter((writer, ex) => Utf8StringInterpolation.Utf8String.Format(writer, $"{ex}"));
 				});
 			}
 		);
@@ -41,29 +41,6 @@ public static class LoggerBase// : ILoggerInternal
 		});
 		CleanLogs();
 	}
-	/* private record LoggerObject(Exception? e, string s)
-	{
-		public void WriteLog()
-		{
-			var s = this.s;
-			if (!Directory.Exists(ExtFilePath))
-				Directory.CreateDirectory(ExtFilePath);
-			if (!Directory.Exists(LogFilePath))
-				Directory.CreateDirectory(LogFilePath);
-
-			using StreamWriter file = new(LogFileName, true);
-			if (string.IsNullOrEmpty(s))
-				s = e!.Message;
-
-			if (s.Length > 0)
-				file.WriteLine($"{DateTime.Now:T} - {s}");
-		}
-	};
-	private static readonly ActionBlock<LoggerObject> _loggerProcess = new
-	(
-		o => o.WriteLog(),
-		new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 }
-	); */
 
 	public static void Trace(string Name, string content)
 	{
@@ -74,7 +51,6 @@ public static class LoggerBase// : ILoggerInternal
 
 	public static void Log(Exception? e, string s = "")
 	{
-		// _loggerProcess.Post(new(e, s));
 		if (e is null)
 			SystemLogger.LogInformation("{Log}", s);
 		else

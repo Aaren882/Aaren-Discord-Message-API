@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using ExtensionComponents;
 using ExtensionComponents.Entity;
@@ -12,6 +12,38 @@ namespace DiscordMessageAPIService;
 
 public sealed class DllEntry
 {
+	/* [UnmanagedCallersOnly(EntryPoint = "RVExtensionFeatureFlags")]
+	public static ulong RVExtensionFeatureFlags()
+	{
+		return (ulong)(
+			// RVFeatureFlags.ContextNoDefaultCall | //- Turn-off Call Context automatically
+			RVFeatureFlags.ArgumentNoEscapeString
+		);
+	} */
+
+	/// <summary>
+	/// Receives context information .
+	/// </summary>from Arma 3 about the execution environment
+	/// <param name="argsPtr">Pointer to the array of strings containing context data.</param>
+	/// <param name="argCount">The number of arguments passed in the context.</param>
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
+	public static void RVExtensionContext(nint argsPtr, int argCount)
+	{
+		try
+		{
+			var context = ExtensionStartup.LocalServices?.GetCallContext(argsPtr, argCount);
+			if (context is null)
+				throw new NullReferenceException("CallContext parse failed.");
+
+			ContextInfo = context;
+			LoggerBase.Trace(nameof(ContextInfo), ContextInfo.ToString());
+		}
+		catch (Exception ex)
+		{
+			LoggerBase.Log(ex, nameof(RVExtensionContext));
+		}
+	}
+
 	/// <summary>
 	/// Register callback for Arma
 	/// </summary>
@@ -40,59 +72,29 @@ public sealed class DllEntry
 	public static void RVExtensionVersion(nint outputPrt, int outputSize)
 	{
 		ServiceCollection services = new();
+		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 		services.AddSingleton<ServiceInteractions>();
 		services.AddSingleton<ILocalServices, LocalServices>();
-		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 		services.AddSingleton<ServiceRequestHandler>();
 		services.AddSingleton<WebsocketClient>();
 		services.SetupFileLogger();
 
 		var serviceProvider = services.BuildServiceProvider();
 
-		//- Setup Service Configuration (including Extension Configuration)
-		ServiceStartup.InitConfiguration(
-			LoggerBase.Trace,
-			LoggerBase.Log,
-			serviceProvider
-		);
-
 		var version = typeof(DllEntry).GetTypeInfo().Assembly
-			.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
-			.InformationalVersion;
+				.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+				.InformationalVersion;
 
 		version = version[..(version.LastIndexOf('+') + 9)];
 
+		// Centralize configuration and initialization via the shared components startup class
+		serviceProvider.InitConfiguration(LoggerBase.Trace, LoggerBase.Log);
+
 		LoggerBase.Log(null, $"Extension Version : [{version}]");
-		localServices.Output(outputPrt, outputSize, version);
+		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
 	}
 
-	/// <summary>
-	/// Receives context information .
-	/// </summary>from Arma 3 about the execution environment
-	/// <param name="argsPtr">Pointer to the array of strings containing context data.</param>
-	/// <param name="argCount">The number of arguments passed in the context.</param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
-	public static void RVExtensionContext(nint argsPtr, int argCount)
-	{
-		var args = new string?[argCount];
-
-		for (var i = 0; i < argCount; i++)
-		{
-			var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPtr + (i * Marshal.SizeOf<nint>())));
-			args[i] = str;
-		}
-
-		ContextInfo = new CallContext(
-			Convert.ToUInt64(args[0]),
-			args[1]!,
-			args[2]!,
-			args[3]!,
-			Convert.ToInt16(args[4])
-		);
-		LoggerBase.Trace(nameof(ContextInfo), ContextInfo.ToString());
-	}
-
-	/// <summary>
+	/* /// <summary>
 	/// The entry point for the default callExtension command.
 	/// </summary>
 	/// <param name="outputPrt">The string builder object that contains the result of the function</param>
@@ -103,40 +105,24 @@ public sealed class DllEntry
 	{
 		// var inputKey = Marshal.PtrToStringUTF8(function)!;
 		// ServiceStartup.localServices.Output(outputPrt, outputSize, inputKey);
-	}
+	} */
 
 	/// <summary>
 	/// The entry point for the callExtensionArgs command.
 	/// </summary>
 	/// <param name="outputPrt"></param>
 	/// <param name="outputSize"></param>
-	/// <param name="function"></param>
+	/// <param name="functionPtr"></param>
 	/// <param name="argsPrt"></param>
 	/// <param name="argCount"></param>
 	/// <returns>
 	///     numbers
 	/// </returns>
 	[UnmanagedCallersOnly(EntryPoint = "RVExtensionArgs")]
-	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint function, nint argsPrt, int argCount)
+	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
 	{
-		var args = new string[argCount];
-		for (var i = 0; i < argCount; i++)
-		{
-			var str = Marshal.PtrToStringUTF8(
-					Marshal.ReadIntPtr(argsPrt + (i * Marshal.SizeOf<nint>()))
-				)!
-				.Trim('"', ' ') //- Remove Arma quotations
-				.Replace("\"\"", "\"");
-
-			args[i] = str;
-			LoggerBase.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
-			//args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
-		}
-
-		var functionName = Marshal.PtrToStringUTF8(function)!;
-		OutputBuilder output = new(outputPrt, outputSize);
-		ArgsAction argsAction = new(output, args, functionName);
-
-		return localServices.ExecuteArgsAction(argsAction);
+		return
+			ExtensionStartup.LocalServices?.ExecuteArgsAction(outputPrt, outputSize, functionPtr, argsPrt, argCount)
+			?? -1;
 	}
 }

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Components.Entity;
@@ -29,7 +30,10 @@ public enum Arma3PayLoadType
 public abstract record Arma3Payload
 {
 	public abstract Arma3PayLoadType Type { get; }
-	public static DateTime Timestamp => DateTime.Now;
+	public string ToJsonString()
+		=> JsonSerializer.Serialize(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+	public byte[] ToJsonBytes()
+		=> JsonSerializer.SerializeToUtf8Bytes(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 }
 
 public record Arma3PayloadJson
@@ -46,12 +50,13 @@ public record Arma3PayloadBinary
 	string FileName,
 	long FileSize,
 	DateTime CreatedTime,
-	int TotalChunks = -1,
 	string? DirectoryPrefix = null
 ) : Arma3Payload
 {
 	[JsonIgnore]
 	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
+	public int TotalChunks { get; set; } = 0;
+
 	public string GetIdentifier(string ConnectionIdentity)
 	{
 		return Convert.ToBase64String(Encoding.UTF8.GetBytes(

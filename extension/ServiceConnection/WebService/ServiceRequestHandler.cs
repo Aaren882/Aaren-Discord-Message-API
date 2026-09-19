@@ -1,5 +1,4 @@
 using System.Net.WebSockets;
-using System.Text.Json;
 using Components.Entity;
 using static ExtensionComponents.ExtensionStartup;
 using static ServiceConnection.ServiceStartup;
@@ -8,16 +7,16 @@ namespace ServiceConnection.WebService;
 
 public sealed class ServiceRequestHandler
 {
-	// private ConcurrentDictionary<Arma3PayloadServiceRequest, Task> _requestHandler = new(); 
 	internal async ValueTask RespondRequest(Arma3PayloadServiceRequest request)
 	{
-		var serviceInteractions = ServiceStartup.serviceInteractions;
+		var serviceInteractions = ServiceStartup.ServiceInteractions;
 		ArgumentNullException.ThrowIfNull(serviceInteractions);
 		await GetRespond(request);
 	}
 
 	private async ValueTask GetRespond(Arma3PayloadServiceRequest request)
 	{
+		var serviceInteractions = ServiceStartup.ServiceInteractions;
 		ArgumentNullException.ThrowIfNull(serviceInteractions);
 		ArgumentNullException.ThrowIfNull(RptFileDirectory);
 		FileInfo RPTFileInfo = new(RptFileDirectory);
@@ -45,10 +44,11 @@ public sealed class ServiceRequestHandler
 				(
 					RPTFileInfo.Name,
 					RPTFileInfo.Length,
-					RPTFileInfo.CreationTime,
-					totalChunks,
-					null
-				);
+					RPTFileInfo.CreationTime
+				)
+				{
+					TotalChunks = totalChunks
+				};
 
 				request = request with { Payload = BinaryMetaData };
 				task = () => serviceInteractions.WsClient.SendBinaryAsync(serviceInteractions!.AccessName, RptFileDirectory, BinaryMetaData, chunkSize);
@@ -60,11 +60,8 @@ public sealed class ServiceRequestHandler
 		Logger(null, $"{nameof(ServiceRequestHandler)}.{nameof(GetRespond)} : \nrequest = {request}");
 
 		//- Send MetaData
-		var payload = JsonSerializer.SerializeToUtf8Bytes(
-			request,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		)!;
-		await serviceInteractions.WsClient.SendAsync(payload, WebSocketMessageType.Binary, true);
+		var payload = request.ToJsonBytes();
+		await serviceInteractions.WsClient.SendAsync(payload, WebSocketMessageType.Text, true);
 		await task.Invoke();
 	}
 }

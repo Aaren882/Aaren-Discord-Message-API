@@ -47,7 +47,7 @@ public class UpdateDBActionBroker(
 				.Select((binaryPayload, i) =>
 				{
 					var payloadId = binaryPayload.GetIdentifier(profileName);
-					var (FileName, _, _, _, _) = binaryPayload;
+					var (FileName, _, _, _) = binaryPayload;
 
 					return binaryStreamManager.AddBinaryAsync(
 						payloadId,
