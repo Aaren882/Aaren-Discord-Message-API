@@ -35,21 +35,38 @@ public sealed class BinaryStreamManager(
 	public ValueTask PushBinaryContentAsync(Arma3PayloadBinaryContent content)
 		=> _contentChannel.Writer.WriteAsync(content);
 
-	public async Task<(string identifier, Content content)> AddBinaryAsync(string identifier, Arma3PayloadBinary metaData, Stream writeStream)
+	public async Task<(string identifier, Content content)> AddBinaryAsync(string identifier, Arma3PayloadBinary metaData, Stream writeStream, TimeSpan? timeout = null)
 	{
 		var content = ContentDictionary.GetOrAdd(identifier, _ => new(metaData, writeStream, null));
 
-		await ReadAllContentAsync(identifier);
-		return (identifier, content);
+		try
+		{
+			var actualTimeout = timeout ?? TimeSpan.FromSeconds(15);
+			using var cts = new CancellationTokenSource(actualTimeout);
+
+			await ReadAllContentAsync(identifier, cts.Token);
+			return (identifier, content);
+		}
+		catch (OperationCanceledException) //- On Timeout
+		{
+			Logger.LogWarning("Binary didn't assembled in time - identifier '{identifier}'.", identifier);
+			content.Dispose();
+
+			Logger.LogWarning("Cleaned up binary record & content - identifier '{identifier}'.", identifier);
+			throw new TimeoutException($"Binary didn't assembled in time - identifier '{identifier}'.");
+		}
+		finally
+		{
+			ContentDictionary.Remove(identifier, out _);
+		}
 	}
-	private async Task ReadAllContentAsync(string identifier)
+	private async Task ReadAllContentAsync(string identifier, CancellationToken ct)
 	{
-		if (!ContentChannelDictionary.TryGetValue(identifier, out var contentChannel))
-			throw new ArgumentOutOfRangeException($"channel with identifier '{identifier}' not found.");
+		var contentChannel = ContentChannelDictionary.GetOrAdd(identifier, _ => Channel.CreateBounded<Arma3PayloadBinaryContent>(100));
 
 		try
 		{
-			await foreach (var binaryContent in contentChannel.Reader.ReadAllAsync())
+			await foreach (var binaryContent in contentChannel.Reader.ReadAllAsync(ct))
 			{
 				var (_, bytes, EndOfContent) = binaryContent;
 				if (!TryGetBinaryValueInternal(identifier, out var writtenContent))
@@ -59,25 +76,24 @@ public sealed class BinaryStreamManager(
 				}
 
 				var (_, writeStream, action) = writtenContent!;
-				await writeStream.WriteAsync(bytes.AsMemory<byte>());
+				await writeStream.WriteAsync(bytes.AsMemory<byte>(), ct);
 
 				if (EndOfContent)
 				{
+					contentChannel.Writer.Complete();
 					writeStream.Position = 0;
-					ContentDictionary.Remove(identifier, out _);
 					action?.Invoke(writtenContent);
-
-					writtenContent.Dispose(); //- Dispose content
 				}
 			}
 		}
+		catch (OperationCanceledException) { throw; }
 		catch (Exception ex)
 		{
 			Logger.LogError(ex, "An error occurred while reading content for identifier '{identifier}'.", identifier);
 		}
 		finally
 		{
-			contentChannel.Writer.Complete();
+			contentChannel.Writer.TryComplete();
 			ContentChannelDictionary.Remove(identifier, out _);
 		}
 	}

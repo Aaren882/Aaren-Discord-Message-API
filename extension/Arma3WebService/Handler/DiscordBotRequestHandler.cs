@@ -8,20 +8,20 @@ public sealed class DiscordBotRequestHandler(
 	ILogger<DiscordBotRequestHandler> logger
 )
 {
-	private delegate ValueTask ReceivedAction(WebsocketServer connection, Arma3PayloadServiceRequest payload);
-	public ValueTask OnReceived(WebsocketServer connection, Arma3PayloadServiceRequest payload)
+	private delegate Task ReceivedAction(WebsocketServer connection, Arma3PayloadServiceRequest payload);
+	public Task OnReceived(WebsocketServer connection, Arma3PayloadServiceRequest payload)
 	{
 		var ActionType = payload.ActionType;
 		ReceivedAction action = (ActionType) switch
 		{
 			1 => ReceiveRptLineAction,
-			2 => BinaryAction,
+			2 => RptFileAction,
 			_ => throw new IndexOutOfRangeException($"Received unknown ActionType: {ActionType}")
 		};
 
 		return action(connection, payload);
 	}
-	private async ValueTask ReceiveRptLineAction(WebsocketServer connection, Arma3PayloadServiceRequest request)
+	private async Task ReceiveRptLineAction(WebsocketServer connection, Arma3PayloadServiceRequest request)
 	{
 		if (request.Payload is Arma3PayloadBinary binaryPayload)
 		{
@@ -33,45 +33,42 @@ public sealed class DiscordBotRequestHandler(
 				throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {request.RequestGuildId}.");
 			}
 
-			var path = $".temp/{payloadId}.rpt";
-			binaryStreamManager.TryAddBinaryValue(
-				payloadId,
-				binaryPayload,
-				new MemoryStream(),
-				async (WrittenContent) =>
-				{
-					var (metaData, writeStream, _) = WrittenContent;
-					try
-					{
-						logger.LogDebug("Successfully processed binary file \"{FileName}\" for payload \"{PayloadId}\"", metaData.FileName, payloadId);
+			//- Wait for binary complete
+			var (_, WrittenContent) = await binaryStreamManager.AddBinaryAsync(payloadId, binaryPayload, new MemoryStream());
+			var (metaData, writeStream, _) = WrittenContent;
 
-						using StreamReader sr = new(writeStream, leaveOpen: true);
-						var content = "```ts\n";
+			try
+			{
+				using (WrittenContent)
+				{
+					var content = "```ts\n";
+					using (StreamReader sr = new(writeStream))
+					{
 						while (!sr.EndOfStream)
 						{
 							content += (await sr.ReadLineAsync())?.Trim(' ', '\r', '\n');
 							content += "\n";
 						}
-						content += "```";
-
-						if (content.Length >= 2000)
-							throw new OverflowException($"\"{nameof(ReceiveRptLineAction)}\" Content length exceeds 2000 characters.");
-
-						await modalSocket.RespondAsync(text: content, ephemeral: true);
-
-						logger.LogInformation("Received Binary File \"{FileName}\"", metaData.FileName);
-						DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
 					}
-					catch (OverflowException ex)
-					{
-						logger.LogWarning(ex.Message);
-					}
-					catch (TimeoutException ex)
-					{
-						logger.LogDebug(ex, "Timeout occurred while processing the print log.");
-					}
+					content += "```";
+
+					if (content.Length >= 2000)
+						throw new OverflowException($"\"{nameof(ReceiveRptLineAction)}\" Content length exceeds 2000 characters.");
+
+					await modalSocket.RespondAsync(text: content, ephemeral: true);
 				}
-			);
+
+				logger.LogInformation("{Function} - \"{FileName}\" uploaded.", nameof(ReceiveRptLineAction), metaData.FileName);
+				DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
+			}
+			catch (TimeoutException)
+			{
+				logger.LogWarning("{Function} - SubmitModal Request timeout !!", nameof(ReceiveRptLineAction));
+			}
+			catch (OverflowException ex)
+			{
+				logger.LogWarning(ex.Message);
+			}
 		}
 		else
 		{
@@ -79,38 +76,39 @@ public sealed class DiscordBotRequestHandler(
 		}
 	}
 
-	private async ValueTask BinaryAction(WebsocketServer connection, Arma3PayloadServiceRequest request)
+	private async Task RptFileAction(WebsocketServer connection, Arma3PayloadServiceRequest request)
 	{
-		logger.LogInformation("Receiving metaData for binary file '{request}'", request);
-
 		if (request.Payload is Arma3PayloadBinary binaryPayload)
 		{
-			var payloadId = binaryPayload.GetIdentifier(connection.websocketContext.GetIdentity());
-
-			if (!DiscordBotAdminSubmitHelper.SubmittedModalSockets
-					.TryGetValue(request.RequestGuildId, out var modalSocket))
+			try
 			{
-				throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {request.RequestGuildId}.");
-			}
-			binaryStreamManager.TryAddBinaryValue(
-				payloadId,
-				binaryPayload,
-				new MemoryStream(),
-				async (WrittenContent) =>
-				{
-					var (metaData, writeStream, _) = WrittenContent;
-					logger.LogDebug("Successfully processed binary file \"{FileName}\" for payload \"{PayloadId}\"", metaData.FileName, payloadId);
+				var payloadId = binaryPayload.GetIdentifier(connection.websocketContext.GetIdentity());
 
+				if (!DiscordBotAdminSubmitHelper.SubmittedModalSockets
+						.TryGetValue(request.RequestGuildId, out var modalSocket))
+				{
+					throw new Exception($"No submitted print log modal socket found\n RequestGuildId : {request.RequestGuildId}.");
+				}
+
+				//- Wait for binary complete
+				var (_, WrittenContent) = await binaryStreamManager.AddBinaryAsync(payloadId, binaryPayload, new MemoryStream());
+				var (metaData, writeStream, _) = WrittenContent;
+
+				using (WrittenContent)
+				{
 					await modalSocket.RespondWithFileAsync(
 						fileStream: writeStream,
 						fileName: binaryPayload.FileName,
 						ephemeral: true
 					);
-
-					logger.LogInformation("Received Binary File \"{FileName}\"", metaData.FileName);
-					DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
 				}
-			);
+				logger.LogInformation("{Function} - RPT File \"{FileName}\" Uploaded.", nameof(RptFileAction), metaData.FileName);
+				DiscordBotAdminSubmitHelper.SubmittedModalSockets.Remove(request.RequestGuildId, out _);
+			}
+			catch (TimeoutException)
+			{
+				logger.LogWarning("{Function} - SubmitModal Request timeout !!", nameof(ReceiveRptLineAction));
+			}
 		}
 		else
 		{

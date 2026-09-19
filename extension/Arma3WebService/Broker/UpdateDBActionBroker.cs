@@ -7,8 +7,7 @@ namespace Arma3WebService.Broker;
 public class UpdateDBActionBroker(
 	BinaryStreamManager binaryStreamManager,
 	ILogger<UpdateDBActionBroker> Logger,
-	IServerIdentityRepository identityRepository,
-	IServerInfoTemplateRepository infoRepository
+	IServiceScopeFactory scopeFactory
 )
 {
 	public async Task AddAsync(WebsocketServer connection, Arma3PayloadUpdateDB PayloadUpdate)
@@ -55,18 +54,26 @@ public class UpdateDBActionBroker(
 						new FileStream(
 							nativeFileDirectories[i],
 							FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
-						)
+						),
+						TimeSpan.FromMinutes(3)
 					);
 				});
 
+			Logger.LogInformation("Waiting for Profile's binary content to be written.");
 			await foreach (var item in Task.WhenEach(contentsAsyncEnumerable))
 			{
 				var (identifier, writtenContent) = await item;
+				writtenContent.Dispose();
 				Logger.LogInformation("BinaryAction finished DB Request for {profileName} : ID = {identifier}", profileName, identifier);
 			}
-			var identity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
+
+			using var serviceScope = scopeFactory.CreateScope();
+			var identityRepository = serviceScope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
+			var identity = await identityRepository.GetByProfileNameAsync(profileName);
+
 			ArgumentNullException.ThrowIfNull(identity);
 
+			var infoRepository = serviceScope.ServiceProvider.GetRequiredService<IServerInfoTemplateRepository>();
 			var infoTemplate = await infoRepository.GetByMessageIdAsync(identity.messageId);
 
 			//- Create/Update Database value
