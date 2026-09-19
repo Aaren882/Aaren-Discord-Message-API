@@ -21,7 +21,6 @@ public sealed class ServiceActionManager(
 	IDiscordBotService discordBotService,
 	DiscordBotRequestHandler requestHandler,
 	UpdateDBActionBroker updateDBActionBroker,
-	BinaryStreamManager binaryStreamManager,
 	IServerIdentityRepository identityRepository,
 	IServerInfoTemplateRepository infoRepository
 )

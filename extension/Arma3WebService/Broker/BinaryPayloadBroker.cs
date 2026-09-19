@@ -39,11 +39,11 @@ public sealed class BinaryPayloadBroker(
 
 		return ValueTask.CompletedTask;
 	}
-	public async ValueTask BinaryContentAction(WebsocketServer connection, Arma3PayloadBinaryContent payload)
+	public ValueTask BinaryContentAction(WebsocketServer connection, Arma3PayloadBinaryContent payload)
 	{
 		try
 		{
-			await binaryStreamManager.PushBinaryContentAsync(payload);
+			return binaryStreamManager.PushBinaryContentAsync(payload);
 		}
 		catch (Exception e)
 		{
@@ -66,20 +66,23 @@ public sealed class BinaryPayloadBroker(
 			await foreach (var actionPayload in _BinaryChannel.Reader.ReadAllAsync(stoppingToken))
 			{
 				var (connection, payload) = actionPayload;
-				var action = (payload) switch
+				try
 				{
-					Arma3PayloadBinary payloadBinary =>
-						BinaryAction(connection, payloadBinary),
-					Arma3PayloadBinaryContent payloadBinary =>
-						BinaryContentAction(connection, payloadBinary),
-					_ => throw new ArgumentOutOfRangeException(nameof(payload.Type), payload.Type, null)
-				};
-				await action;
+					var action = (payload) switch
+					{
+						Arma3PayloadBinary payloadBinary =>
+							BinaryAction(connection, payloadBinary),
+						Arma3PayloadBinaryContent payloadBinary =>
+							BinaryContentAction(connection, payloadBinary),
+						_ => throw new NotSupportedException($"Payload type {payload.GetType().Name} is not supported in BinaryPayloadBroker.")
+					};
+					await action;
+				}
+				catch (NotSupportedException ex)
+				{
+					Logger.LogWarning(ex, "Unhandled payload type in BinaryPayloadBroker.");
+				}
 			}
-		}
-		catch (ArgumentOutOfRangeException ex)
-		{
-			Logger.LogWarning(ex, "Unhandled payload type in BinaryPayloadBroker.");
 		}
 		catch (Exception e)
 		{

@@ -47,6 +47,9 @@
     <None Update="Discord_Message_API\MessageInteractions\testBot.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Discord_Message_API\Offline_msg_test.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
