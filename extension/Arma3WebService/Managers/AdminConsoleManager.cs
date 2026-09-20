@@ -1,82 +1,85 @@
-using System.Text.Json;
+using System.Collections.Immutable;
 using System.Diagnostics.Metrics;
+using System.Reflection;
+using System.Text.Json;
 using Arma3WebService.DBContext;
-using Discord;
-using Microsoft.EntityFrameworkCore;
+using Arma3WebService.DBContext.Schema;
 using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Models;
-using Arma3WebService.DBContext.Schema;
 using Component.DiscordEntity;
+using Discord;
+using Discord.Interactions;
+using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 
 namespace Arma3WebService.Managers;
 
 public sealed class AdminConsoleManager(
+	DiscordSocketClient client,
+	InteractionService interactions,
 	ILogger<AdminConsoleManager> logger,
 	IDiscordBotService discordBotService,
 	IServiceProvider serviceProvider,
 	IDbContextFactory<ServiceDbContext> dbContextFactory
-)
+) : BackgroundService
 {
-	internal ulong AdminMessageId;
+	public static IMessage? AdminMessage { get; private set; }
+	public const string MessageFileName = "AdminConsole.json";
+	private readonly TimeSpan _ConsoleUpdateTimeSpan = TimeSpan.FromSeconds(10);
 
 	public enum ActionType
 	{
+		None,
 		Modal,
 		Button,
 		SelectMenu,
 	}
 
-	/*public async Task<DiscordBotInteraction?> GetActionJson(ActionType actionType)
+	public async Task<DiscordBotAdminInteraction> GetAdminAction(ActionType actionType)
 	{
-		var path = $"AdminConsole/{actionType.ToString()}Actions.json";
-		var json = await File.ReadAllTextAsync(path);
-		var interaction = JsonSerializer.Deserialize(json, DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction);
-		return (actionType) switch
-		{
-			ActionType.SelectMenu => await StructureAdminSelectMenu(interaction!),
-			_ => interaction
-		};
-	}
+		if (actionType == ActionType.None)
+			throw new NotSupportedException("Action type None is not supported.");
 
-	public async Task<DiscordBotInteraction> StructureAdminSelectMenu(DiscordBotInteraction interaction)
-	{
-		if (!interaction.TryGetValue("admin_advanced_tools", out var actionsBase))
-			throw new NullReferenceException("\"admin_advanced_tools\" doesn't exist in current \"interaction\".");
-
-		const string path = "AdminConsole/SessionSelectMenu.json";
-		
-		var overwriteJson = await File.ReadAllTextAsync(path);
-		var selectMenu = JsonSerializer.Deserialize(
-			overwriteJson,
-			DiscordBotActionJsonSerializerContext.Default.IDictionaryStringDiscordBotAdminInteractionActions);
-
-		var options = ((DiscordBotAdminSelectMenuActions)actionsBase).OverwriteInteractions(selectMenu);
-		
-		foreach (var (_, value) in options)
-		{
-			var labelComponent = new DiscordDto.LabelComponent
-			{
-				label = "Game Session",
-				component = CreateSessionSelectMenuComponent()
-			};
-			value.InsertComponent(0, labelComponent);
-		}
-		
-		return interaction;
-	}*/
-
-	public async Task<DiscordBotAdminInteraction?> GetAdminAction(ActionType actionType)
-	{
 		var path = $"AdminConsole/{actionType}Actions.json";
 		var json = await File.ReadAllTextAsync(path);
 		var deserialize = JsonSerializer.Deserialize(json, DiscordBotActionJsonSerializerContext.Default.DiscordBotAdminInteraction);
-		return deserialize;
+		return deserialize ?? throw new JsonException($"Failed to deserialize JSON for action type: {actionType}.");
 	}
 
-	public List<string> CreateSessionsNames()
+	public sealed class ComponentModule(
+		AdminConsoleManager adminConsoleManager
+	) : InteractionModuleBase<SocketInteractionContext>
+	{
+		[ComponentInteraction("admin_*", runMode: RunMode.Async)]
+		public async Task HandleAdminActions()
+		{
+			DiscordBotAdminInteraction adminAction;
+			switch (Context.Interaction)
+			{
+				case SocketMessageComponent messageComponent:
+					AdminConsoleManager.ActionType type = AdminConsoleManager.ActionType.None;
+					if (messageComponent.Data.Type == ComponentType.Button)
+					{
+						type = AdminConsoleManager.ActionType.Button;
+					}
+					else if (messageComponent.Data.Type == ComponentType.SelectMenu)
+					{
+						type = AdminConsoleManager.ActionType.SelectMenu;
+					}
+
+					adminAction = await adminConsoleManager.GetAdminAction(type);
+					await adminAction.Execute(messageComponent, adminConsoleManager);
+					break;
+				default:
+					throw new NullReferenceException("Interaction is not a SocketMessageComponent.");
+			}
+		}
+	}
+
+	public ImmutableArray<string> CreateSessionsNames()
 	{
 		var names = GetSessionNames();
-		return names.Count != 0
+		return names.Length != 0
 			? names
 			: throw new Exception("No game session found.");
 	}
@@ -88,15 +91,15 @@ public sealed class AdminConsoleManager(
 			_ => CreateSessionsNames()
 		};
 
-		List<string> DbProfileNames()
+		ImmutableArray<string> DbProfileNames()
 		{
 			using var dbContext = dbContextFactory.CreateDbContext();
 			var queryable = dbContext.ServerIdentities.Select(x => x.profileName);
-			return queryable.ToList();
+			return [.. queryable];
 		}
 	}
 
-	public async Task CreateAdminConsole()
+	public async Task<(IMessage, bool)> GetOrAddAdminConsole()
 	{
 		var channelId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.AdminConsole);
 		var channel = await discordBotService.GetMessageChannelAsync(channelId);
@@ -104,18 +107,28 @@ public sealed class AdminConsoleManager(
 		{
 			await using var dbContext = await dbContextFactory.CreateDbContextAsync();
 			var exist = dbContext.InternalManagement.FirstOrDefault(
-				o =>
-					o.managementType == InternalManagementType.AdminConsole
-				);
+				o => o.managementType == InternalManagementType.AdminConsole);
 
-			var updateColumn = true;
-			IMessage message;
+			var message = await channel.GetMessageAsync(
+				AdminMessage?.Id ??
+				exist?.messageId ?? // 1551287522556907701
+				ulong.MinValue
+			);
+
+			var isNewMessage = message == null;
+			//- Always will be not null
+			message ??= await CreateConsole()
+					?? throw new NullReferenceException("Admin console message could not be retrieved or created.");
 
 			//- Checking DB data
-			if (exist is null)
+			var updateColumn = true;
+			if (exist != null)
 			{
-				message = await CreateConsole();
-
+				updateColumn = exist.messageId != message.Id;
+				if (updateColumn) exist.messageId = message.Id;
+			}
+			else
+			{
 				await dbContext.InternalManagement.AddAsync(
 					new InternalManagement
 					{
@@ -124,56 +137,75 @@ public sealed class AdminConsoleManager(
 					}
 				);
 			}
-			else
-			{
-				message = await channel.GetMessageAsync(exist.messageId);
-				var id = message?.Id ?? 0;
-				if (id == 0)
-					message = await CreateConsole();
-
-				updateColumn = exist.messageId != id;
-				if (updateColumn) exist.messageId = message!.Id;
-			}
-
-			AdminMessageId = message!.Id;
-			_ = UpdateConsoleInfo(channel, AdminMessageId);
 
 			//- Make sure DB updated
 			if (updateColumn)
 				await dbContext.SaveChangesAsync();
 
+			return (message, isNewMessage);
+
 			//- Local Method
 			async Task<IMessage> CreateConsole()
 			{
-				var json = await File.ReadAllTextAsync("AdminConsole.json");
+				var json = await File.ReadAllTextAsync(MessageFileName);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					MsgPayload_JsonContext.Default.DiscordMessageDto
 				);
 				return await discordBotService.SendMessageAsync(channelId, deserialize!);
 			}
-			;
 		}
 		catch (Exception e)
 		{
 			logger.LogError(e, "CreateAdminConsole: ");
-			await channel.SendMessageAsync($"Exception : {e.Message}");
+			await channel.SendMessageAsync($"Exception : {e}");
+			throw;
 		}
 	}
 
-	private List<string> GetSessionNames()
+	private ImmutableArray<string> GetSessionNames()
 	{
 		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
-		var names = webSocketService.GetConnectionsNames().ToList();
-		// List<string> names = ["FeatureTest","test2"];
+		ImmutableArray<string> names = webSocketService.GetConnectionsNames();
 
 		return names;
 	}
 
-	private async Task UpdateConsoleInfo(IMessageChannel channel, ulong messageID)
+	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		var samples = new Dictionary<string, string>();
+		client.ModalSubmitted += async (socketModal) =>
+		{
+			if (socketModal.Message.Id != AdminMessage?.Id) return; //- Block all non-AdminConsole request
+
+			var adminAction = await GetAdminAction(AdminConsoleManager.ActionType.Modal);
+			await adminAction.Execute(socketModal, serviceProvider);
+		};
+
+		client.InteractionCreated += async (SocketInteraction) =>
+		{
+			if (SocketInteraction is SocketModal) return; //- Block all ModalSubmitted (Handler is right above)
+
+			try
+			{
+				SocketInteractionContext context = new(client, SocketInteraction);
+
+				var result = await interactions.ExecuteCommandAsync(context, serviceProvider);
+				if (!result.IsSuccess)
+				{
+					logger.LogError("[ERROR] Discord Admin Action : {Reason}\n{ERROR}", result.ErrorReason, result.Error);
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.LogWarning(ex, "[EXCEPTION] Discord Admin Action:");
+			}
+		};
+		await interactions.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);
+
+		//- Perf Monitor
 		const string rmMeterName = "Microsoft.Extensions.Diagnostics.ResourceMonitoring";
+
+		Dictionary<string, string> samples = [];
 		using Meter meter = new(rmMeterName);
 		using MeterListener meterListener = new()
 		{
@@ -194,17 +226,23 @@ public sealed class AdminConsoleManager(
 		});
 		meterListener.Start();
 
-		while (true)
+		using PeriodicTimer timer = new(_ConsoleUpdateTimeSpan);
+		while (await timer.WaitForNextTickAsync(stoppingToken))
 		{
 			try
 			{
+				//- Make suer AdminConsole Exist
+				(AdminMessage, bool isNewMessage) = await GetOrAddAdminConsole();
+
+				if (isNewMessage) continue;
+
 				meterListener.RecordObservableInstruments();
-				var sessionCount = GetSessionNames().Count;
+				var sessionCount = GetSessionNames().Length;
 				var sessionCountColor = sessionCount == 0 ? "arm" : "fix";
 				samples["{TOTAL_SESSIONS}"] = @$"{sessionCountColor}\n{sessionCount}";
 				samples["{SYSTEM_TIMESTAMP}"] = $"{((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}";
 
-				var json = await File.ReadAllTextAsync("AdminConsole.json");
+				var json = await File.ReadAllTextAsync(MessageFileName, stoppingToken);
 				json = samples.Aggregate(
 					json,
 					(current, item) =>
@@ -220,16 +258,15 @@ public sealed class AdminConsoleManager(
 					MsgPayload_JsonContext.Default.DiscordMessageDto
 				);
 
-				await channel.ModifyMessageAsync(messageID, msg =>
+				await AdminMessage.Channel.ModifyMessageAsync(AdminMessage.Id, msg =>
 				{
 					msg.Content = message?.Content;
 					msg.Embeds = message?.ConvertEmbeds();
 					msg.Components = message?.ConvertComponents();
 					msg.Flags = message?.Flags;
 				});
-
-				await Task.Delay(10000);
 			}
+			catch (OperationCanceledException) { }
 			catch (Exception e)
 			{
 				logger.LogError(e, "\"UpdateConsoleInfo\" throw an Exception.");

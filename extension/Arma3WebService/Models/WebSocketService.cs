@@ -1,6 +1,9 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
+using Arma3WebService.DBContext.Repositories;
 using Arma3WebService.Entity;
 using Arma3WebService.Managers;
+using Discord;
 
 namespace Arma3WebService.Models
 {
@@ -10,35 +13,86 @@ namespace Arma3WebService.Models
 		ValueTask InvokeArmaCallBack(Arma3RemoteCommand command);
 		bool TryAddConnection(WebsocketContextEntity contextEntity, in WebsocketServer websocketWorker);
 		void RemoveConnection(WebsocketContextEntity contextEntity);
-		IEnumerable<string> GetConnectionsNames();
+		ImmutableArray<string> GetConnectionsNames();
 		event Action<WebsocketContextEntity, WebsocketServer> OnConnected;
 		event Action<WebsocketContextEntity, WebsocketServer> OnDisconnected;
 	}
 
 	public sealed class WebSocketService(
 		ILogger<WebSocketService> logger,
-		ServiceActionManager serviceActionManager,
-		RemoteStateManager remoteStateManager
+		IDiscordBotService discordBotService,
+		IServiceScopeFactory scopeFactory,
+		ServiceActionManager serviceActionManager
 	) : IWebSocketService, IHostedService, IDisposable
 	{
 		private readonly ILogger _logger = logger;
 		private readonly CancellationTokenSource _stoppingCts = new();
-		// private readonly ConcurrentDictionary<string, IConnection> _connections = new();
 		public event Action<WebsocketContextEntity, WebsocketServer> OnConnected = async (entity, connection) =>
 		{
-			var profileName = entity.GetIdentity();
-			await remoteStateManager.UpdateGameSessionCacheAsync(profileName, connection);
+			var sessionIdentity = entity.GetIdentity();
+			try
+			{
+				//- Logging
+				var loggingChannel = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.Logging);
+				var channel = await discordBotService.GetMessageChannelAsync(loggingChannel);
+
+				var embedBuilder = new EmbedBuilder()
+					.WithTitle("🎮 Session Connected!")
+					.WithDescription("A new Arma 3 session has successfully initialized and is ready for deployment.")
+					.WithColor(3066993)
+					.AddField("🖥️ Server Name", sessionIdentity)
+					.WithFooter("System Logger")
+					.WithCurrentTimestamp();
+				await channel.SendMessageAsync(embed: embedBuilder.Build());
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e, "GameSession Connected (Bot Logging):");
+			}
 		};
 
 		public event Action<WebsocketContextEntity, WebsocketServer> OnDisconnected = async (entity, connection) =>
-			await remoteStateManager.UpdateGameSessionCacheAsync(entity.GetIdentity());
+		{
+			try
+			{
+				var profileName = entity.GetIdentity();
+				using var serviceScope = scopeFactory.CreateScope();
+
+				var identityRepository = serviceScope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
+				var templateRepository = serviceScope.ServiceProvider.GetRequiredService<IServerInfoTemplateRepository>();
+
+				var identity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false)
+					?? throw new NullReferenceException();
+
+				var template = await templateRepository.GetByMessageIdAsync(identity.messageId, tracked: false)
+					?? throw new NullReferenceException();
+
+				await discordBotService.ModifyMessageAsync(template.messageId, template.messageOffline);
+
+				var loggingChannel = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.Logging);
+				var channel = await discordBotService.GetMessageChannelAsync(loggingChannel);
+				var embedBuilder = new EmbedBuilder()
+					.WithTitle("🛑 Session Disconnected")
+					.WithDescription("The Arma 3 operations session has been terminated or the server has gone offline.")
+					.WithColor(15158332)
+					.AddField("🖥️ Server Name", entity.GetIdentity(), true)
+					.AddField("⏱️ Session Status", "Offline / Hibernating", true)
+					.WithFooter("System Logger")
+					.WithCurrentTimestamp();
+				await channel.SendMessageAsync(embed: embedBuilder.Build());
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e, "GameSession Disconnected :");
+			}
+		};
 
 		public bool TryGetConnection(string connectionIdentity, out WebsocketServer? session)
 		{
 			return _connectionWorkers.TryGetValue(connectionIdentity, out session);
 		}
 
-		public IEnumerable<string> GetConnectionsNames() => _connectionWorkers.Keys;
+		public ImmutableArray<string> GetConnectionsNames() => _connectionWorkers.Keys.ToImmutableArray();
 
 		public ValueTask InvokeArmaCallBack(Arma3RemoteCommand command)
 		{

@@ -12,6 +12,9 @@ using Arma3WebService.Identities;
 using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Components.Entity;
+using Discord;
+using Discord.Interactions;
+using Discord.WebSocket;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -63,10 +66,25 @@ namespace Arma3WebService
 			builder.Services.AddSingleton<ConcurrentDictionary<string, Content>>(_ => new());
 			builder.Services.AddSingleton<ConcurrentDictionary<string, Channel<Arma3PayloadBinaryContent>>>(_ => new());
 
-			//- Add controllers
-			builder.Services.AddSingleton<AdminConsoleManager>();
-			builder.Services.AddSingleton<DiscordBotRequestHandler>();
+			//- Add Services
+			builder.Services.AddSingleton(new DiscordSocketClient(
+				new DiscordSocketConfig
+				{
+					GatewayIntents = GatewayIntents.AllUnprivileged,
+					LogLevel = LogSeverity.Info
+				}
+			));
+			builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), new InteractionServiceConfig
+			{
+				LogLevel = LogSeverity.Info,
+				DefaultRunMode = RunMode.Async
+			}));
+
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
+			builder.Services.AddSingleton<AdminConsoleManager>();
+
+
+			builder.Services.AddSingleton<DiscordBotRequestHandler>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 			builder.Services.AddSingleton<BinaryStreamManager>();
 			builder.Services.AddSingleton<UpdateDBActionBroker>();
@@ -89,6 +107,7 @@ namespace Arma3WebService
 
 			// Add services to the container.
 			builder.Services.AddHostedService<DiscordBotService>();
+			builder.Services.AddHostedService<AdminConsoleManager>();
 			//- Register Bot Service -//
 
 			builder.Services.AddHostedService<WebSocketService>();
