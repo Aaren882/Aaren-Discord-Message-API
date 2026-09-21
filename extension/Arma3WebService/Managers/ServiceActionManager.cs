@@ -21,8 +21,7 @@ public sealed class ServiceActionManager(
 	IDiscordBotService discordBotService,
 	DiscordBotRequestHandler requestHandler,
 	UpdateDBActionBroker updateDBActionBroker,
-	IServerIdentityRepository identityRepository,
-	IServerInfoTemplateRepository infoRepository
+	IServiceScopeFactory scopeFactory
 )
 {
 	public ValueTask CallBackAction(WebsocketServer connection, Arma3PayloadCallBack command)
@@ -76,6 +75,11 @@ public sealed class ServiceActionManager(
 			);
 
 			ArgumentNullException.ThrowIfNull(JsonStringAction, nameof(JsonStringAction));
+
+			await using var serviceScope = scopeFactory.CreateAsyncScope();
+			var identityRepository = serviceScope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
+			var infoRepository = serviceScope.ServiceProvider.GetRequiredService<IServerInfoTemplateRepository>();
+
 			await JsonStringAction.Invoke(connection, serviceProvider, identityRepository, infoRepository);
 		}
 		catch (Exception e)
@@ -113,6 +117,10 @@ public sealed class ServiceActionManager(
 	}
 	private async ValueTask UpdateDiscordServerInfoMessageAsync(string sessionIdentity, Dictionary<string, string> logItem)
 	{
+		await using var serviceScope = scopeFactory.CreateAsyncScope();
+		var identityRepository = serviceScope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
+		var infoRepository = serviceScope.ServiceProvider.GetRequiredService<IServerInfoTemplateRepository>();
+
 		var serverIdentity = await identityRepository.GetByProfileNameAsync(sessionIdentity);
 
 		//- If messageId not set  
