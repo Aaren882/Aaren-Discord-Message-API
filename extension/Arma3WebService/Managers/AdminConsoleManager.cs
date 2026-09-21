@@ -109,16 +109,25 @@ public sealed class AdminConsoleManager(
 			var exist = dbContext.InternalManagement.FirstOrDefault(
 				o => o.managementType == InternalManagementType.AdminConsole);
 
-			var message = await channel.GetMessageAsync(
-				AdminMessage?.Id ??
-				exist?.messageId ?? // 1551287522556907701
-				ulong.MinValue
-			);
-
-			var isNewMessage = message == null;
-			//- Always will be not null
-			message ??= await CreateConsole()
+			IMessage message;
+			var isNewMessage = false;
+			try
+			{
+				message = await channel.GetMessageAsync(
+					AdminMessage?.Id ??
+					exist?.messageId ??
+					ulong.MinValue
+				) ?? throw new ArgumentException("AdminConsole message not found, proceeding to create new message.");
+			}
+			catch (ArgumentException ex) //- Catch when GetMessageAsync failed
+			{
+				logger.LogInformation("It seems there's no AdminConsole message exist. Trying to create a new Console... \n Reason : {Reason}", ex.Message);
+				message = await CreateConsole()
 					?? throw new NullReferenceException("Admin console message could not be retrieved or created.");
+				logger.LogInformation("New AdminConsole is created on \"{Channel}\" : ID - {messageId}", message.Channel.Name, message.Id);
+
+				isNewMessage = true; //- Flag for signaling it's a new message just created !!
+			}
 
 			//- Checking DB data
 			var updateColumn = true;
@@ -183,11 +192,13 @@ public sealed class AdminConsoleManager(
 
 		client.InteractionCreated += async (SocketInteraction) =>
 		{
-			if (SocketInteraction is SocketModal) return; //- Block all ModalSubmitted (Handler is right above)
-
+			if (SocketInteraction is not SocketMessageComponent interaction) return;
 			try
 			{
-				SocketInteractionContext context = new(client, SocketInteraction);
+				//- Block all Not-AdminConsole interaction
+				if (interaction.Message != AdminMessage) return;
+
+				SocketInteractionContext context = new(client, interaction);
 
 				var result = await interactions.ExecuteCommandAsync(context, serviceProvider);
 				if (!result.IsSuccess)

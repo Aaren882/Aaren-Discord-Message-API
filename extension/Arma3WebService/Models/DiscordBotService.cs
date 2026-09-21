@@ -70,6 +70,9 @@ public sealed class DiscordBotService(
 		};
 		client.ButtonExecuted += async (component) =>
 		{
+			//- Block all AdminConsole's request
+			if (component.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
 			try
 			{
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
@@ -90,6 +93,9 @@ public sealed class DiscordBotService(
 		};
 		client.SelectMenuExecuted += async (component) =>
 		{
+			//- Block all AdminConsole's request
+			if (component.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
 			try
 			{
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
