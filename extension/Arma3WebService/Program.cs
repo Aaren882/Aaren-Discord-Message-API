@@ -20,6 +20,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Net.Http.Headers;
 using static Arma3WebService.Managers.BinaryStreamManager;
 using static Arma3WebService.Managers.WebsocketServer;
@@ -163,8 +165,13 @@ namespace Arma3WebService
 			{
 				var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
 
-				// This applies any pending migrations and creates the database if it doesn't exist
-				dbContext.Database.Migrate();
+				var migrator = dbContext.GetService<IMigrator>();
+				var targetMigration = dbContext.Database.GetMigrations().LastOrDefault()
+					?? throw new InvalidOperationException($"No migrations found in <{nameof(ServiceDbContext)}>.");
+				var pendingMigrations = dbContext.Database.GetPendingMigrations().ToArray();
+
+				if (pendingMigrations.Length != 0)
+					migrator.Migrate(targetMigration);
 			}
 
 			// Configure the HTTP request pipeline.
