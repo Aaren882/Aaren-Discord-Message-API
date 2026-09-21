@@ -56,7 +56,7 @@ namespace Arma3WebService.Models
 			try
 			{
 				var profileName = entity.GetIdentity();
-				using var serviceScope = scopeFactory.CreateScope();
+				await using var serviceScope = scopeFactory.CreateAsyncScope();
 
 				var identityRepository = serviceScope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
 				var templateRepository = serviceScope.ServiceProvider.GetRequiredService<IServerInfoTemplateRepository>();

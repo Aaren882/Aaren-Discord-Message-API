@@ -5,8 +5,7 @@ using Arma3WebService.DBContext.Schema;
 namespace Arma3WebService.Managers;
 
 public sealed class RemoteStateManager(
-	IServerIdentityRepository identityRepository,
-	IServerInfoTemplateRepository infoTemplateRepository
+	IServiceScopeFactory scopeFactory
 )
 {
 	private readonly ConcurrentDictionary<ulong, WebsocketServer> _gameSessionsCache = [];
@@ -15,6 +14,8 @@ public sealed class RemoteStateManager(
 
 	internal async Task UpdateGameSessionCacheAsync(string profileName, WebsocketServer? connection = null)
 	{
+		await using var scope = scopeFactory.CreateAsyncScope();
+		var identityRepository = scope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
 		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
 
 		if (serverIdentity == null)
@@ -32,6 +33,8 @@ public sealed class RemoteStateManager(
 		if (_serverInfoTemplatesCache.TryGetValue(messageId, out var template))
 			return template;
 
+		await using var scope = scopeFactory.CreateAsyncScope();
+		var infoTemplateRepository = scope.ServiceProvider.GetRequiredService<IServerInfoTemplateRepository>();
 		var infoTemplate = await infoTemplateRepository.GetByMessageIdAsync(messageId, tracked: false);
 
 		ArgumentNullException.ThrowIfNull(infoTemplate);
@@ -44,6 +47,8 @@ public sealed class RemoteStateManager(
 		if (_serverInfoProfileNamesCache.TryGetValue(profileName, out var messageId))
 			return await GetServerInfoTemplateAsync(messageId);
 
+		await using var scope = scopeFactory.CreateAsyncScope();
+		var identityRepository = scope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
 		var serverIdentity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
 
 		ArgumentNullException.ThrowIfNull(serverIdentity);
