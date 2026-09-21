@@ -1,9 +1,10 @@
 using System.Text.Json;
-using Discord;
-using Discord.WebSocket;
 using Arma3WebService.Entity.DiscordBotAction;
 using Arma3WebService.Managers;
 using Component.DiscordEntity;
+using Discord;
+using Discord.Interactions;
+using Discord.WebSocket;
 
 namespace Arma3WebService.Models;
 
@@ -20,73 +21,60 @@ public interface IDiscordBotService
 	public ulong GetPresetMessageChannelId(DiscordBotChannel channelType);
 	public Task<IMessageChannel> GetMessageChannelAsync(ulong channelID);
 	public Task<string?> GetPermanentUrlAsync(ulong channelId, ulong messageId);
-	public DiscordSocketClient GetClient();
+	// public DiscordSocketClient GetClient();
 	public Task<byte[]> SendLocalFile(string text);
 	public Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message);
 	public Task<IUserMessage> SendMessageAsync(ulong channelId, DiscordMessageDto message);
 }
 
 public sealed class DiscordBotService(
+	DiscordSocketClient client,
 	ILogger<DiscordBotService> logger,
-	IServiceProvider serviceProvider,
 	RemoteStateManager remoteStateManager,
 	IConfiguration configuration
 ) : BackgroundService, IDiscordBotService
 {
-	private static readonly DiscordSocketClient Client = new();
 	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel") ?? configuration["MonitorChannel"]!);
 	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel") ?? configuration["AdminChannel"]!);
 	private readonly ulong _adminLoggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminLoggingChannel") ?? configuration["AdminLoggingChannel"]!);
 	private readonly ulong _loggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("LoggingChannel") ?? configuration["LoggingChannel"]!);
 
-	public DiscordSocketClient GetClient() => Client;
 	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 	{
-		await Client.LoginAsync(
+		await client.LoginAsync(
 			TokenType.Bot,
 			Environment.GetEnvironmentVariable("BotToken") ?? configuration["BotToken"]
 		);
-		await Client.StartAsync();
+		await client.StartAsync();
 
-		var adminConsoleManager = serviceProvider.GetRequiredService<AdminConsoleManager>();
-		await adminConsoleManager.CreateAdminConsole();
-
-		Client.Log += Log;
-		Client.ModalSubmitted += async (socketModal) =>
+		client.Log += Log;
+		client.ModalSubmitted += async (socketModal) =>
 		{
-			try
+			//- Block all AdminConsole's request
+			if (socketModal.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
+			/* try // (Not Working)
 			{
-				if (socketModal.Message.Id == adminConsoleManager.AdminMessageId)
-				{
-					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.Modal);
-					await adminAction!.Execute(socketModal, serviceProvider);
-					return;
-				}
-
-				/* var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
+				var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
 				var deserialize = JsonSerializer.Deserialize(
 					json,
 					DiscordBotActionJsonSerializerContext.Default.DiscordBotModalInteraction
 				);
-				await deserialize!.Execute(socketModal); */
+				await deserialize!.Execute(socketModal);
 			}
 			catch (Exception e)
 			{
 				logger.LogError(e, "ModalSubmitted :");
 				await socketModal.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
-			}
+			}*/
 		};
-		Client.ButtonExecuted += async (component) =>
+		client.ButtonExecuted += async (component) =>
 		{
+			//- Block all AdminConsole's request
+			if (component.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
 			try
 			{
-				if (component.Message.Id == adminConsoleManager.AdminMessageId)
-				{
-					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.Button);
-					await adminAction!.Execute(component, adminConsoleManager);
-					return;
-				}
-
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
 				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
 				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
@@ -103,17 +91,13 @@ public sealed class DiscordBotService(
 				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
-		Client.SelectMenuExecuted += async (component) =>
+		client.SelectMenuExecuted += async (component) =>
 		{
+			//- Block all AdminConsole's request
+			if (component.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
 			try
 			{
-				if (component.Message.Id == adminConsoleManager.AdminMessageId)
-				{
-					var adminAction = await adminConsoleManager.GetAdminAction(AdminConsoleManager.ActionType.SelectMenu);
-					await adminAction!.Execute(component, adminConsoleManager);
-					return;
-				}
-
 				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
 				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
 				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
@@ -126,57 +110,7 @@ public sealed class DiscordBotService(
 			catch (Exception e)
 			{
 				logger.LogError(e, "SelectMenuExecuted :");
-				// await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
-			}
-		};
-
-		var webSocketService = serviceProvider.GetRequiredService<IWebSocketService>();
-		webSocketService.OnConnected += async (websocketContextEntity, connection) =>
-		{
-			var sessionIdentity = websocketContextEntity.GetIdentity();
-			try
-			{
-				//- Logging
-				var channel = await GetMessageChannelAsync(_loggingChannel);
-
-				var embedBuilder = new EmbedBuilder()
-					.WithTitle("🎮 Session Connected!")
-					.WithDescription("A new Arma 3 session has successfully initialized and is ready for deployment.")
-					.WithColor(3066993)
-					.AddField("🖥️ Server Name", sessionIdentity)
-					.WithFooter("System Logger")
-					.WithCurrentTimestamp();
-				await channel.SendMessageAsync(embed: embedBuilder.Build());
-			}
-			catch (Exception e)
-			{
-				logger.LogError(e, "GameSession Connected (Bot Logging):");
-			}
-		};
-		webSocketService.OnDisconnected += async (entity, connection) =>
-		{
-			try
-			{
-				var profileName = entity.GetIdentity();
-				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(profileName);
-
-				await ModifyMessageAsync(currentTemplate.messageId, currentTemplate.messageOffline);
-
-				var id = GetPresetMessageChannelId(DiscordBotChannel.Logging);
-				var channel = await GetMessageChannelAsync(id);
-				var embedBuilder = new EmbedBuilder()
-					.WithTitle("🛑 Session Disconnected")
-					.WithDescription("The Arma 3 operations session has been terminated or the server has gone offline.")
-					.WithColor(15158332)
-					.AddField("🖥️ Server Name", entity.GetIdentity(), true)
-					.AddField("⏱️ Session Status", "Offline / Hibernating", true)
-					.WithFooter("System Logger")
-					.WithCurrentTimestamp();
-				await channel.SendMessageAsync(embed: embedBuilder.Build());
-			}
-			catch (Exception e)
-			{
-				logger.LogError(e, "GameSession Disconnected :");
+				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
 			}
 		};
 	}
@@ -210,7 +144,7 @@ public sealed class DiscordBotService(
 
 	public async Task<IMessageChannel> GetMessageChannelAsync(ulong channelID)
 	{
-		var channel = await Client.GetChannelAsync(channelID) as IMessageChannel;
+		var channel = await client.GetChannelAsync(channelID) as IMessageChannel;
 		return channel ?? throw new NullReferenceException($"Channel {channelID} not found");
 	}
 	public ulong GetPresetMessageChannelId(DiscordBotChannel channelType)
