@@ -2,48 +2,40 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build",
-            "type": "shell",
-            "command": "hemtt build",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+          "label": "Build hemtt",
+          "type": "shell",
+          "command": "hemtt build",
+          "problemMatcher": [],
+          "group": {
+            "kind": "build",
+            "isDefault": true
+          }
         },
         {
-          "label": "build",
-          "command": "dotnet",
-          "type": "process",
-          "args": [
-            "build",
-            "${workspaceFolder}/extension/DiscordMessageAPI.sln",
-            "/property:GenerateFullPaths=true",
-            "/consoleloggerparameters:NoSummary;ForceNoAlign"
-          ],
-          "problemMatcher": "$msCompile"
-        },
-        {
-          "label": "publish",
+          "label": "Build Service extension",
           "command": "dotnet",
           "type": "process",
           "args": [
             "publish",
-            "${workspaceFolder}/extension/DiscordMessageAPI.sln",
-            "/property:GenerateFullPaths=true",
-            "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            "${workspaceFolder}/extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj",
+            "-c", "Release", //- Configuration
+            "-r", "win-x64", //- RID
+            "-o", ".", //- Output
+            "--self-contained"
           ],
           "problemMatcher": "$msCompile"
         },
         {
-          "label": "watch",
+          "label": "Build extension",
           "command": "dotnet",
           "type": "process",
           "args": [
-            "watch",
-            "run",
-            "--project",
-            "${workspaceFolder}/extension/DiscordMessageAPI.sln"
+            "publish",
+            "${workspaceFolder}/extension/DiscordMessageAPI/DiscordMessageAPI.csproj",
+            "-c", "Release", //- Configuration
+            "-r", "win-x64", //- RID
+            "-o", ".", //- Output
+            "--self-contained"
           ],
           "problemMatcher": "$msCompile"
         }
