@@ -48,11 +48,11 @@ public class WebSocketStateMachine : IDisposable
 		Logger = logger;
 		_cts = new();
 	}
-	public WebSocketStateMachine(WebsocketWorker websocketWorker, ILogger logger, CancellationToken ct)
+	public WebSocketStateMachine(WebsocketWorker websocketWorker, ILogger logger, ReadOnlySpan<CancellationToken> cts)
 	{
 		_websocketWorker = websocketWorker;
 		Logger = logger;
-		_cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+		_cts = CancellationTokenSource.CreateLinkedTokenSource(cts);
 	}
 
 	public OperationalState State

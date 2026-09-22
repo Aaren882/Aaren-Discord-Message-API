@@ -61,7 +61,7 @@ public sealed class WebsocketServer(
 			Logger.LogError(e, "Fatal Exception: ");
 		}
 	}
-	public async Task StartAsync(HttpContext context)
+	public async Task StartAsync(HttpContext context, params CancellationToken[] cts)
 	{
 		WebsocketContextEntity contextEntity = wsContextEntityFactory.CreateJsonStringContext(context);
 
@@ -70,7 +70,7 @@ public sealed class WebsocketServer(
 		var webSocket = await context.WebSockets.AcceptWebSocketAsync(subProtocol: null);
 		websocketContext = contextEntity;
 
-		await StartAsync(webSocket, websocketContext.CancellationToken);
+		await StartAsync(webSocket, cts);
 		service.RemoveConnection(websocketContext);
 	}
 }

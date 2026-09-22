@@ -1,8 +1,9 @@
 using System.Net;
+using Arma3WebService.Managers;
+using Arma3WebService.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Arma3WebService.Managers;
 
 namespace Arma3WebService.Controllers;
 
@@ -13,6 +14,7 @@ namespace Arma3WebService.Controllers;
 [Route("/api/ws")]
 [ApiController]
 public class WebSocketApiController(
+	IWebSocketService webSocketService,
 	WebsocketServer websocketWorker
 ) : ControllerBase
 {
@@ -33,7 +35,7 @@ public class WebSocketApiController(
 			return Unauthorized("No Identity is specified.");
 
 		//- Implement new Framework
-		await websocketWorker.StartAsync(context);
+		await websocketWorker.StartAsync(context, [webSocketService.Cts.Token , context.RequestAborted]);
 
 		return new EmptyResult();
 	}
