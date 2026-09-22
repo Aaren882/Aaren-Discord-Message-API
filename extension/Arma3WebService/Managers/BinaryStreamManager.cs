@@ -112,14 +112,13 @@ public sealed class BinaryStreamManager(
 				await contentChannel.Writer.WriteAsync(binaryContent, stoppingToken);
 			}
 		}
-		catch (OperationCanceledException) { }
+		catch (OperationCanceledException)
+		{
+			Logger.LogInformation("{Service} shutdown gracefully.", nameof(BinaryStreamManager));
+		}
 		catch (Exception ex)
 		{
-			Logger.LogError(ex, "An error occurred during binary stream processing.");
-		}
-		finally
-		{
-			Logger.LogCritical("Binary stream processing loop terminated.");
+			Logger.LogCritical(ex, "Binary stream processing loop terminated.");
 		}
 	}
 }

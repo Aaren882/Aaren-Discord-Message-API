@@ -84,6 +84,10 @@ public sealed class BinaryPayloadBroker(
 				}
 			}
 		}
+		catch (OperationCanceledException)
+		{
+			Logger.LogInformation("{Service} shutdown gracefully.", nameof(BinaryPayloadBroker));
+		}
 		catch (Exception e)
 		{
 			Logger.LogError(e, "An unexpected error occurred in BinaryPayloadBroker.");

@@ -238,50 +238,60 @@ public sealed class AdminConsoleManager(
 		meterListener.Start();
 
 		using PeriodicTimer timer = new(_ConsoleUpdateTimeSpan);
-		while (await timer.WaitForNextTickAsync(stoppingToken))
+		try
 		{
-			try
+			while (await timer.WaitForNextTickAsync(stoppingToken))
 			{
-				//- Make suer AdminConsole Exist
-				(AdminMessage, bool isNewMessage) = await GetOrAddAdminConsole();
-
-				if (isNewMessage) continue;
-
-				meterListener.RecordObservableInstruments();
-				var sessionCount = GetSessionNames().Length;
-				var sessionCountColor = sessionCount == 0 ? "arm" : "fix";
-				samples["{TOTAL_SESSIONS}"] = @$"{sessionCountColor}\n{sessionCount}";
-				samples["{SYSTEM_TIMESTAMP}"] = $"{((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}";
-
-				var json = await File.ReadAllTextAsync(MessageFileName, stoppingToken);
-				json = samples.Aggregate(
-					json,
-					(current, item) =>
-					{
-						var (key, value) = item;
-						logger.LogDebug("Admin Panel : {KEY}, {Value}", key, value);
-						return current.Replace(key, value, StringComparison.OrdinalIgnoreCase);
-					}
-				);
-
-				var message = JsonSerializer.Deserialize(
-					json,
-					MsgPayload_JsonContext.Default.DiscordMessageDto
-				);
-
-				await AdminMessage.Channel.ModifyMessageAsync(AdminMessage.Id, msg =>
+				try
 				{
-					msg.Content = message?.Content;
-					msg.Embeds = message?.ConvertEmbeds();
-					msg.Components = message?.ConvertComponents();
-					msg.Flags = message?.Flags;
-				});
+					//- Make suer AdminConsole Exist
+					(AdminMessage, bool isNewMessage) = await GetOrAddAdminConsole();
+
+					if (isNewMessage) continue;
+
+					meterListener.RecordObservableInstruments();
+					var sessionCount = GetSessionNames().Length;
+					var sessionCountColor = sessionCount == 0 ? "arm" : "fix";
+					samples["{TOTAL_SESSIONS}"] = @$"{sessionCountColor}\n{sessionCount}";
+					samples["{SYSTEM_TIMESTAMP}"] = $"{((DateTimeOffset)DateTime.Now).ToUnixTimeSeconds()}";
+
+					var json = await File.ReadAllTextAsync(MessageFileName, stoppingToken);
+					json = samples.Aggregate(
+						json,
+						(current, item) =>
+						{
+							var (key, value) = item;
+							logger.LogDebug("Admin Panel : {KEY}, {Value}", key, value);
+							return current.Replace(key, value, StringComparison.OrdinalIgnoreCase);
+						}
+					);
+
+					var message = JsonSerializer.Deserialize(
+						json,
+						MsgPayload_JsonContext.Default.DiscordMessageDto
+					);
+
+					await AdminMessage.Channel.ModifyMessageAsync(AdminMessage.Id, msg =>
+					{
+						msg.Content = message?.Content;
+						msg.Embeds = message?.ConvertEmbeds();
+						msg.Components = message?.ConvertComponents();
+						msg.Flags = message?.Flags;
+					});
+				}
+				catch (Exception e)
+				{
+					logger.LogWarning(e, "\"UpdateConsoleInfo\" threw an Exception.");
+				}
 			}
-			catch (OperationCanceledException) { }
-			catch (Exception e)
-			{
-				logger.LogError(e, "\"UpdateConsoleInfo\" throw an Exception.");
-			}
+		}
+		catch (OperationCanceledException)
+		{
+			logger.LogInformation("{Service} shutdown gracefully.", nameof(AdminConsoleManager));
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "{Service} threw an Exception.", nameof(AdminConsoleManager));
 		}
 	}
 }
