@@ -82,29 +82,28 @@ namespace Arma3WebService
 				DefaultRunMode = RunMode.Async
 			}));
 
+			//- Bot Background Services
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
 			builder.Services.AddSingleton<AdminConsoleManager>();
 
-
+			//- Websocket Services
+			builder.Services.AddScoped<WebsocketServer>();
 			builder.Services.AddSingleton<DiscordBotRequestHandler>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 			builder.Services.AddSingleton<BinaryStreamManager>();
 			builder.Services.AddSingleton<UpdateDBActionBroker>();
 			builder.Services.AddSingleton<BinaryPayloadBroker>();
 			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
-			builder.Services.AddScoped<IdentityCheckService>();
-			builder.Services.AddScoped<WebsocketServer>();
-			builder.Services.AddScoped<IServerIdentityRepository, ServerIdentityRepository>();
-			builder.Services.AddScoped<IServerInfoTemplateRepository, ServerInfoTemplateRepository>();
-			// builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
-			// builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
-			// builder.Services.AddSingleton<IArma3ActionFactory, Arma3ActionFactory>();
-
 			builder.Services.AddSingleton<WebsocketContextEntityFactory>();
-
-
 			builder.Services.AddSingleton<ServiceActionManager>();
 			builder.Services.AddSingleton<RemoteStateManager>();
+
+			//- DB Repos
+			builder.Services.AddScoped<IServerInfoTemplateRepository, ServerInfoTemplateRepository>();
+			builder.Services.AddScoped<IServerIdentityRepository, ServerIdentityRepository>();
+
+			//- Identity Services
+			builder.Services.AddScoped<IdentityCheckService>();
 			builder.Services.AddScoped<JwtHelpers>();
 
 			// Add services to the container.
@@ -119,12 +118,8 @@ namespace Arma3WebService
 			//- Register Connection Services -//
 
 			builder.Services.AddControllers();
-
-			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-			//builder.Services.AddOpenApi();
 			builder.Services.AddSwaggerGen();
 
-			//builder.Services.AddControllersWithViews();
 
 			//- WebSocket
 			builder.Services.AddCors(options =>
@@ -139,6 +134,7 @@ namespace Arma3WebService
 					);
 			});
 
+			//- Auth Settings
 			builder.Services
 				.AddAuthorizationBuilder()
 				.AddPolicy("GameRequest", policy =>
@@ -154,9 +150,8 @@ namespace Arma3WebService
 				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
 			builder.Services.ConfigureOptions<JwtConfigureOptions>();
 
+			//- Resource monitor
 			builder.Services.AddResourceMonitoring();
-
-
 
 			var app = builder.Build();
 
@@ -181,8 +176,6 @@ namespace Arma3WebService
 				app.MapSwagger();
 				app.UseSwaggerUI();
 			}
-
-			//app.UseHttpsRedirection();
 
 			//- Websocket
 			app.UseWebSockets(new WebSocketOptions
