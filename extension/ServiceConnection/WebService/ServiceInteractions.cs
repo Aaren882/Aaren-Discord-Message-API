@@ -120,17 +120,17 @@ public sealed class ServiceInteractions
 	internal ValueTask SendWebSocketMessageAsync(string messageJson)
 		=> WsClient.SendAsync(messageJson, WebSocketMessageType.Text, true);
 
-	public async Task SendWebSocketBinaries(Dictionary<string, string> binaryDict, int chunkSize = 64 * 1024)
+	public async Task SendWebSocketBinaries(Dictionary<string, string> binaryDict)
 	{
 		Logger.LogInformation("Start Sending binaries.");
 		foreach (var (directoryPrefix, filePath) in binaryDict)
 		{
 			Logger.LogInformation("Binary : [Prefix - {Prefix}, {Path}]", directoryPrefix, filePath);
-			await SendWebSocketBinary(filePath, directoryPrefix, chunkSize);
+			await SendWebSocketBinary(filePath, directoryPrefix);
 		}
 		Logger.LogInformation("End of Sending binaries.");
 	}
-	private async Task SendWebSocketUpdateAndSaveProfile(Arma3ClientProfileConfiguration configuration, int chunkSize = 64 * 1024)
+	private async Task SendWebSocketUpdateAndSaveProfile(Arma3ClientProfileConfiguration configuration)
 	{
 		Logger.LogInformation("Sending profileConfig.");
 
@@ -146,7 +146,7 @@ public sealed class ServiceInteractions
 		foreach (var (payloadBinary, index) in payloadBinaries.Select((v, i) => (v, i)))
 		{
 			var filePath = fileList[index];
-			await WsClient.SendBinaryAsync(AccessName, filePath, payloadBinary, chunkSize);
+			await WsClient.SendBinaryAsync(AccessName, filePath, payloadBinary);
 		}
 		Logger.LogInformation("profileConfig Sent.");
 	}
@@ -166,10 +166,9 @@ public sealed class ServiceInteractions
 			() => WsClient.SendRptLinesAsync(filePath, linesCount)
 		); */
 	}
-	public async Task SendWebSocketBinary(string filePath, string directoryPrefix, int chunkSize = 64 * 1024)
+	public async Task SendWebSocketBinary(string filePath, string directoryPrefix)
 	{
 		FileInfo fileInfo = new(filePath);
-		var totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
 		Logger.LogInformation("Sending binary file \"{FileName}\"", fileInfo.Name);
 
 		// Send Metadata (as text message)
@@ -179,17 +178,11 @@ public sealed class ServiceInteractions
 			fileInfo.Length,
 			fileInfo.CreationTime,
 			directoryPrefix
-		)
-		{
-			TotalChunks = totalChunks
-		};
+		);
 
-		// Task.Run(async () =>
-		// {
 		var bytes = metadata.ToJsonBytes();
 		await WsClient.SendAsync(bytes, WebSocketMessageType.Binary, true);
-		await WsClient.SendBinaryAsync(AccessName, filePath, metadata, chunkSize);
-		// });
+		await WsClient.SendBinaryAsync(AccessName, filePath, metadata);
 	}
 
 	/// <summary>

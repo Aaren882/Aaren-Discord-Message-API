@@ -36,8 +36,6 @@ public sealed class ServiceRequestHandler
 				task = () => serviceInteractions.WsClient.SendRptLinesAsync(serviceInteractions!.AccessName, RptFileDirectory, RptLineMetaData, 50);
 				break;
 			case 2: //- RequestRpt
-				const int chunkSize = 60 * 1024;
-				var totalChunks = (int)Math.Ceiling((double)RPTFileInfo.Length / chunkSize);
 
 				// Send Metadata (as text message)
 				Arma3PayloadBinary BinaryMetaData = new
@@ -45,13 +43,10 @@ public sealed class ServiceRequestHandler
 					RPTFileInfo.Name,
 					RPTFileInfo.Length,
 					RPTFileInfo.CreationTime
-				)
-				{
-					TotalChunks = totalChunks
-				};
+				);
 
 				request = request with { Payload = BinaryMetaData };
-				task = () => serviceInteractions.WsClient.SendBinaryAsync(serviceInteractions!.AccessName, RptFileDirectory, BinaryMetaData, chunkSize);
+				task = () => serviceInteractions.WsClient.SendBinaryAsync(serviceInteractions!.AccessName, RptFileDirectory, BinaryMetaData);
 				break;
 		}
 		ArgumentNullException.ThrowIfNull(task);

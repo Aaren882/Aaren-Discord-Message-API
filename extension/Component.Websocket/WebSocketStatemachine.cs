@@ -148,7 +148,7 @@ public class WebSocketStateMachine : IDisposable
 		try
 		{
 			// 64KB buffer for reading chunks.
-			var buffer = (new byte[64 * 1024]).AsMemory<byte>();
+			var buffer = (new byte[_websocketWorker.BufferSize]).AsMemory<byte>();
 
 			while (_webSocket?.State == WebSocketState.Open)
 			{

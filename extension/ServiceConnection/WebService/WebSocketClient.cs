@@ -39,7 +39,7 @@ public sealed class WebsocketClient(
 		}
 		MessageReceived?.Invoke(payload);
 	}
-	public async ValueTask SendBinaryAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary, int chunkSize = 60 * 1024)
+	public async ValueTask SendBinaryAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary)
 	{
 		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 
@@ -54,12 +54,12 @@ public sealed class WebsocketClient(
 		if (totalChunks < 1)
 		{
 			FileInfo fileInfo = new(filePath);
-			totalChunks = payloadBinary.TotalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+			totalChunks = payloadBinary.TotalChunks = (int)Math.Ceiling((double)fileInfo.Length / BufferSize);
 		}
 		// Send Chunks (as binary messages)
-		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, chunkSize))
+		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, BufferSize))
 		{
-			var readBuffer = (new byte[chunkSize]).AsMemory<byte>();
+			var readBuffer = (new byte[BufferSize]).AsMemory<byte>();
 			var identifier = payloadBinary.GetIdentifier(accessName);
 
 			for (var i = 1; i < totalChunks + 1; i++)
