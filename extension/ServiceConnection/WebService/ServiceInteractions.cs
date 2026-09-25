@@ -197,47 +197,95 @@ public sealed class ServiceInteractions
 	/// </summary>
 	private async Task<(ProfileConfiguration, IdentityRolesReturnPayload)> GetAccessToken(string accessName, string profileName)
 	{
-		try
+		if (string.IsNullOrEmpty(AccessName) || accessName != AccessName)
+			AccessName = accessName;
+
+		var profileConfig = GetServiceProfile(profileName);
+
+		//- Send Request for access token
+		var payload = new IdentityRolesPayload
 		{
-			if (string.IsNullOrEmpty(AccessName) || accessName != AccessName)
-				AccessName = accessName;
-
-			var profileConfig = GetServiceProfile(profileName);
-
-			//- Send Request for access token
-			var payload = new IdentityRolesPayload
+			Identity = new IdentityInfo
 			{
-				Identity = new IdentityInfo
-				{
-					AccessName = AccessName,
-					Role = Role.GameServer
-				},
-				ExpireMinute = 15,
-				ProfileDateOffsets = profileConfig.GetDateOffsets()
-			};
-			var jsonPayload = JsonSerializer.Serialize(
-				payload,
-				IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesPayload
-			);
+				AccessName = AccessName,
+				Role = Role.GameServer
+			},
+			ExpireMinute = 15,
+			ProfileDateOffsets = profileConfig.GetDateOffsets()
+		};
+		var jsonPayload = JsonSerializer.Serialize(
+			payload,
+			IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesPayload
+		);
 
-			using var response = await APIRequest.PostRequest(
-				ServiceSecret.ServiceUri + "/api/token",
-				content: new StringContent(
-					jsonPayload,
-					Encoding.UTF8, MediaTypeNames.Application.Json
-				),
-				authHeader: new AuthenticationHeaderValue(
-					"Basic",
-					GetBasicAuthenticationBearer(ServiceSecret)
-				)
-			);
+		const int MaxRetry = 5;
+		for (int i = 1; i < MaxRetry + 1; i++)
+		{
+			var retrySeconds = Math.Pow(i, 2);
+			var nextRetrySeconds = Math.Pow(i + 1, 2);
+
+			var waitSpan = TimeSpan.FromSeconds(retrySeconds);
+			await Task.Delay(waitSpan);
+
+			byte[]? ResponseContentBytes = null;
+			try
+			{
+				using var response = await APIRequest.PostRequest(
+					ServiceSecret.ServiceUri + "/api/token",
+					content: new StringContent(
+						jsonPayload,
+						Encoding.UTF8, MediaTypeNames.Application.Json
+					),
+					authHeader: new AuthenticationHeaderValue(
+						"Basic",
+						GetBasicAuthenticationBearer(ServiceSecret)
+					)
+				);
+
+				if (!response.IsSuccessStatusCode)
+				{
+					Logger.LogWarning(
+						"({Retry}/{MaxRetry}) API request failed with status code: {StatusCode}({ReasonPhrase}). Retrying after {RetrySeconds} Seconds...",
+						i,
+						MaxRetry,
+						response.StatusCode,
+						response.ReasonPhrase,
+						nextRetrySeconds
+					);
+					continue;
+				}
+
+				//- Get the response content
+				ResponseContentBytes = await response.Content.ReadAsByteArrayAsync();
+				ArgumentNullException.ThrowIfNull(ResponseContentBytes);
+			}
+			catch (ArgumentNullException)
+			{
+				Logger.LogError(
+					"({Retry}/{MaxRetry}) API empty response Content. Retrying after {RetrySeconds} Seconds...",
+					i,
+					MaxRetry,
+					nextRetrySeconds
+				);
+				continue;
+			}
+			catch (HttpRequestException ex)
+			{
+				Logger.LogError(
+					"({Retry}/{MaxRetry}) API request failed due to \"{Reason}\".\n Retrying after {RetrySeconds} Seconds...",
+					i,
+					MaxRetry,
+					ex.Message,
+					nextRetrySeconds
+				);
+				continue;
+			}
 
 			//- Get the Token
-			var result = await response.Content.ReadAsStringAsync();
 			var authTokenPayload = JsonSerializer.Deserialize(
-				result,
+				ResponseContentBytes,
 				IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesReturnPayload
-			)!;
+			);
 			Logger.LogTrace("Token Manager (result) : {TokenPayload}", authTokenPayload);
 			Logger.LogTrace("profileConfig (result) : {profileConfig}", profileConfig);
 
@@ -246,11 +294,8 @@ public sealed class ServiceInteractions
 
 			return (profileConfig, authTokenPayload);
 		}
-		catch (Exception e)
-		{
-			Logger.LogError(e, "An error occurred during service interaction: {Message}", e.Message);
-			throw;
-		}
+
+		throw new InvalidOperationException("All retry failed.");
 	}
 	public ProfileConfiguration GetServiceProfile(string profileName)
 	{
