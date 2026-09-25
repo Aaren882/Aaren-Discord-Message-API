@@ -30,6 +30,7 @@ namespace Arma3WebService
 {
 	public class Program
 	{
+		public const string PersistDirectory = ".data";
 		public static void Main(string[] args)
 		{
 			Env.Load();
@@ -39,7 +40,7 @@ namespace Arma3WebService
 			var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? builder.Configuration["DB_PROVIDER"] ?? "SQLite";
 			builder.Services.AddDbContextFactory<ServiceDbContext>(options =>
 			{
-				var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration["DB_CONNECTION_STRING"] ?? "Data Source=data.db";
+				var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration["DB_CONNECTION_STRING"] ?? $"Data Source={Program.PersistDirectory}/data.db";
 
 				var migrationAssembly = $"Arma3WebService.Migrations.{provider}";
 				var optionsBuilder = (provider) switch

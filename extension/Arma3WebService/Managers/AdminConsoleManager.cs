@@ -24,7 +24,7 @@ public sealed class AdminConsoleManager(
 ) : BackgroundService
 {
 	public static IMessage? AdminMessage { get; private set; }
-	public const string MessageFileName = "AdminConsole.json";
+	public const string MessageFileName = $"{Program.PersistDirectory}/AdminConsole.json";
 	private readonly TimeSpan _ConsoleUpdateTimeSpan = TimeSpan.FromSeconds(10);
 
 	public enum ActionType
@@ -40,7 +40,7 @@ public sealed class AdminConsoleManager(
 		if (actionType == ActionType.None)
 			throw new NotSupportedException("Action type None is not supported.");
 
-		var path = $"AdminConsole/{actionType}Actions.json";
+		var path = $"{Program.PersistDirectory}/AdminConsole/{actionType}Actions.json";
 		var json = await File.ReadAllTextAsync(path);
 		var deserialize = JsonSerializer.Deserialize(json, DiscordBotActionJsonSerializerContext.Default.DiscordBotAdminInteraction);
 		return deserialize ?? throw new JsonException($"Failed to deserialize JSON for action type: {actionType}.");

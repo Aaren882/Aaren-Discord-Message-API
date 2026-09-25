@@ -15,7 +15,7 @@ services:
       # (Database)
       - DB_PROVIDER=${DB_PROVIDER:-SQLite} # SQLite , MySQL , NpgSQL
       # SQLite
-      - DB_CONNECTION_STRING=Data Source=data.db
+      - DB_CONNECTION_STRING=Data Source=.data/data.db
       # MySQL (MySQL, mariaDB)
       # - DB_CONNECTION_STRING=Server=${DB_HOST:-localhost};Port=${DB_PORT:-3306};Database=${DB};User=${DB_USER};Password=${DB_PW}
       # PostgreSQL (NpgSQL)
