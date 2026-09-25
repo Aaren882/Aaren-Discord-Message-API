@@ -32,7 +32,9 @@ services:
       # - AdminPassword=1234 # (Optional) Admin password for calling admin Commands
 
     volumes:
-      - app:/app
+      - data:/app/.data
+      - profiles:/app/.profile
 
 volumes:
-  app:
+  data:
+  profiles:
