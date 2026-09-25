@@ -63,7 +63,7 @@ public record Arma3PayloadBinary
 				ConnectionIdentity +
 				FileSize +
 				FileName +
-				CreatedTime
+				CreatedTime.ToFileTimeUtc()
 			)
 		);
 	}
