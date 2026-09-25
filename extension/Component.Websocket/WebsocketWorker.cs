@@ -6,6 +6,7 @@ namespace Component.Websocket;
 
 public interface IWebsocketWorker : IDisposable
 {
+	CancellationToken CancellationToken { get; }
 	internal void DoAssemble(in WebSocketStateMachine.InboundMessage inboundMessage);
 	void PostReceived(in Stream assembledStream, WebSocketMessageType messageType);
 }
@@ -13,6 +14,7 @@ public interface IWebsocketWorker : IDisposable
 public abstract class WebsocketWorker : IWebsocketWorker
 {
 	protected virtual ILogger<IWebsocketWorker> Logger { get; init; } = default!;
+	public CancellationToken CancellationToken { get => WebSocketStateMachine?.InternalCts.Token ?? default; }
 	public virtual WebSocketStateMachine? WebSocketStateMachine { get; protected set; }
 
 	public virtual bool HasConnection => (WebSocketStateMachine?.State) switch

@@ -55,7 +55,8 @@ public class UpdateDBActionBroker(
 							nativeFileDirectories[i],
 							FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
 						),
-						TimeSpan.FromMinutes(3)
+						TimeSpan.FromMinutes(3),
+						connection.CancellationToken
 					);
 				});
 

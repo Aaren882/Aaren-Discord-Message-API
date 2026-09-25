@@ -35,14 +35,17 @@ public sealed class BinaryStreamManager(
 	public ValueTask PushBinaryContentAsync(Arma3PayloadBinaryContent content)
 		=> _contentChannel.Writer.WriteAsync(content);
 
-	public async Task<(string identifier, Content content)> AddBinaryAsync(string identifier, Arma3PayloadBinary metaData, Stream writeStream, TimeSpan? timeout = null)
+	public async Task<(string identifier, Content content)> AddBinaryAsync(string identifier, Arma3PayloadBinary metaData, Stream writeStream, TimeSpan? timeout = null, CancellationToken cancellationToke = default)
 	{
 		var content = ContentDictionary.GetOrAdd(identifier, _ => new(metaData, writeStream, null));
 
 		try
 		{
 			var actualTimeout = timeout ?? TimeSpan.FromSeconds(15);
-			using var cts = new CancellationTokenSource(actualTimeout);
+			using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+				new CancellationTokenSource(actualTimeout).Token,
+				cancellationToke
+			);
 
 			await ReadAllContentAsync(identifier, cts.Token);
 			return (identifier, content);

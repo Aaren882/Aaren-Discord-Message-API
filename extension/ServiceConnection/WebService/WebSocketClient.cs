@@ -34,7 +34,7 @@ public sealed class WebsocketClient(
 		)!;
 		if (payload is Arma3PayloadServiceRequest request)
 		{
-			Task.Run(async () => await serviceRequestHandler.RespondRequest(request))
+			Task.Run(async () => await serviceRequestHandler.RespondRequest(request), CancellationToken)
 				.GetAwaiter().GetResult();
 		}
 		MessageReceived?.Invoke(payload);
@@ -64,7 +64,7 @@ public sealed class WebsocketClient(
 
 			for (var i = 1; i < totalChunks + 1; i++)
 			{
-				int readLength = await fs.ReadAsync(readBuffer, CancellationToken.None);
+				int readLength = await fs.ReadAsync(readBuffer, CancellationToken);
 				Arma3PayloadBinaryContent content = new(identifier, readBuffer[..readLength].ToArray(), i == totalChunks);
 
 				Logger.LogDebug("SendBinaryAsync (Progress): {i}/{TotalChunks}", i, totalChunks);
@@ -150,7 +150,7 @@ public sealed class WebsocketClient(
 		if (authToken != null)
 			webSocket.Options.SetRequestHeader("Authorization", "Bearer " + authToken);
 
-		await webSocket.ConnectAsync(new(uri), CancellationToken.None);
+		await webSocket.ConnectAsync(new(uri), CancellationToken);
 		Logger.LogInformation("Connected to server.");
 		Connected?.Invoke();
 

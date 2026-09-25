@@ -38,7 +38,7 @@ public class WebSocketStateMachine : IDisposable
 	private WebSocket? _webSocket;
 	private readonly ILogger Logger;
 	private readonly IWebsocketWorker _websocketWorker;
-	private readonly CancellationTokenSource _cts;
+	internal readonly CancellationTokenSource InternalCts;
 	private readonly Channel<OutboundMessage> _outBoundChannel = Channel.CreateUnbounded<OutboundMessage>();
 	private bool _processing = false;
 
@@ -46,13 +46,13 @@ public class WebSocketStateMachine : IDisposable
 	{
 		_websocketWorker = websocketWorker;
 		Logger = logger;
-		_cts = new();
+		InternalCts = new();
 	}
 	public WebSocketStateMachine(WebsocketWorker websocketWorker, ILogger logger, ReadOnlySpan<CancellationToken> cts)
 	{
 		_websocketWorker = websocketWorker;
 		Logger = logger;
-		_cts = CancellationTokenSource.CreateLinkedTokenSource(cts);
+		InternalCts = CancellationTokenSource.CreateLinkedTokenSource(cts);
 	}
 
 	public OperationalState State
@@ -76,8 +76,8 @@ public class WebSocketStateMachine : IDisposable
 		}
 		_webSocket = webSocket;
 		_mainLoop = Task.WhenAny(
-			StartContinuousSendLoopAsync(_cts.Token),
-			StartContinuousReceiveLoopAsync(_cts.Token)
+			StartContinuousSendLoopAsync(InternalCts.Token),
+			StartContinuousReceiveLoopAsync(InternalCts.Token)
 		);
 
 		return _mainLoop;
@@ -85,18 +85,18 @@ public class WebSocketStateMachine : IDisposable
 	public async ValueTask CloseAcknowledgedAsync()
 	{
 		if (_webSocket is null) throw new Exception("WebSocket not initialized");
-		await _webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Acknowledged", _cts.Token);
+		await _webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Acknowledged", InternalCts.Token);
 	}
 	public async ValueTask CloseIntentionalAsync()
 	{
 		if (_webSocket is null) throw new Exception("WebSocket not initialized");
-		await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Intentional", _cts.Token);
+		await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Intentional", InternalCts.Token);
 	}
 	public ValueTask SendMessageAsync(ReadOnlyMemory<byte> messageBytes, WebSocketMessageType messageType, bool endOfMessage)
 		=> _outBoundChannel.Writer.WriteAsync
 		(
 			new(messageBytes, messageType, endOfMessage),
-			_cts.Token
+			InternalCts.Token
 		);
 	public bool TrySendMessage(ReadOnlyMemory<byte> messageBytes, WebSocketMessageType messageType, bool endOfMessage)
 		=> _outBoundChannel.Writer.TryWrite
@@ -190,11 +190,11 @@ public class WebSocketStateMachine : IDisposable
 
 	public void Dispose()
 	{
-		if (!_cts.IsCancellationRequested)
+		if (!InternalCts.IsCancellationRequested)
 		{
 			// 1. Cancel any active ReceiveAsync blocking calls
-			_cts.Cancel();
-			_cts.Dispose();
+			InternalCts.Cancel();
+			InternalCts.Dispose();
 
 			// 2. Safely dispose the native WebSocket resources
 			_webSocket?.Dispose();
