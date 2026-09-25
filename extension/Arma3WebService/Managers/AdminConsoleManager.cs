@@ -195,11 +195,13 @@ public sealed class AdminConsoleManager(
 			if (SocketInteraction is not SocketMessageComponent interaction) return;
 			try
 			{
+				var isNotAdminId = interaction.Message.Id != AdminMessage?.Id;
+
 				//- Block all Not-AdminConsole interaction
-				if (interaction.Message != AdminMessage) return;
+				logger.LogDebug("Incoming interaction Msg : {MsgId} | AdminMsg : {AdminId}, Checksum : {isNotAdminId}", interaction.Message, AdminMessage?.Id, isNotAdminId);
+				if (isNotAdminId) return;
 
 				SocketInteractionContext context = new(client, interaction);
-
 				var result = await interactions.ExecuteCommandAsync(context, serviceProvider);
 				if (!result.IsSuccess)
 				{
