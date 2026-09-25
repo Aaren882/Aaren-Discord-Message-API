@@ -9,10 +9,6 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Arma3WebService/Arma3WebService.csproj", "Arma3WebService/"]
 COPY ["Components/Components.csproj", "Components/"]
-#COPY ["Arma3WebService.Migrations.MySQL/Arma3WebService.Migrations.MySQL.csproj", "Arma3WebService.Migrations.MySQL/"]
-#COPY ["Arma3WebService.DBContext/Arma3WebService.DBContext.csproj", "Arma3WebService.DBContext/"]
-#COPY ["Arma3WebService.Migrations.NpgSQL/Arma3WebService.Migrations.NpgSQL.csproj", "Arma3WebService.Migrations.NpgSQL/"]
-#COPY ["Arma3WebService.Migrations.SQLite/Arma3WebService.Migrations.SQLite.csproj", "Arma3WebService.Migrations.SQLite/"]
 RUN dotnet restore "Arma3WebService/Arma3WebService.csproj"
 COPY . .
 
@@ -24,5 +20,6 @@ RUN dotnet publish "./Arma3WebService.csproj" -c $BUILD_CONFIGURATION -o /app/pu
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=publish --chown=$APP_UID /app/publish .
+
 ENTRYPOINT ["dotnet", "Arma3WebService.dll"]
