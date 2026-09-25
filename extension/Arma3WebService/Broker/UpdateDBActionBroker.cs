@@ -35,16 +35,16 @@ public class UpdateDBActionBroker(
 			string[] propertyNames = [.. typeof(Arma3ClientProfileConfiguration).GetProperties().Select(x => x.Name)];
 			List<string> nativeFileDirectories = [.. metaDataList.Select((metaData, i) => Path.Combine(DirectoryPrefix, propertyNames[i], metaData.FileName))];
 
-			var newConfiguration = configuration with
-			{
-				MessageTemplate = nativeFileDirectories[0],
-				MessageOfflineTemplate = nativeFileDirectories[1],
-				MessageActions = nativeFileDirectories[2]
-			};
-
 			var contentsAsyncEnumerable = metaDataList
 				.Select((binaryPayload, i) =>
 				{
+					var destinationDir = nativeFileDirectories[i];
+					var dirName = Path.GetDirectoryName(destinationDir)
+						?? throw new ArgumentException($"Cannot create directory for file: {destinationDir}");
+
+					if (!Path.Exists(dirName))
+						Directory.CreateDirectory(dirName);
+
 					var payloadId = binaryPayload.GetIdentifier(profileName);
 					var (FileName, _, _, _) = binaryPayload;
 
@@ -52,19 +52,29 @@ public class UpdateDBActionBroker(
 						payloadId,
 						binaryPayload,
 						new FileStream(
-							nativeFileDirectories[i],
+							destinationDir,
 							FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
 						),
 						TimeSpan.FromMinutes(3),
 						connection.CancellationToken
 					);
-				});
+				}).ToArray();
 
-			Logger.LogInformation("Waiting for Profile's binary content to be written.");
+			var newConfiguration = configuration with
+			{
+				MessageTemplate = nativeFileDirectories[0],
+				MessageOfflineTemplate = nativeFileDirectories[1],
+				MessageActions = nativeFileDirectories[2]
+			};
+			Logger.LogInformation("Waiting for Profile's binary content to be written. Items : {Count}", contentsAsyncEnumerable.Length);
+
 			await foreach (var item in Task.WhenEach(contentsAsyncEnumerable))
 			{
+				Logger.LogInformation("Processing and writing Profile's binary content inside sequential worker.");
+
 				var (identifier, writtenContent) = await item;
 				writtenContent.Dispose();
+
 				Logger.LogInformation("BinaryAction finished DB Request for {profileName} : ID = {identifier}", profileName, identifier);
 			}
 

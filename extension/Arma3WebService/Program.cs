@@ -61,10 +61,19 @@ namespace Arma3WebService
 			builder.Services.AddScoped(sp =>
 				sp.GetRequiredService<IDbContextFactory<ServiceDbContext>>().CreateDbContext());
 
-			builder.Services.AddSingleton<Channel<ActionPayload>>(_ => Channel.CreateBounded<ActionPayload>(1000));
-			builder.Services.AddSingleton<Channel<BinaryPayload>>(_ => Channel.CreateBounded<BinaryPayload>(100));
+			builder.Services.AddSingleton<Channel<ActionPayload>>(_ => Channel.CreateBounded<ActionPayload>(new BoundedChannelOptions(1000)
+			{
+				SingleReader = true,
+			}));
+			builder.Services.AddSingleton<Channel<BinaryPayload>>(_ => Channel.CreateBounded<BinaryPayload>(new BoundedChannelOptions(100)
+			{
+				SingleReader = true,
+			}));
 
-			builder.Services.AddSingleton<Channel<Arma3PayloadBinaryContent>>(_ => Channel.CreateUnbounded<Arma3PayloadBinaryContent>());
+			builder.Services.AddSingleton<Channel<Arma3PayloadBinaryContent>>(_ => Channel.CreateUnbounded<Arma3PayloadBinaryContent>(new UnboundedChannelOptions
+			{
+				SingleReader = true,
+			}));
 			builder.Services.AddSingleton<ConcurrentDictionary<string, Content>>(_ => new());
 			builder.Services.AddSingleton<ConcurrentDictionary<string, Channel<Arma3PayloadBinaryContent>>>(_ => new());
 
