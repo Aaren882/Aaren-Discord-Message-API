@@ -164,30 +164,11 @@ public sealed class WebSocketService(
 			_connectionWorkers.Count
 		);
 	}
-	/* public async Task StopAsync(CancellationToken cancellationToken)
-	{
-		try
-		{
-			// Signal cancellation to the executing method
-			await _stoppingCts.CancelAsync();
-		}
-		finally
-		{
-			// Wait until the task completes or the stop token triggers
-			var connections = _connectionWorkers.Values.ToAsyncEnumerable()
-				.WithCancellation(cancellationToken);
-
-			await foreach (var connection in connections)
-			{
-				await connection.CloseAsync();
-			}
-		}
-
-		logger.LogInformation("WebSocket Has Stopped Listening...");
-	} */
-	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+	protected override Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		logger.LogInformation("WebSocket is Listening now");
 		_cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+
+		return Task.CompletedTask;
 	}
 }

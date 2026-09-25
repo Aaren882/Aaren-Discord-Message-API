@@ -11,6 +11,7 @@ using static ExtensionComponents.ExtensionStartup;
 
 namespace ServiceConnection.WebService;
 
+#pragma warning disable CDT1004
 public sealed class ServiceInteractions
 {
 	private const string Secret = "secret.json";
