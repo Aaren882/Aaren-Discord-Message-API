@@ -20,24 +20,37 @@ public sealed class WebsocketClient(
 
 	public override void PostReceived(in Stream assembledStream, WebSocketMessageType messageType)
 	{
-		using StreamReader reader = new(assembledStream, Encoding.UTF8);
-		var receivedMessage = reader.ReadToEnd();
-		if (string.IsNullOrEmpty(receivedMessage))
+		try
 		{
-			Logger.LogWarning("Received empty \"{MessageType}\" Message.", messageType);
-			return;
-		}
+			if (assembledStream.Length == 0)
+			{
+				Logger.LogWarning("Received empty \"{MessageType}\" Message.", messageType);
+				return;
+			}
 
-		var payload = JsonSerializer.Deserialize(
-			receivedMessage,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		)!;
+			var payload = JsonSerializer.Deserialize(
+				assembledStream,
+				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+			)!;
 		if (payload is Arma3PayloadServiceRequest request)
 		{
 			Task.Run(async () => await serviceRequestHandler.RespondRequest(request), CancellationToken)
 				.GetAwaiter().GetResult();
 		}
 		MessageReceived?.Invoke(payload);
+		}
+		catch (Exception ex) when (ex is InvalidOperationException || ex is NotSupportedException)
+		{
+			Logger.LogWarning(ex, "Failed to process message due to invalid operation or unsupported type.");
+		}
+		catch (Exception e) when (e is JsonException || e is OverflowException)
+		{
+			Logger.LogWarning(e, "Something went wrong during/after parsing incoming payload.");
+		}
+		catch (Exception e)
+		{
+			Logger.LogError(e, "Fatal Exception: ");
+		}
 	}
 	public async ValueTask SendBinaryAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary)
 	{

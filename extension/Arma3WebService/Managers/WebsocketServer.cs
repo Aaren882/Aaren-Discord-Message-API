@@ -26,16 +26,14 @@ public sealed class WebsocketServer(
 	{
 		try
 		{
-			using StreamReader reader = new(assembledStream, Encoding.UTF8);
-			var receivedMessage = reader.ReadToEnd();
-			if (string.IsNullOrEmpty(receivedMessage))
+			if (assembledStream.Length == 0)
 			{
 				Logger.LogTrace("\"{Identity}\" : Received empty \"{MessageType}\" Message.", websocketContext.GetIdentity(), messageType.ToString());
 				return;
 			}
 
 			var payload = JsonSerializer.Deserialize(
-				receivedMessage,
+				assembledStream,
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
 

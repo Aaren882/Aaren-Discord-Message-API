@@ -14,25 +14,8 @@ public class WebSocketStateMachine : IDisposable
 		Abort, //- _websocket is exist but with no connection (can be aborted)
 		Idle, Text, Binary //- Working States
 	}
-	public readonly record struct OutboundMessage(ReadOnlyMemory<byte> _messageBytes, WebSocketMessageType _messageType, bool _endOfMessage)
-	{
-		public void Deconstruct(out ReadOnlyMemory<byte> MessageBytes, out WebSocketMessageType MessageType, out bool EndOfMessage)
-		{
-			MessageBytes = _messageBytes;
-			MessageType = _messageType;
-			EndOfMessage = _endOfMessage;
-		}
-	}
-
-	public readonly record struct InboundMessage(ReadOnlyMemory<byte> _bytes, WebSocketMessageType _messageType, bool _endOfMessage)
-	{
-		public void Deconstruct(out ReadOnlyMemory<byte> Bytes, out WebSocketMessageType MessageType, out bool EndOfMessage)
-		{
-			Bytes = _bytes;
-			MessageType = _messageType;
-			EndOfMessage = _endOfMessage;
-		}
-	}
+	public readonly record struct OutboundMessage(ReadOnlyMemory<byte> messageBytes, WebSocketMessageType messageType, bool endOfMessage);
+	public readonly record struct InboundMessage(ReadOnlyMemory<byte> bytes, WebSocketMessageType messageType, bool endOfMessage);
 
 	private Task? _mainLoop { get; set; }
 	private WebSocket? _webSocket;
