@@ -157,7 +157,7 @@ namespace Arma3WebService
 			builder.Services
 				.AddAuthentication()
 				.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme)
-				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
+				.AddScheme<AuthenticationSchemeOptions, BearerAuthenticationHandler>("BasicAuth", null);
 			builder.Services.ConfigureOptions<JwtConfigureOptions>();
 
 			//- Resource monitor

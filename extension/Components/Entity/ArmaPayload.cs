@@ -135,18 +135,9 @@ public record Arma3PayloadServiceRequest
 	public override Arma3PayLoadType Type => Arma3PayLoadType.ServiceRequest;
 };
 
-//- Service
-public record struct ServiceAuthenticationHeader(
-	string Username,
-	string Password
-)
-{
-	public override string ToString()
-	{
-		var usernamePassword = string.Join(':', [Username, Password]);
-		return Convert.ToBase64String(Encoding.UTF8.GetBytes(usernamePassword));
-	}
-};
+//- Service Secret
+public readonly record struct ServiceAuthenticationHeader(string ApiKey);
+
 public record Arma3ServiceSecret(
 	string ServiceUri,
 	string WebSocketServiceUri,
