@@ -213,7 +213,7 @@ public sealed class ServiceInteractions
 			ExpireMinute = 15,
 			ProfileDateOffsets = profileConfig.GetDateOffsets()
 		};
-		var jsonPayload = JsonSerializer.Serialize(
+		var jsonPayload = JsonSerializer.SerializeToUtf8Bytes(
 			payload,
 			IdentityRolesPayloadJsonSerializerContext.Default.IdentityRolesPayload
 		);
@@ -230,12 +230,11 @@ public sealed class ServiceInteractions
 			byte[]? ResponseContentBytes = null;
 			try
 			{
+				using ReadOnlyMemoryContent content = new(jsonPayload);
+				content.Headers.ContentType = new(MediaTypeNames.Application.Json);
 				using var response = await APIRequest.PostRequest(
 					ServiceSecret.ServiceUri + "/api/token",
-					content: new StringContent(
-						jsonPayload,
-						Encoding.UTF8, MediaTypeNames.Application.Json
-					),
+					content: content,
 					authHeader: new AuthenticationHeaderValue(
 						"Bearer",
 						ServiceSecret.Secret.ApiKey
@@ -338,9 +337,5 @@ public sealed class ServiceInteractions
 
 		Logger.LogTrace("GetServiceSecret : {Secret}", secretString);
 		return tokenPayload;
-	}
-	private string GetBasicAuthenticationBearer(Arma3ServiceSecret serviceSecret)
-	{
-		return serviceSecret.Secret.ToString();
 	}
 }
