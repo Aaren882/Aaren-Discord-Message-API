@@ -167,15 +167,29 @@ public sealed class WebsocketClient(
 
 		await webSocket.ConnectAsync(new(uri), CancellationToken);
 		Logger.LogInformation("Connected to server.");
-		Connected?.Invoke();
+
+		try
+		{
+			Connected?.Invoke();
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "WebSocket connected event threw an exception.");
+		}
 
 		WebSocketStateMachine = new(this, Logger);
-		_ = WebSocketStateMachine.StartAsync(webSocket); //- Don't block the thread (Client-Side)
-	}
-	public override async Task CloseAsync()
-	{
-		await base.CloseAsync();
-		Disconnected?.Invoke();
-		Logger.LogInformation("Disconnected from server.");
+		_ = WebSocketStateMachine.StartAsync(webSocket) //- Don't block the thread (Client-Side)
+			.ContinueWith(_ =>
+			{
+				Logger.LogInformation("Disconnected from server.");
+				try
+				{
+					Disconnected?.Invoke();
+				}
+				catch (Exception e)
+				{
+					logger.LogError(e, "WebSocket disconnected event threw an exception.");
+				}
+			});
 	}
 }
