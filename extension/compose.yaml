@@ -10,7 +10,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_HTTP_PORTS=${HTTP_PORTS:-5048}
-      - Jwt_Secret=${JWT_SECRET} # Useful Tool: https://it-tools.tech/token-generator
+      
+      # Useful Tool: https://it-tools.tech/token-generator
+      - Jwt_Secret=${JWT_SECRET} 
+      - APIKey=${API_Key}
 
       # (Database)
       - DB_PROVIDER=${DB_PROVIDER:-SQLite} # SQLite , MySQL , NpgSQL

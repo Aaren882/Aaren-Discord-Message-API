@@ -12,14 +12,14 @@ namespace Arma3WebService.Identities;
 
 public sealed class JwtHelpers(
 	IConfiguration configuration,
-	IServiceProvider serviceProvider,
 	IdentityCheckService identityCheckService,
 	ILogger<JwtHelpers> logger
 )
 {
 	private readonly string issuer = configuration["Jwt:Issuer"]!;
 	private readonly string audience = configuration["Jwt:Audience"]!;
-	private readonly string signKey = Environment.GetEnvironmentVariable("Jwt_Secret") ?? configuration["Jwt:Secret"]!;
+	private readonly string signKey = Environment.GetEnvironmentVariable("Jwt_Secret") ?? configuration["Jwt:Secret"]
+		?? throw new InvalidOperationException("JWT signing secret not configured in environment or application settings.");
 
 	public async Task<IdentityRolesReturnPayload> GenerateToken(IdentityRolesPayload payload)
 	{

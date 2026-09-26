@@ -19,7 +19,7 @@ namespace Arma3WebService.Handler
 		) : base(options, logger, encoder)
 		{
 			ApiKey = Environment.GetEnvironmentVariable("APIKey") ?? configuration["APIKey"]
-				?? throw new AuthenticationFailureException("API Key not configured");
+				?? throw new InvalidOperationException("API Key not configured in environment or application settings.");
 
 			_logger = logger.CreateLogger("BasicAuthenticationHandler");
 		}
