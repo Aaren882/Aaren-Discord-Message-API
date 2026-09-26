@@ -6,24 +6,21 @@ using Microsoft.Extensions.Options;
 
 namespace Arma3WebService.Handler
 {
-	public class BasicAuthenticationHandler: AuthenticationHandler<AuthenticationSchemeOptions>
+	public class BearerAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 	{
-		private readonly ServiceAuthenticationHeader _header;
-		private readonly string _HashedKey;
+		private readonly string ApiKey;
 		private readonly ILogger _logger;
 
-		public BasicAuthenticationHandler(
+		public BearerAuthenticationHandler(
 			IOptionsMonitor<AuthenticationSchemeOptions> options,
 			ILoggerFactory logger,
 			UrlEncoder encoder,
 			IConfiguration configuration
 		) : base(options, logger, encoder)
 		{
-			var username = Environment.GetEnvironmentVariable("TokenManagerName")  ?? configuration["TokenManagerName"]!;
-            var password = Environment.GetEnvironmentVariable("TokenManagerPassword")  ?? configuration["TokenManagerPassword"]!;
+			ApiKey = Environment.GetEnvironmentVariable("APIKey") ?? configuration["APIKey"]
+				?? throw new AuthenticationFailureException("API Key not configured");
 
-            _header = new ServiceAuthenticationHeader(username, password);
-			_HashedKey = _header.ToString();
 			_logger = logger.CreateLogger("BasicAuthenticationHandler");
 		}
 
@@ -31,22 +28,21 @@ namespace Arma3WebService.Handler
 		{
 			var authorizationHeader = Request.Headers.Authorization.ToString();
 
-			if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Basic "))
+			if (string.IsNullOrEmpty(authorizationHeader) || !authorizationHeader.StartsWith("Bearer "))
 			{
-				return AuthenticateResult.Fail("Missing Basic Auth header");
+				return AuthenticateResult.Fail("Missing Bearer Auth header");
 			}
-			
-			var encodedUsernamePassword = authorizationHeader.Substring("Basic ".Length).Trim();
-			
+
+			var requestKey = authorizationHeader.Substring("Bearer ".Length).Trim();
+
 			//- Check Authentication
-			if (_HashedKey != encodedUsernamePassword)
+			if (requestKey != ApiKey)
 				return AuthenticateResult.Fail("Invalid credentials");
-			
+
 			_logger.LogInformation("\"Arma Token Manager Request is Authenticated.\"");
 
 			// Generate the JWT token upon successful validation
 			var claims = new[] {
-				new Claim(ClaimTypes.Name, _header.Username),
 				//#NOTE : In game server request
 				new Claim(ClaimTypes.NameIdentifier, IdentityRoles.GameServerGuid.ToString())
 			};

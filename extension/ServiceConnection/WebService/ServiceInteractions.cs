@@ -237,8 +237,8 @@ public sealed class ServiceInteractions
 						Encoding.UTF8, MediaTypeNames.Application.Json
 					),
 					authHeader: new AuthenticationHeaderValue(
-						"Basic",
-						GetBasicAuthenticationBearer(ServiceSecret)
+						"Bearer",
+						ServiceSecret.Secret.ApiKey
 					)
 				);
 
