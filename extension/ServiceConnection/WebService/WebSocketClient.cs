@@ -113,7 +113,7 @@ public sealed class WebsocketClient(
 		var charCount = 0;
 
 		Arma3PayloadBinaryContent content;
-		byte[] bytes;
+		ReadOnlyMemory<byte> bytes;
 		foreach (var (line, i) in lastLines.Select((value, i) => (value, i)))
 		{
 			var wLine = line + "\n";

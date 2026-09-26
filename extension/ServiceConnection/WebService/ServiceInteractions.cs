@@ -121,6 +121,12 @@ public sealed class ServiceInteractions
 	internal ValueTask SendWebSocketMessageAsync(string messageJson)
 		=> WsClient.SendAsync(messageJson, WebSocketMessageType.Text, true);
 
+	public ValueTask SendWebSocketMessage(ReadOnlyMemory<byte> message)
+		=> SendWebSocketMessageAsync(message);
+
+	internal ValueTask SendWebSocketMessageAsync(ReadOnlyMemory<byte> message)
+		=> WsClient.SendAsync(message, WebSocketMessageType.Text, true);
+
 	public async Task SendWebSocketBinaries(Dictionary<string, string> binaryDict)
 	{
 		Logger.LogInformation("Start Sending binaries.");
@@ -141,8 +147,8 @@ public sealed class ServiceInteractions
 			new UpdateAndSaveProfile(payloadBinaries, configuration)
 		);
 
-		var configStr = payloadUpdateDB.ToJsonString();
-		await WsClient.SendAsync(configStr, WebSocketMessageType.Text, true);
+		var configByte = payloadUpdateDB.ToJsonBytes();
+		await WsClient.SendAsync(configByte, WebSocketMessageType.Text, true);
 
 		foreach (var (payloadBinary, index) in payloadBinaries.Select((v, i) => (v, i)))
 		{

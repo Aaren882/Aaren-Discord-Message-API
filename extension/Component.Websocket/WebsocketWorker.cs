@@ -74,12 +74,12 @@ public abstract class WebsocketWorker : IWebsocketWorker
 		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 		return TrySend(Encoding.UTF8.GetBytes(payload), messageType, endOfMessage);
 	}
-	public ValueTask SendAsync(byte[] payload, WebSocketMessageType messageType, bool endOfMessage)
+	public ValueTask SendAsync(ReadOnlyMemory<byte> payload, WebSocketMessageType messageType, bool endOfMessage)
 	{
 		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 		return WebSocketStateMachine.SendMessageAsync(payload, messageType, endOfMessage);
 	}
-	public bool TrySend(byte[] payload, WebSocketMessageType messageType, bool endOfMessage)
+	public bool TrySend(ReadOnlyMemory<byte> payload, WebSocketMessageType messageType, bool endOfMessage)
 	{
 		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 		return WebSocketStateMachine.TrySendMessage(payload, messageType, endOfMessage);

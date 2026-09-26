@@ -47,8 +47,7 @@ namespace DiscordMessageAPI
 			{
 				{ "{MISSION_NAME}", "Mission Name" }
 			});
-			// var payload = new Arma3PayloadJson(jsonObj.ToString());
-			var message = payload.ToJsonString();
+			var message = payload.ToJsonBytes();
 			await serviceInteractions.SendWebSocketMessage(message);
 
 			Console.ReadKey();

@@ -32,7 +32,7 @@ public abstract record Arma3Payload
 	public abstract Arma3PayLoadType Type { get; }
 	public string ToJsonString()
 		=> JsonSerializer.Serialize(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-	public byte[] ToJsonBytes()
+	public ReadOnlyMemory<byte> ToJsonBytes()
 		=> JsonSerializer.SerializeToUtf8Bytes(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
 }
 

@@ -26,11 +26,11 @@ public sealed class ServiceActionManager(
 {
 	public ValueTask CallBackAction(WebsocketServer connection, Arma3PayloadCallBack command)
 	{
-		return connection.SendAsync(command.ToJsonString(), WebSocketMessageType.Text, true);
+		return connection.SendAsync(command.ToJsonBytes(), WebSocketMessageType.Text, true);
 	}
 	public ValueTask TextAction(WebsocketServer connection, Arma3PayloadText payload)
 	{
-		return connection.SendAsync(payload.ToJsonString(), WebSocketMessageType.Text, true);
+		return connection.SendAsync(payload.ToJsonBytes(), WebSocketMessageType.Text, true);
 	}
 
 	public async ValueTask UpdateDBAction(WebsocketServer connection, Arma3PayloadUpdateDB payload)
