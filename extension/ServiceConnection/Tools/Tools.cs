@@ -1,6 +1,3 @@
-using System.Text.Json;
-using Components.Entity;
-using ExtensionComponents.Entity;
 using static ExtensionComponents.ExtensionStartup;
 using static ExtensionComponents.Tools.Util;
 using static ServiceConnection.ServiceStartup;
@@ -66,11 +63,5 @@ public static class Util
 			.MaxBy(x => x.CreationTime);
 
 		return fileInfo?.FullName ?? throw new NullReferenceException($"No file exist in : {path}");
-	}
-
-	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)
-	{
-		var data = payload.ToJsonString();
-		return extensionCallback("DISCORD_API", ((int)payload.Type).ToString(), data);
 	}
 }
