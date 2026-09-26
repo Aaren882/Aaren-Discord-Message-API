@@ -32,12 +32,14 @@ public sealed class WebsocketClient(
 				assembledStream,
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
-		if (payload is Arma3PayloadServiceRequest request)
-		{
-			Task.Run(async () => await serviceRequestHandler.RespondRequest(request), CancellationToken)
-				.GetAwaiter().GetResult();
-		}
-		MessageReceived?.Invoke(payload);
+
+			//- Processing Requests
+			if (payload is Arma3PayloadServiceRequest request)
+			{
+				if (!serviceRequestHandler.TryAddRequest(request))
+					throw new OverflowException("Service request limit exceeded. Cannot process new requests.");
+			}
+			MessageReceived?.Invoke(payload);
 		}
 		catch (Exception ex) when (ex is InvalidOperationException || ex is NotSupportedException)
 		{
