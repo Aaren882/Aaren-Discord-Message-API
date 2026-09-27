@@ -26,6 +26,6 @@ Easy JSON payload.
 [send-json-payload.md](send-json-payload.md)
 {% endcontent-ref %}
 
-<figure><img src="../../../.gitbook/assets/image (14).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/image (13).png" alt="" width="563"><figcaption><p>Working Reference</p></figcaption></figure>
 
 ***

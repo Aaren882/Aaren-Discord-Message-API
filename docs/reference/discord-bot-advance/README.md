@@ -19,7 +19,7 @@ Unlike basic webhook implementations, this backend provides a robust infrastruct
 * **Log Handling**: Facilitates the streaming of RPT logs or downloading them directly to your staff channels.
 * **Real-Time Game Monitoring**: Better customizations and more reliable status reports.
 
-<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (4).png" alt="" width="563"><figcaption><p>Interactive Discord Message</p></figcaption></figure></div>
+<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (14).png" alt="" width="563"><figcaption><p>Interactive Discord Message</p></figcaption></figure></div>
 
 ### :tools: Start hosting your own bot
 
