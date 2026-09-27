@@ -15,7 +15,11 @@ public static class LoggerBase
 	private readonly static ILogger SystemLogger = LoggerFactory.Create(builder => builder.UseDefaultFileLogger()).CreateLogger("SYSTEM");
 	public static ILoggingBuilder UseDefaultFileLogger(this ILoggingBuilder Builder)
 	{
+#if DEBUG
 		Builder.SetMinimumLevel(LogLevel.Trace);
+#else
+		Builder.SetMinimumLevel(LogLevel.Information);
+#endif
 		Builder.AddZLoggerFile(
 			LogFileName,
 			options =>
