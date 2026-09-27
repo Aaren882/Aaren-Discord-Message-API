@@ -77,6 +77,7 @@ public sealed class EntryDelegates : EntryDelegatesBase
 		);
 		Util.CallExtensionCallback(Callback, profileUpdated);
 
+		output.Append(rptDir);
 		return 1;
 	}
 	internal static int GetCurrentRpt(IOutputBuilder output, string[] args, int argCount)
