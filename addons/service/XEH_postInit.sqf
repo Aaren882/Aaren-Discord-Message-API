@@ -1,5 +1,8 @@
 #include "script_component.hpp"
 
+//- Catch SP
+if (!GVAR(Connect_On_SP) && !isMultiplayer) exitWith {};
+
 private _ServerName = serverName;
 _ServerName = [
   _ServerName,
@@ -8,13 +11,16 @@ _ServerName = [
 
 localNamespace setVariable [QGVAR(serverName), _ServerName];
 
+INFO_1("DISCORD_API [PostInit] || Register ServerName ""%1"".",_ServerName);
+INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...");
+
 //- Register interactive events
 [QGVAR(StartConnection), FUNC(StartConnection)] call CBA_fnc_addEventHandler;
 [QGVAR(StopConnection), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
 
-[QGVARMAIN(postInit_Server), {
+["CBA_settingsInitialized", {
 
-  INFO("DISCORD_API [CallBack Init]");
+  INFO("DISCORD_API [PostInit] || ""CBA_settingsInitialized""");
   
   //- Start Socket Connection
     call FUNC(StartConnection);
@@ -76,7 +82,7 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
     };
   }];
 
-  INFO("DISCORD_API [Server Info Init]");
+  INFO("DISCORD_API [Server Info Init] || Start Sending Telemetries");
   call FUNC(ServerInfo_Loop);
   
   //- Check Server Entry & Exit
@@ -145,3 +151,5 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   INFO_1("RptDirectoryUpdated : %1",_this);
 
 }] call CBA_fnc_addEventHandler;
+
+INFO("DISCORD_API [PostInit] || ""Interactive events components"" Registered.");
