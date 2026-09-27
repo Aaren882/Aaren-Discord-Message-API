@@ -5,3 +5,18 @@ hemtt
 hemtt.exe
 *.biprivatekey
 releases
+
+# Extension
+*.dll
+!DiscordMessageAPI_x64.dll
+*.so
+!DiscordMessageAPI_x64.so
+
+*.dll.*
+*.pdb
+*.env
+
+extension/featureTest/Discord_Message_API/*
+
+# Github Local Actions
+.act/

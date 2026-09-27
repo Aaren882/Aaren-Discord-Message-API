@@ -1,4 +1,4 @@
-#define LOCAL_STR(STRING) localize ("STR_Discord_MSG_" + STRING)
+#include "script_component.hpp"
 
 [
   "DiscordMsg_API_Delay", "TIME", 

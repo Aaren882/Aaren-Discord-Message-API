@@ -1,0 +1,155 @@
+#include "script_component.hpp"
+
+//- Catch SP
+if (!GVAR(Connect_On_SP) && !isMultiplayer) exitWith {};
+
+private _ServerName = serverName;
+_ServerName = [
+  _ServerName,
+  format ["SP_Server %1", profileName]
+] select (_ServerName == "");
+
+localNamespace setVariable [QGVAR(serverName), _ServerName];
+
+INFO_1("DISCORD_API [PostInit] || Register ServerName ""%1"".",_ServerName);
+INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...");
+
+//- Register interactive events
+[QGVAR(StartConnection), FUNC(StartConnection)] call CBA_fnc_addEventHandler;
+[QGVAR(StopConnection), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
+
+["CBA_settingsInitialized", {
+
+  INFO("DISCORD_API [PostInit] || ""CBA_settingsInitialized""");
+  
+  //- Start Socket Connection
+    call FUNC(StartConnection);
+  
+  //- Setup callBack tunnel
+  addMissionEventHandler ["ExtensionCallback", 
+  {
+    params ["_name", "_callBackType", "_data"];
+    if (_name isNotEqualTo "DISCORD_API") exitWith {}; //- Check source
+
+    TRACE_1("ExtensionCallback",_data);
+    private _props = fromJSON _data;
+
+    //- Specify callback Type
+    switch (parseNumber _callBackType) do {
+      case __Text__: {
+        private _message = _props getOrDefault ["Message",""];
+        
+        INFO_1("DISCORD_API [CallBack Text] || Message : %1",_message);
+      };
+      
+      case __Rpt__: {
+        /*
+        string FileName,
+        long FileSize,
+        DateTime CreatedTime,
+        int TotalChunks
+        */
+        private _fileName = _props getOrDefault ["FileName",""];
+        private _fileSize = _props getOrDefault ["FileSize",0];
+        private _createdTime = _props getOrDefault ["CreatedTime",""];
+        private _totalChunks = _props getOrDefault ["TotalChunks",0];
+        INFO_4("DISCORD_API [CallBack Rpt] || _FileName : %1 , _FileSize : %2 , _CreatedTime : %3 , _TotalChunks : %4",_fileName,_fileSize,_createdTime,_totalChunks);
+      };
+      
+      case __Command__: {
+        private _eventName = _props getOrDefault ["Function",""];
+        private _dta = _props getOrDefault ["Data", "[]"];
+
+        private _event = QUOTE(ADDON) + "_" + _eventName;
+        INFO_1("DISCORD_API [CallBack Command] || Event : %1",_event);
+        TRACE_2("DISCORD_API [CallBack Command] || Event : %1 , Data : %2",_event,_dta);
+
+        [_event, fromJSON _dta] call CBA_fnc_localEvent;
+      };
+
+      //- Structured Data
+      case __JsonString__: {
+        private _jsonString = _props getOrDefault ["JsonString","{}"];
+        INFO_1("DISCORD_API [CallBack JsonString] || JsonString : %1",_jsonString);
+      };
+      case __FlatJsonString__: {
+        private _flatJsonString = _props getOrDefault ["FlatJsonString",[]];
+        INFO_1("DISCORD_API [CallBack FlatJsonString] || FlatJsonString : %1",_flatJsonString);
+      };
+      default {
+        ERROR_1("Invalid callback type ""%1""",_callBackType);
+      };
+    };
+  }];
+
+  INFO("DISCORD_API [Server Info Init] || Start Sending Telemetries");
+  call FUNC(ServerInfo_Loop);
+  
+  //- Check Server Entry & Exit
+  addMissionEventHandler ["PlayerConnected", {
+    [true] call EFUNC(webhook,Update_ServerInfo);
+  }];
+  addMissionEventHandler ["HandleDisconnect", {
+    [true] call EFUNC(webhook,Update_ServerInfo);
+  }];
+  addMissionEventHandler ["OnUserAdminStateChanged", {
+    params ["_networkId", "_loggedIn", "_votedIn"];
+
+    //- Setup Admin panel (on diary)
+    [
+      _networkId, 
+      ["logout", "login"] select _loggedIn
+    ] call FUNC(AdminPanel);
+
+    //- Add CBA Addon Option
+    if (!_loggedIn) exitWith {};
+    private _ownerId = _networkId getUserInfo 1;
+    INFO_1("Admin ""%1"" logged in. Syncing profiles...",_networkId);
+    private _profileFileNames = uiNamespace getVariable [QGVAR(profileFileNames), []];
+    TRACE_1("profileFileNames",_profileFileNames);
+    
+    [_profileFileNames] remoteExecCall [QFUNC(AddCBASettings), _ownerId];
+  }];
+}] call CBA_fnc_addEventHandler;
+
+[QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
+[QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
+[QGVAR(AdminBroadcast), {
+  params ["_msg"];
+  INFO_1("AdminBroadcast ""%1""",_this);
+  [_msg] remoteExec ["BIS_fnc_infoText"];
+}] call CBA_fnc_addEventHandler;
+[QGVAR(AdminMpCommand), {
+  params ["_data","_callerGlobalName","_callerId"];
+  _data params ["_password","_cmd"];
+  INFO_2("Admin MP Command by ""%1 | Discord Id : %2""",_callerGlobalName,_callerId);
+
+  private _passwordWasOK = _password serverCommand _cmd;
+  if (_passwordWasOK) then
+  {
+    WARNING_2("MP Command by Admin ""%1:%2""",_callerGlobalName,_callerId);
+  } else
+  {
+    WARNING_2("Failed MP Command Attempt by Admin ""%1:%2""",_callerGlobalName,_callerId);
+  }
+}] call CBA_fnc_addEventHandler;
+
+[QGVAR(ServiceAccessResult), {
+  INFO_1("ServiceAccessResult : %1",_this);
+  
+  //- Wait for websocket connection
+  [
+    {GVAR(Available)}, {
+      params ["_successful","_returnPayloadString"];
+      INFO_1("[ServiceAccessResult]: Profile configuration received %1",_returnPayloadString);
+  }, _this, 10, {
+    WARNING("ServiceAccessResult callback wait timeout. It seems the service is not responding or taking too long to respond.");
+  }] call CBA_fnc_waitUntilAndExecute;
+}] call CBA_fnc_addEventHandler;
+
+[QGVAR(RptDirectoryUpdated), {
+  INFO_1("RptDirectoryUpdated : %1",_this);
+
+}] call CBA_fnc_addEventHandler;
+
+INFO("DISCORD_API [PostInit] || ""Interactive events components"" Registered.");

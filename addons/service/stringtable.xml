@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="Discord_SERVICE">
+	<Package name="Localized_Descriptions">
+    <Key ID="str_discordapi_service_profile">
+      <Original>Service Profile</Original>
+      <Chinese>服務設定檔</Chinese>
+    </Key>
+    <Key ID="str_discordapi_service_connect_on_sp">
+      <Original>Connect on SP</Original>
+      <Chinese>在單人遊戲(SP)時連接</Chinese>
+    </Key>
+    <Key ID="str_discordapi_service_connect_on_sp_tooltip">
+      <Original>This is primary used on Development.</Original>
+      <Chinese>主要用於開發環境</Chinese>
+    </Key>
+  </Package>
+</Project>

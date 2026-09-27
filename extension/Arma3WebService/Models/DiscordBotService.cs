@@ -1,0 +1,247 @@
+using System.Text.Json;
+using Arma3WebService.Entity.DiscordBotAction;
+using Arma3WebService.Managers;
+using Component.DiscordEntity;
+using Discord;
+using Discord.Interactions;
+using Discord.WebSocket;
+
+namespace Arma3WebService.Models;
+
+public enum DiscordBotChannel
+{
+	Monitor,
+	AdminConsole,
+	AdminLogging,
+	Logging,
+}
+
+public interface IDiscordBotService
+{
+	public ulong GetPresetMessageChannelId(DiscordBotChannel channelType);
+	public Task<IMessageChannel> GetMessageChannelAsync(ulong channelID);
+	public Task<string?> GetPermanentUrlAsync(ulong channelId, ulong messageId);
+	// public DiscordSocketClient GetClient();
+	public Task<byte[]> SendLocalFile(string text);
+	public Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message);
+	public Task<IUserMessage> SendMessageAsync(ulong channelId, DiscordMessageDto message);
+}
+
+public sealed class DiscordBotService(
+	DiscordSocketClient client,
+	ILogger<DiscordBotService> logger,
+	RemoteStateManager remoteStateManager,
+	IConfiguration configuration
+) : BackgroundService, IDiscordBotService
+{
+	private readonly ulong _monitorChannel = ulong.Parse(Environment.GetEnvironmentVariable("MonitorChannel") ?? configuration["MonitorChannel"]!);
+	private readonly ulong _adminChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminChannel") ?? configuration["AdminChannel"]!);
+	private readonly ulong _adminLoggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("AdminLoggingChannel") ?? configuration["AdminLoggingChannel"]!);
+	private readonly ulong _loggingChannel = ulong.Parse(Environment.GetEnvironmentVariable("LoggingChannel") ?? configuration["LoggingChannel"]!);
+
+	protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+	{
+		await client.LoginAsync(
+			TokenType.Bot,
+			Environment.GetEnvironmentVariable("BotToken") ?? configuration["BotToken"]
+		);
+		await client.StartAsync();
+
+		client.Log += Log;
+		client.ModalSubmitted += async (socketModal) =>
+		{
+			//- Block all AdminConsole's request
+			if (socketModal.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
+			/* try // (Not Working)
+			{
+				var json = await File.ReadAllTextAsync("testBotModal.json", stoppingToken);
+				var deserialize = JsonSerializer.Deserialize(
+					json,
+					DiscordBotActionJsonSerializerContext.Default.DiscordBotModalInteraction
+				);
+				await deserialize!.Execute(socketModal);
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e, "ModalSubmitted :");
+				await socketModal.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
+			}*/
+		};
+		client.ButtonExecuted += async (component) =>
+		{
+			//- Block all AdminConsole's request
+			if (component.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
+			try
+			{
+				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
+				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
+				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+				var deserialize = JsonSerializer.Deserialize(
+					json,
+					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
+				);
+
+				await deserialize!.Execute(component);
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e, "ButtonExecuted :");
+				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
+			}
+		};
+		client.SelectMenuExecuted += async (component) =>
+		{
+			//- Block all AdminConsole's request
+			if (component.Message.Id == AdminConsoleManager.AdminMessage?.Id)
+				return;
+			try
+			{
+				var currentTemplate = await remoteStateManager.GetServerInfoTemplateAsync(component.Message.Id);
+				if (currentTemplate.messageActionPath is null) throw new NullReferenceException("\"ActionTemplate\" for this message is not exist.");
+				var json = await File.ReadAllTextAsync(currentTemplate.messageActionPath, stoppingToken);
+				var deserialize = JsonSerializer.Deserialize(
+					json,
+					DiscordBotActionJsonSerializerContext.Default.DiscordBotInteraction
+				);
+				await deserialize!.Execute(component);
+			}
+			catch (Exception e)
+			{
+				logger.LogError(e, "SelectMenuExecuted :");
+				await component.RespondAsync(text: $"```diff\n\n- Exception : {e.Message}```", ephemeral: true);
+			}
+		};
+	}
+
+	public async Task<IUserMessage> ModifyMessageAsync(ulong messageID, DiscordMessageDto message)
+	{
+		var channel = await GetMessageChannelAsync(_monitorChannel);
+
+		var modifyResult = await channel!.ModifyMessageAsync(messageID, msg =>
+		{
+			msg.Content = message.Content;
+			msg.Embeds = message.ConvertEmbeds();
+			msg.Components = message.ConvertComponents();
+			msg.Flags = message.Flags;
+		});
+
+		return modifyResult;
+	}
+	public async Task<string?> GetPermanentUrlAsync(ulong channelId, ulong messageId)
+	{
+		var channel = await GetMessageChannelAsync(channelId);
+		var message = await channel.GetMessageAsync(messageId);
+
+		if (message != null && message.Attachments.Count != 0)
+		{
+			return message.Attachments.First().Url;
+		}
+
+		return null;
+	}
+
+	public async Task<IMessageChannel> GetMessageChannelAsync(ulong channelID)
+	{
+		var channel = await client.GetChannelAsync(channelID) as IMessageChannel;
+		return channel ?? throw new NullReferenceException($"Channel {channelID} not found");
+	}
+	public ulong GetPresetMessageChannelId(DiscordBotChannel channelType)
+	{
+		var channelId = channelType switch
+		{
+			DiscordBotChannel.Monitor => _monitorChannel,
+			DiscordBotChannel.AdminConsole => _adminChannel,
+			DiscordBotChannel.AdminLogging => _adminLoggingChannel,
+			DiscordBotChannel.Logging => _loggingChannel,
+			_ => throw new ArgumentOutOfRangeException(nameof(channelType), channelType, null)
+		};
+		return channelId;
+	}
+
+	public async Task<IUserMessage> SendMessageAsync(ulong channelId, DiscordMessageDto message)
+	{
+		var channel = await GetMessageChannelAsync(channelId);
+
+		var component = message.ConvertComponents();
+		var embeds = message.ConvertEmbeds();
+
+		var sentMessage = (message) switch
+		{
+			{ Attachments: not null } => channel
+				.SendFilesAsync(
+					message.Attachments,
+					text: message.Content,
+					isTTS: message.Tts ?? false,
+					embeds: embeds,
+					components: component,
+					flags: message.Flags
+				),
+			{ File: not null } => channel
+				.SendFileAsync(
+					filePath: message.File,
+					text: message.Content,
+					isTTS: message.Tts ?? false,
+					embeds: embeds,
+					components: component,
+					flags: message.Flags
+				),
+			{ FileStream: not null } => channel
+				.SendFileAsync(
+					stream: message.FileStream,
+					filename: message.FileName,
+					text: message.Content,
+					isTTS: message.Tts ?? false,
+					embeds: embeds,
+					components: component,
+					flags: message.Flags
+				),
+			_ => channel
+				.SendMessageAsync(
+					text: message.Content,
+					isTTS: message.Tts ?? false,
+					embeds: embeds,
+					components: component,
+					flags: message.Flags
+				)
+		};
+
+		return await sentMessage;
+	}
+
+
+
+	public Task<byte[]> SendLocalFile(string filename)
+		=> File.ReadAllBytesAsync(Path.GetFullPath(filename));
+
+
+	private Task Log(LogMessage msg)
+	{
+		var template = $"[{msg.Source}] {msg.Message}";
+
+		// Use the appropriate ILogger method based on Discord's LogSeverity
+		switch (msg.Severity)
+		{
+			case LogSeverity.Critical:
+				logger.LogCritical(msg.Exception, template);
+				break;
+			case LogSeverity.Error:
+				logger.LogError(msg.Exception, template);
+				break;
+			case LogSeverity.Warning:
+				logger.LogWarning(template);
+				break;
+			case LogSeverity.Info:
+				logger.LogInformation(template);
+				break;
+			case LogSeverity.Verbose:
+				logger.LogInformation(template);
+				break;
+			case LogSeverity.Debug:
+				logger.LogDebug(template);
+				break;
+		}
+		return Task.CompletedTask;
+	}
+}

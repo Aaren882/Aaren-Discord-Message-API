@@ -1,3 +1,5 @@
+#include "script_component.hpp"
+
 private _infoVar = missionNamespace getVariable ["DiscordEmbedBuilder_Info",[]];
 if (
   !hasInterface || 
@@ -5,4 +7,4 @@ if (
 ) exitWith {};
 
 systemChat str localize "STR_Discord_MSG_Init_Hint";
-"DiscordMessageAPI" callExtension ["init_player",[_infoVar # 1]];
+"DiscordMessageAPI" callExtension ["Init_Player",[_infoVar # 1]];

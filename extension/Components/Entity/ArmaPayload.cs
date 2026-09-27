@@ -1,0 +1,153 @@
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace Components.Entity;
+
+public enum Arma3PayLoadType
+{
+	Text = 1,
+	Binary = 2,
+	Command = 3,
+	RptLine = 4,
+	JsonString = 5,
+	FlatJsonString = 6,
+	ServiceRequest = 7,
+	BinaryContent,
+	UpdateDB,
+}
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
+[JsonDerivedType(typeof(Arma3PayloadText), (int)Arma3PayLoadType.Text)]
+[JsonDerivedType(typeof(Arma3PayloadBinary), (int)Arma3PayLoadType.Binary)]
+[JsonDerivedType(typeof(Arma3PayloadBinaryContent), (int)Arma3PayLoadType.BinaryContent)]
+[JsonDerivedType(typeof(Arma3PayloadUpdateDB), (int)Arma3PayLoadType.UpdateDB)]
+[JsonDerivedType(typeof(Arma3PayloadCallBack), (int)Arma3PayLoadType.Command)]
+[JsonDerivedType(typeof(Arma3PayloadRptLine), (int)Arma3PayLoadType.RptLine)]
+[JsonDerivedType(typeof(Arma3PayloadJson), (int)Arma3PayLoadType.JsonString)]
+[JsonDerivedType(typeof(Arma3PayloadFlatJsonString), (int)Arma3PayLoadType.FlatJsonString)]
+[JsonDerivedType(typeof(Arma3PayloadServiceRequest), (int)Arma3PayLoadType.ServiceRequest)]
+public abstract record Arma3Payload
+{
+	public abstract Arma3PayLoadType Type { get; }
+	public string ToJsonString()
+		=> JsonSerializer.Serialize(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+	public ReadOnlyMemory<byte> ToJsonBytes()
+		=> JsonSerializer.SerializeToUtf8Bytes(this, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+}
+
+public record Arma3PayloadJson
+(
+	string JsonString
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.JsonString;
+};
+
+public record Arma3PayloadBinary
+(
+	string FileName,
+	long FileSize,
+	DateTime CreatedTime,
+	string? DirectoryPrefix = null
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Binary;
+	public int TotalChunks { get; set; } = 0;
+
+	public string GetIdentifier(string ConnectionIdentity)
+	{
+		return Convert.ToBase64String(Encoding.UTF8.GetBytes(
+				ConnectionIdentity +
+				FileSize +
+				FileName +
+				CreatedTime.ToFileTimeUtc()
+			)
+		);
+	}
+};
+public record Arma3PayloadBinaryContent
+(
+	string Identifier,
+	byte[] Bytes,
+	bool EndOfContent
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.BinaryContent;
+};
+
+public record Arma3PayloadUpdateDB
+(
+	DBConfigAction DBConfigAction
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.UpdateDB;
+};
+
+public record Arma3PayloadRptLine
+(
+	string FileName,
+	DateTime CreatedTime
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.RptLine;
+};
+
+public record Arma3PayloadCallBack(
+	string Function,
+	string Data
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Command;
+};
+
+public record Arma3PayloadText(
+	string Message
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.Text;
+};
+
+public record Arma3PayloadFlatJsonString
+(
+	Dictionary<string, string> FlatJsonString
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.FlatJsonString;
+};
+
+public record Arma3PayloadServiceRequest
+(
+	ushort ActionType,
+	string RequestGuildId,
+	Arma3Payload? Payload = null
+) : Arma3Payload
+{
+	[JsonIgnore]
+	public override Arma3PayLoadType Type => Arma3PayLoadType.ServiceRequest;
+};
+
+//- Service Secret
+public readonly record struct ServiceAuthenticationHeader(string ApiKey);
+
+public record Arma3ServiceSecret(
+	string ServiceUri,
+	string WebSocketServiceUri,
+	ServiceAuthenticationHeader Secret,
+	string? RPT_Directory = null
+);
+
+[JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options
+[
+	JsonSerializable(typeof(Arma3Payload)),
+	JsonSerializable(typeof(Arma3ServiceSecret))
+]
+public sealed partial class Arma3PayloadJsonSerializerContext : JsonSerializerContext;

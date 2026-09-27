@@ -1,163 +1,130 @@
-using RGiesecke.DllExport;
-using System;
-using System.IO;
-using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using ExtensionComponents;
+using ExtensionComponents.Entity;
+using ExtensionComponents.Tools;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace DiscordMessageAPI
+namespace DiscordMessageAPI;
+
+public class DllEntry
 {
-    public class DllEntry
-    {
-        //private static readonly string SessionKey = Tools.GenTimeEncode();
-        public static string InitTime = null;
-        public static bool ExtensionInit = false;
-        public static Webhooks_Storage ALLWebhooks = null;
+	private const ulong RVFeature_ArgumentNoEscapeString = 1UL << 2; // 0x04
 
-        #region Misc RVExtension Requirements
-#if IS_x64
-        [DllExport("RVExtensionVersion", CallingConvention = CallingConvention.Winapi)]
-#else
-        [DllExport("_RVExtensionVersion@8", CallingConvention = CallingConvention.Winapi)]
-#endif
-        public static void RvExtensionVersion(StringBuilder output, int outputSize)
-        {
-            outputSize--;
-            output.Append("1.0.0");
-        }
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionFeatureFlags")]
+	public static ulong RVExtensionFeatureFlags()
+	{
+		return RVFeature_ArgumentNoEscapeString;
+	}
 
-#if IS_x64
-        [DllExport("RVExtension", CallingConvention = CallingConvention.Winapi)]
-#else
-        [DllExport("_RVExtension@12", CallingConvention = CallingConvention.Winapi)]
-#endif
-        public static void RvExtension(StringBuilder output, int outputSize,
-            [MarshalAs(UnmanagedType.LPStr)] string function)
-        {
-            outputSize--;
-            
+	/// <summary>
+	/// Register callback for Arma
+	/// </summary>
+	/// <param name="functionPtr"></param>
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionRegisterCallback")]
+	public static void RVExtensionRegisterCallback(nint functionPtr)
+	{
+		try
+		{
+			ExtensionStartup.Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
+			LoggerBase.Trace("RVExtensionRegisterCallback", "CallBack Initiated");
+		}
+		catch (Exception e)
+		{
+			LoggerBase.Trace("RVExtensionRegisterCallback", "ERROR...");
+			LoggerBase.Log(e);
+		}
+	}
 
-        }
+	/// <summary>
+	/// Gets called when Arma starts up and loads all extension.
+	/// It's perfect to load in static objects in a separate thread so that the extension doesn't need any separate initialization
+	/// </summary>
+	/// <param name="outputPrt"></param>
+	/// <param name="outputSize"></param>
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionVersion")]
+	public static void RVExtensionVersion(nint outputPrt, int outputSize)
+	{
+		//- Clean up logs
+		LoggerBase.CleanLogs();
 
-#if IS_x64
-        [DllExport("RVExtensionArgs", CallingConvention = CallingConvention.Winapi)]
-#else
-        [DllExport("_RVExtensionArgs@20", CallingConvention = CallingConvention.Winapi)]
-#endif
-        #endregion
-        public static int RvExtensionArgs(StringBuilder output, int outputSize,
-            [MarshalAs(UnmanagedType.LPStr)] string inputKey,
-            [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPStr, SizeParamIndex = 4)] string[] args, int argCount)
-        {
-            outputSize--;
-            try
-            {
-                // Use time as Key (for Server , Player)
-                if (ExtensionInit && inputKey == "init_player")
-                {
-                    output.Append("Extension has already been initiated.");
-                    return -1;
-                }
+		var services = new ServiceCollection();
+		services.AddSingleton<ILocalServices, LocalServices>();
+		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 
-                // Remove arma quotations
-                args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
+		var serviceProvider = services.BuildServiceProvider();
 
-                //Entry
-                switch (inputKey == "init_player" || inputKey == "Refresh_Webhooks")
-                {
-                    //- Init Functions 
-                    case true:
-                    {
-                        // Get all Webhooks
-                        if (inputKey == "Refresh_Webhooks")
-                        {
-                            string jsonString = Tools.ParseJson("Webhooks.json");
-                            ALLWebhooks = JsonSerializer.Deserialize<Webhooks_Storage>(jsonString);
-                            int webhooksCount = ALLWebhooks.Webhooks.Length;
-                            int webhook_sel = Math.Min(Int32.Parse(args[0]), webhooksCount - 1);
-                            ExtensionInit = true;
+		//- Setup Service Configuration
+		ExtensionStartup.InitConfiguration(serviceProvider);
 
-                            //- Exit if there's no Webhook
-                            if (webhooksCount == 0)
-                            {
-                                output.Append("No Webhook Exist.");
-                                return 0;
-                            }
+		var version = typeof(DllEntry).GetTypeInfo().Assembly
+			.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+			.InformationalVersion;
 
-                            if (webhook_sel < 0) // output can be like ["ww", "ww"]
-                                output.Append($"[[\"{string.Join("\",\"", ALLWebhooks.Webhooks)}\"],\"{InitTime}\"]");
-                            else
-                                output.Append($"[\"{ALLWebhooks.Webhooks[webhook_sel]}\",\"{InitTime}\"]");
+		version = version
+			.Substring(0, version.LastIndexOf('+') + 9);
 
-                            return webhooksCount;
-                        }
-                        else //- Initation for Clients (Players)
-                            InitTime = args[0]; //- From Server
-                        break;
-                    }
-                    default:
-                    {
-                        if (inputKey == "ParseJson")
-                        {
-                            int[] utf = Tools.StringToCode32(Tools.ParseJson(args[0]));
-                            output.Append($"[{string.Join(",", utf)}]");
-                            break;
-                        }
-                        if (InitTime == null)
-                        {
-                            output.Append("Find No Key.");
-                            break;
-                        }
+		LoggerBase.Log(null, $"Extension Version : [{version}]");
+		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
+	}
 
-                        //- args[0] :
-                            //- Http(s) Handlers ["url", HandlerType<int>, Optional :[Necessary Payload] ]
-                        switch (inputKey)
-                        {
-                            //- Load Json as Message format
-                            case "HandlerJson":
-                            {
-                                Discord.HandlerJson(args);
-                                break;
-                            }
-                            case "HandlerJsonFormat":
-                            {
-                                Discord.HandlerJsonFormat(args);
-                                break;
-                            }
-                            case "SendMessage":
-                            {
-                                if (argCount == 8) // async without await because we don't expect a reply
-                                {
-                                    string[] codePointStrings = Regex.Replace(args[5], @"[\[\]]", "").Split(',');
-                                    if (codePointStrings.Length > 1)
-                                        args[5] = string.Concat(codePointStrings.Select(cp => char.ConvertFromUtf32(int.Parse(cp))));
-                                    Discord.HandleRequest(args);
-                                }
-                                else
-                                {
-                                    output.Append("INCORRECT NUMBER OF ARGUMENTS");
-                                    return -2;
-                                }
-                                break;
-                            }
-                            default: //- Other conditions
-                                break;
-                        }
+	/// <summary>
+	/// Receives context information .
+	/// </summary>from Arma 3 about the execution environment
+	/// <param name="argsPtr">Pointer to the array of strings containing context data.</param>
+	/// <param name="argCount">The number of arguments passed in the context.</param>
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
+	public static void RVExtensionContext(nint argsPtr, int argCount)
+	{
+		var args = new string?[argCount];
 
-                        break; //- Exit
-                    }
-                }
+		for (var i = 0; i < argCount; i++)
+		{
+			var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPtr + (i * Marshal.SizeOf<nint>())));
+			args[i] = str;
+		}
 
-                return 0;
-            }
-            catch (Exception e)
-            {
-                Tools.Logger(e,$"{e}");
-                output.Append("Error!! Check Log.");
-                return -11;
-            }
-        }
-    }
+		ExtensionStartup.ContextInfo = new CallContext(
+			Convert.ToUInt64(args[0]),
+			args[1]!,
+			args[2]!,
+			args[3]!,
+			Convert.ToInt16(args[4])
+		);
+		LoggerBase.Trace(nameof(ExtensionStartup.ContextInfo), ExtensionStartup.ContextInfo.ToString());
+	}
+
+	/// <summary>
+	/// The entry point for the default callExtension command.
+	/// </summary>
+	/// <param name="outputPrt">The string builder object that contains the result of the function</param>
+	/// <param name="outputSize">The maximum size of bytes that can be returned</param>
+	/// <param name="function">The string argument that is used along with callExtension</param>
+	[UnmanagedCallersOnly(EntryPoint = "RVExtension")]
+	public static void RVExtension(nint outputPrt, int outputSize, nint function)
+	{
+		// var inputKey = Marshal.PtrToStringUTF8(function)!;
+		// ServiceStartup.localServices.Output(outputPrt, outputSize, inputKey);
+	}
+
+	/// <summary>
+	/// The entry point for the callExtensionArgs command.
+	/// </summary>
+	/// <param name="outputPrt"></param>
+	/// <param name="outputSize"></param>
+	/// <param name="function"></param>
+	/// <param name="argsPrt"></param>
+	/// <param name="argCount"></param>
+	/// <returns>
+	///     numbers
+	/// </returns>
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionArgs")]
+	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
+	{
+		OutputBuilder output = new(outputPrt, outputSize);
+		ArgsBuilder args = new(argsPrt, argCount);
+		ArgsAction argsAction = new(output, args, functionPtr);
+
+		return ExtensionStartup.LocalServices?.ExecuteArgsAction(argsAction) ?? -1;
+	}
 }

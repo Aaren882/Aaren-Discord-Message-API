@@ -1,0 +1,32 @@
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "externalUrlConfiguration": true
+    },
+    "https": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "externalUrlConfiguration": true,
+      "publishAllPorts": true,
+      "useSSL": false
+    }
+  },
+  "executablePath": {
+    "type": "string",
+    "description": "An absolute or relative path to the executable.",
+    "default": "/WebService"
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}

@@ -1,0 +1,33 @@
+using Arma3WebService.Identities;
+using Components.Entity;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Arma3WebService.Controllers
+{
+	[Authorize(AuthenticationSchemes = "BasicAuth")]
+	[EnableCors("InternalCommunication")]
+	[Route("api/token")]
+	[ApiController]
+	public class AppUtilController(ILogger<AppUtilController> logger, JwtHelpers jwtHelpers) : ControllerBase
+	{
+		private readonly ILogger _logger = logger;
+
+		[HttpPost]
+		public async Task<IActionResult> GenToken(IdentityRolesPayload payload)
+		{
+			return Ok(await jwtHelpers.GenerateToken(payload));
+		}
+
+		[HttpGet]
+		public async Task<IActionResult> ValidateToken(IdentityRolesPayload payload)
+		{
+			var vaildation = await jwtHelpers.ValidateToken(payload);
+			
+			return Ok(new {
+				Vaild = vaildation.IsValid
+			});
+		}
+	}
+}

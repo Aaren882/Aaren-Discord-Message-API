@@ -1,0 +1,95 @@
+{
+  "content": "## 🛠️ Server Core Management Console\n> **WARNING:** This panel is for administrative use only. All actions are logged.",
+  "embeds": [
+    {
+      "description": "Real-time status and operational controls for the game server environment.",
+      "color": "15158332",
+      "fields": [
+        {
+          "name": "📊 Service Health",
+          "value": "🟢 **CPU:** `{PROCESS.CPU.UTILIZATION}%` \n🟢 **RAM:** `{DOTNET.PROCESS.MEMORY.VIRTUAL.UTILIZATION}%`",
+          "inline": true
+        },
+        {
+          "name": "🛜 Active Sessions",
+          "value": "```{TOTAL_SESSIONS}```",
+          "inline": true
+        },
+        {
+          "name": "⚙️ Quick Guide",
+          "value": "• Use the **Buttons** below for instant mission management and broadcasting.\n• Use the **Dropdown Menu** to more advanced commands.",
+          "inline": false
+        }
+      ],
+      "author": {
+        "name": "Admin Console",
+        "icon_url": "https://i.imgur.com/410CmKi.png"
+      },
+      "footer": {
+        "text": "System Time:"
+      },
+      "timeStamp": "true"
+    }
+  ],
+  "components": [
+    {
+      "type": 1,
+      "components": [
+        {
+          "type": 2,
+          "style": 1,
+          "label": "Global Broadcast",
+          "custom_id": "admin_broadcast",
+          "emoji": {
+            "name": "📢"
+          }
+        },
+        {
+          "type": 2,
+          "style": 3,
+          "label": "MP Command",
+          "custom_id": "admin_mp_command",
+          "emoji": {
+            "name": "🔧"
+          }
+        }
+      ]
+    },
+    {
+      "type": 1,
+      "components": [
+        {
+          "type": 3,
+          "custom_id": "admin_advanced_tools",
+          "placeholder": "Advanced Management Commands...",
+          "options": [
+            {
+              "label": "Upload Mod List",
+              "description": "Update the list of required mods for the server",
+              "value": "upload_list",
+              "emoji": {
+                "name": "🔧"
+              }
+            },
+            {
+              "label": "View Server Logs",
+              "description": "Fetch the last 2000 characters of the RPT log",
+              "value": "print_log",
+              "emoji": {
+                "name": "📋"
+              }
+            },
+            {
+              "label": "Download Full Logs",
+              "description": "Export the complete RPT log file (.rpt)",
+              "value": "export_log",
+              "emoji": {
+                "name": "📥"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

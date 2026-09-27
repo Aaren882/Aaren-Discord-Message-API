@@ -1,0 +1,260 @@
+name: Release Service and Extensions
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New version for the project"
+        required: true 
+        type: string
+  push:
+    tags:
+      - 'v*.*.*-service*' # Push events to matching v*, i.e. v20.15.10
+
+
+permissions:
+  contents: write 
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  CLEAN_VERSION: 'v0.0.0'
+  TAG_SUFFIX: 'latest'
+      
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - RID: linux-x64
+            os: ubuntu-latest
+          - RID: win-x64
+            os: windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    # Initial setups
+    - name: Strip prefix 'v' and suffix '-service'
+      shell: bash
+      run: |
+        TAG="${{ github.ref_name }}"
+        WITHOUT_PREFIX=${TAG#v}
+        VERSION=${WITHOUT_PREFIX%%-service*}
+
+        # Check if '-service-' exists in the tag
+        if [[ "$TAG" == *"-service-"* ]]; then
+          # ${TAG##*-service-} removes everything up to the last '-service-'
+          SUFFIX="${TAG##*-service-}"
+          echo "TAG_SUFFIX=$SUFFIX" >> $GITHUB_ENV
+        fi
+        
+        echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Checkout Source Code
+      uses: actions/checkout@v6.0.3
+
+    - name: Set project versions
+      id: update
+      uses: vers-one/dotnet-project-version-updater@v1.8
+      with:
+        file: |
+          "extension/Arma3WebService/Arma3WebService.csproj", "extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj"
+        version: ${{ env.CLEAN_VERSION }}
+
+    # Setup .NET
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v5.3.0
+      with:
+        dotnet-version: '9.0.x'
+
+    # Ubuntu runners already have clang and zlib, but this ensures they exist
+    - name: Install Prerequisites
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang zlib1g-dev
+    
+    # Building binaries
+    - name: Publish with Crossgen2
+      shell: bash
+      run: |
+        dotnet publish extension/DiscordMessageAPI/DiscordMessageAPI.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
+        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
+        dotnet publish extension/Arma3WebService/Arma3WebService.csproj --self-contained \
+        -c Release \
+        -o ./dist/service/${{ matrix.RID }} \
+        -r ${{ matrix.RID }} \
+        -p:PublishReadyToRun=true \
+        -p:PublishReadyToRunComposite=false \
+        -p:PublishSingleFile=true \
+        -p:TieredCompilation=true
+
+    # Push image to github registry
+    - name: Docker meta
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      id: meta
+      uses: docker/metadata-action@v6
+      with:
+        # list of Docker images to use as base name for tags
+        images: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=raw,value=v${{ env.CLEAN_VERSION }}
+          type=raw,value=${{ env.TAG_SUFFIX }}
+      
+    - name: Login to GitHub Container Registry
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      uses: docker/login-action@v4
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up QEMU
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      uses: docker/setup-qemu-action@v4
+
+    - name: Set up Docker Buildx
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      uses: docker/setup-buildx-action@v4
+
+    - name: Build docker image
+      if: ${{ matrix.os == 'ubuntu-latest' }} 
+      uses: docker/build-push-action@v7
+      with:
+        context: ./extension
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: artifact.${{ matrix.RID }}
+        path: dist
+  
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    outputs:
+      CLEAN_VERSION: ${{ steps.get-version.outputs.CLEAN_VERSION }}
+      TAG_SUFFIX: ${{ steps.get-version.outputs.TAG_SUFFIX }}
+      UPLOAD_URL: ${{ steps.do-release.outputs.upload_url }}
+
+    steps:
+    - name: Strip prefix 'v' and suffix '-service'
+      id: get-version
+      shell: bash
+      run: |
+        TAG="${{ github.ref_name }}"
+        WITHOUT_PREFIX=${TAG#v}
+        VERSION=${WITHOUT_PREFIX%%-service*}
+
+        # Check if '-service-' exists in the tag
+        if [[ "$TAG" == *"-service-"* ]]; then
+          # ${TAG##*-service-} removes everything up to the last '-service-'
+          SUFFIX="${TAG##*-service-}"
+          echo "TAG_SUFFIX=$SUFFIX" >> $GITHUB_ENV
+          echo "TAG_SUFFIX=$SUFFIX" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
+        echo "CLEAN_VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Download All Artifacts
+      uses: actions/download-artifact@v7
+      with:
+        path: dist
+        pattern: artifact.*
+        merge-multiple: true
+
+    - run: ls -R dist
+
+    - name: Zip extension by RID
+      run: |
+        cd dist/extension
+        
+        # Loop through every directory (RID) inside
+        for rid_dir in */; do
+          # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
+          rid="${rid_dir%/}"
+          
+          echo "Compressing RID: $rid"
+          
+          # Zip the directory. Output will be "linux-x64.zip"
+          zip -r "extensions.${rid}.zip" "$rid"
+        done
+      
+    - name: Zip service by RID
+      run: |
+        cd dist/service
+        
+        # Loop through every directory (RID) inside
+        for rid_dir in */; do
+          # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
+          rid="${rid_dir%/}"
+          
+          echo "Compressing RID: $rid"
+          
+          # Zip the directory. Output will be "linux-x64.zip"
+          zip -r "webService.${rid}.zip" "$rid"
+        done
+
+    - name: Publish GitHub Release
+      id: do-release
+      uses: softprops/action-gh-release@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        name: Release ${{ env.CLEAN_VERSION }} ${{ env.TAG_SUFFIX }}
+        tag_name: ${{ github.ref_name }}
+        target_commitish: ${{ github.sha }}
+        files: |
+          dist/extension/*.zip
+          dist/service/*.zip
+        prerelease: ${{ env.TAG_SUFFIX != 'latest' }}
+        generate_release_notes: true
+        draft: true
+
+    - name: Delete Original Downloaded Artifacts
+      uses: geekyeggo/delete-artifact@v6
+      with:
+        name: artifact.* 
+        failOnError: false
+  
+  Addons:
+    needs: release
+    runs-on: ubuntu-latest
+
+    env:
+      UPLOAD_URL: ${{ needs.release.outputs.UPLOAD_URL }}
+      TAG_SUFFIX: ${{ needs.release.outputs.TAG_SUFFIX }}
+      CLEAN_VERSION: ${{ needs.release.outputs.CLEAN_VERSION }}
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v6.0.3
+
+    - name: Setup HEMTT
+      uses: arma-actions/hemtt@v1
+    
+    - name: Run HEMTT release
+      run: hemtt release
+
+    - run: |
+        cd releases
+        mv -v DiscordAPI-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+      
+    - name: Upload Release Asset
+      uses: softprops/action-gh-release@v3
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        working_directory: releases
+        draft: true
+        files: |
+          DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip

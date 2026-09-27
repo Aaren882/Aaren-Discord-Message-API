@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>4b64821a-9337-48e3-82d4-195f213d4332</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.Interactions" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.Rest" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="3.20.1" />
+    <PackageReference Include="DotNetEnv" Version="3.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.17" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.19">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.19" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.ResourceMonitoring" Version="10.10.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.6" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.6" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
+    <PackageReference Include="System.Net.WebSockets" Version="4.3.0" />
+    <PackageReference Include="System.Text.Json" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Arma3WebService.Migrations.MySQL\Arma3WebService.Migrations.MySQL.csproj" />
+    <ProjectReference Include="..\Arma3WebService.Migrations.NpgSQL\Arma3WebService.Migrations.NpgSQL.csproj" />
+    <ProjectReference Include="..\Arma3WebService.Migrations.SQLite\Arma3WebService.Migrations.SQLite.csproj" />
+    <ProjectReference Include="..\Components\Components.csproj" />
+    <ProjectReference Include="..\Component.Websocket\Component.Websocket.csproj" />
+    <ProjectReference Include="..\Component.DiscordEntity\Component.DiscordEntity.csproj" />
+    <ProjectReference Include="..\Arma3WebService.DBContext\Arma3WebService.DBContext.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include=".\.data\*.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
+    <Content Include=".\.data\*\*.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
+    <Content Include=".\.profile\*\default.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
+    <Content Include=".\ecosystem.config.js" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="bin\Release\net9.0\" />
+  </ItemGroup>
+
+</Project>
