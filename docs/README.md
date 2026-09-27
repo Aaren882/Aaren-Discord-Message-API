@@ -6,6 +6,7 @@ layout:
   cover:
     visible: true
     size: hero
+    mask: none
   title:
     visible: true
   description:
@@ -21,6 +22,8 @@ layout:
   tags:
     visible: true
   actions:
+    visible: true
+  anchors:
     visible: true
 ---
 
@@ -48,6 +51,16 @@ Dive a little deeper and start exploring reference to get an idea of everything 
 [reference](reference/reference/)
 {% endcontent-ref %}
 
-{% content-ref url="reference/backend-service-advance/" %}
-[backend-service-advance](reference/backend-service-advance/)
+{% content-ref url="reference/discord-bot-advance/" %}
+[discord-bot-advance](reference/discord-bot-advance/)
 {% endcontent-ref %}
+
+***
+
+## Want to contribute?
+
+This project is fully open source.
+
+If you have features/problems, feel free to issue them on GitHub.
+
+{% embed url="https://github.com/Aaren882/Aaren-Discord-Message-API" %}

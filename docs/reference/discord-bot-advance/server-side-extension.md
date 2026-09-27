@@ -1,67 +1,25 @@
 # 📤 Server-Side Extension
 
-{% hint style="warning" %}
+{% hint style="danger" %}
 `DiscordMessageAPISerivce.dll` is a **server-side** extension.
 
-Make sure the mod is load via `-servermod` instead of `-mod` to **bypass BattEye whitelist**.
+* Make sure the mod is load via `-servermod` instead of `-mod` to **bypass BattEye whitelist** or it may not work as intented.
 {% endhint %}
 
-First, navigate to the directory of `arma3server_x64.exe`.\
-There should be `Discord_Message_API` folder (if no, create a new one), that's where the configs are.
+## 🖼️ Message template
 
-<figure><img src="../../.gitbook/assets/image (8).png" alt=""><figcaption><p>Setup Example</p></figcaption></figure>
+The format still follows the same as [Webhook's](../customize-server-info.md).
 
-## 🎮Configure `secret.json`
-
-{% code title="./Discord_Message_API/secret.json" %}
-```json
-{
-  "ServiceUri" : "http://localhost:5048", //- `https://` for SSL/TLS
-  "WebSocketServiceUri" : "ws://localhost:5048/api/ws/ingame", //-  `wss://` for SSL/TLS
-  "RPT_Directory": "C:/Users/MyUser/AppData/Local/Arma 3", //- Default RPT Directory
-  "Secret" : { //- API Endpoint Auth
-    "UserName" : "admin",
-    "Password" : "password"
-  }
-}
-```
-{% endcode %}
-
-***
-
-### 👥Configure Profile (Optional)
-
-This must be in `./profiles` folder that can be changed in `Addons Settings`.
-
-{% code title="./Discord_Message_API/profiles/default.json" %}
-```json
-{
-  //- "Configuration" can be emply e.g. "Configuration": {}
-  "Configuration": {
-    "MessageTemplate": "Bot/Server_Info_msg_old.json", //- (OPTIONAL) Directory to the json file
-    "MessageOfflineTemplate": "Offline_msg.json"       //- (OPTIONAL)
-  },
-  "RPT_Directory": "C:/Users/MyUser/AppData/Local/Arma 3" //- (OPTIONAL) will fallback to `secret.json`
-}
-```
-{% endcode %}
-
-***
-
-## Message template format
-
-The format still follows the same as [Webhook's](https://aarens-base.gitbook.io/aarens-base-docs/aarens-discord-message-api/~/revisions/RInZDjt1JSGaqqpLQGxf/reference/reference/setup-server-monit/customize-server-info).
-
-But you can have more customizations, e.g. `components`.
+<div><figure><img src="../../.gitbook/assets/image (2).png" alt="" width="375"><figcaption><p>Online Example</p></figcaption></figure> <figure><img src="../../.gitbook/assets/image.png" alt="" width="375"><figcaption><p>Offline Example</p></figcaption></figure></div>
 
 {% hint style="warning" %}
 Don't use `ComponentsV2` for server monitor template.
 
 * It will make the message not editable.
 * Some fields will not be accepted, ex. `Embeds`.
-{% endhint %}
 
-<figure><img src="../../.gitbook/assets/image.png" alt="" width="375"><figcaption><p>Template Example</p></figcaption></figure>
+Offical Docs : [https://docs.discord.com/developers/components/reference](https://docs.discord.com/developers/components/reference)
+{% endhint %}
 
 <details>
 
@@ -165,3 +123,48 @@ Don't use `ComponentsV2` for server monitor template.
 
 
 </details>
+
+***
+
+## ✏️ Setting up
+
+* First, navigate to the directory of `arma3server_x64.exe`/`arma3_x64.exe`.\
+  There should be `Discord_Message_API` folder (if no, create a new one), that's where the configs are.
+* `./logs` where the logs live if you want to debug.
+
+<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption><p>Setup Example <strong>(Reds are IMPROTANT)</strong></p></figcaption></figure></div>
+
+## 🎮 Configure `secret.json`
+
+{% code title="{Arma3*.exe}/Discord_Message_API/secret.json" %}
+```json
+{
+  "ServiceUri" : "http://localhost:5048", //- `https://` for SSL/TLS
+  "WebSocketServiceUri" : "ws://localhost:5048/api/ws/ingame", //-  `wss://` for SSL/TLS
+  "RPT_Directory": "C:/Users/MyUser/AppData/Local/Arma 3", //- Default RPT Directory
+  "Secret" : { //- API Endpoint Auth
+    "ApiKey" : "MY SERVICE API KEY"
+  }
+}
+```
+{% endcode %}
+
+### 👥 Configure Profile (Optional)
+
+This must be in `./profiles` folder that can be changed in `Addons Settings`.
+
+{% code title="{Arma3*.exe}/Discord_Message_API/profiles/default.json" %}
+```json
+{
+  //- "Configuration" can be emply, but "CANNOT BE REMOVED" e.g. "Configuration": {}
+  "Configuration": {
+    //- (OPTIONAL) Directory to the online template file
+    "MessageTemplate": "MyTemplates/Server_Info_msg.json",
+    //- (OPTIONAL) Dirctory to your offline template
+    "MessageOfflineTemplate": "Offline_msg.json"
+  },
+  //- (OPTIONAL) will fallback to `secret.json`
+  "RPT_Directory": "C:/Users/MyUser/AppData/Local/Arma 3"
+}
+```
+{% endcode %}

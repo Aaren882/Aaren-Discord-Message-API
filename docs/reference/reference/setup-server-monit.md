@@ -20,7 +20,7 @@ You can find the options in 👇
 
 Select Webhook with Index.
 
-<figure><img src="../../.gitbook/assets/image (1).png" alt=""><figcaption><p>CBA Setting</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>CBA Setting</p></figcaption></figure>
 
 ***
 {% endstep %}
@@ -55,7 +55,7 @@ So the Webhook can edit the messge.
 
 Paste the **`Message ID`** that just sent.
 
-<figure><img src="../../.gitbook/assets/image (1) (1).png" alt=""><figcaption><p>Settings for Server INFO</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (1) (1) (1).png" alt=""><figcaption><p>Settings for Server INFO</p></figcaption></figure>
 
 {% hint style="info" %}
 If the server have **Persistent** checked, the game will keep updating **Server-Status** even there's zero player in the server.
@@ -67,7 +67,7 @@ If the server have **Persistent** checked, the game will keep updating **Server-
 {% step %}
 ## _**Press "OK"**_
 
-<figure><img src="../../.gitbook/assets/image (2).png" alt=""><figcaption><p>Press "OK" to Save</p></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (2) (1).png" alt=""><figcaption><p>Press "OK" to Save</p></figcaption></figure>
 
 ***
 {% endstep %}

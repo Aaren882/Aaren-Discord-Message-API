@@ -5,7 +5,7 @@ description: >-
   for the Discord Message API.
 ---
 
-# 🪛 Hosting Service
+# 🪛 Hosting Bot
 
 ## 🧠 Component Overview
 
@@ -20,11 +20,12 @@ The `Arma3WebService` is ASP.NET Core application that facilitates communication
 
 ### 🛠️ Requirements & Prerequisites
 
-| Component    | Requirement                                   | Note                                      |
-| ------------ | --------------------------------------------- | ----------------------------------------- |
-| **OS**       | Windows Server / Windows 10+ / Linux / Docker | Supports Windows Service deployment.      |
-| **Ports**    | Custom / 5048 (TCP)                           | Standard defaults for WebSocket           |
-| **Database** | SQLite (Default)                              | Use SQL Server for multi-server clusters. |
+| Component       | Requirement                                                         | Note                                      |
+| --------------- | ------------------------------------------------------------------- | ----------------------------------------- |
+| **Discord Bot** | [Create a Discord Bot](https://discord.com/developers/applications) | Obviously needs a bot.                    |
+| **OS**          | Windows Server / Windows 10+ / Linux / Docker                       | Supports Windows Service deployment.      |
+| **Ports**       | Custom / 5048 (TCP)                                                 | Standard defaults for WebSocket           |
+| **Database**    | SQLite (Default)                                                    | Use SQL Server for multi-server clusters. |
 
 ***
 
@@ -34,7 +35,7 @@ The `Arma3WebService` is ASP.NET Core application that facilitates communication
 {% step %}
 ### Networking & Firewall
 
-The backend service must be reachable by the Arma 3 server via extension
+The backend service must be reachable by the Arma 3 server via extension.
 
 * **Extension Types:**
   * `DiscordMessageAPIService_x64.dll`
@@ -46,23 +47,21 @@ The backend service must be reachable by the Arma 3 server via extension
 ### Configure Variables
 
 {% hint style="info" %}
-Rememeber to change `Jwt_Secret`. (useful tool : [https://it-tools.tech/token-generator](https://it-tools.tech/token-generator))
+Rememeber to change secrets. (useful tool : [https://it-tools.tech/token-generator](https://it-tools.tech/token-generator))
 {% endhint %}
 
 {% tabs %}
 {% tab title="Environment Variables" %}
-Hosters should primarily use the `.env` file for configuration. Create this file in the root directory of `Arma3WebService.exe`.
+Hosters should primarily use the `.env` file for configuration. Create this file at root directory of `Arma3WebService.exe`.
 
 ```dotenv
 ASPNETCORE_ENVIRONMENT = "Production";
 ASPNETCORE_HTTPS_PORTS = 7172; //- (Optional)
 ASPNETCORE_HTTP_PORTS = 5048;
 
-Jwt_Secret = "SOMETHING SECURE DONT SHARE";
-
 //- API Auth
-"TokenManagerName": "admin",
-"TokenManagerPassword": "password",
+Jwt_Secret = "SOMETHING SECURE DONT SHARE";
+APIKey="SOMETHING SECURE DONT SHARE";
 
 BotToken = "BOT_TOKEN";
 MonitorChannel = "ChannelID";
@@ -88,13 +87,12 @@ It's similar to **Env Variables**, but has less precedence.
   "AdminPassword": "in game AdminPassword ",
   
   //- API Auth
-  "TokenManagerName": "admin",
-  "TokenManagerPassword": "password",
+  "APIKey": "SOMETHING SECURE DONT SHARE",
   
   "Jwt": {
     "Issuer": "issuer",
     "Audience": "audience",
-    "Secret": "ChangeMe"
+    "Secret": "SOMETHING SECURE DONT SHARE"
   },
   "Logging": {
     "LogLevel": {
@@ -113,10 +111,10 @@ It's similar to **Env Variables**, but has less precedence.
   "Kestrel": {
     "Endpoints": {
       "Http": {
-        "Url": "http://localhost:5048"
+        "Url": "http://*:5048"
       },
       "Https": {
-        "Url": "https://localhost:7172" 
+        "Url": "https://*:7172" 
       }
     }
   }
@@ -136,8 +134,6 @@ For 24/7 uptime, do not run the console window manually. Use **PM2** to wrap the
 
 {% tabs %}
 {% tab title="Hosting on Docker" %}
-<a href="https://github.com/Aaren882/Aaren-Discord-Message-API/pkgs/container/aaren-discord-message-api" class="button primary" data-icon="docker">Image on github</a>
-
 #### Latest image
 
 ```bash
@@ -148,6 +144,50 @@ docker pull ghcr.io/aaren882/aaren-discord-message-api:latest
 
 ```bash
 docker pull ghcr.io/aaren882/aaren-discord-message-api:rc
+```
+
+<p align="center"><a href="https://github.com/Aaren882/Aaren-Discord-Message-API/pkgs/container/aaren-discord-message-api" class="button primary" data-icon="docker">Image on github</a></p>
+
+```yaml
+services:
+  arma3webservice:
+    image: ghcr.io/aaren882/aaren-discord-message-api:latest
+    ports:
+      - "5048:5048"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=${HTTP_PORTS:-5048}
+      
+      # Useful Tool: https://it-tools.tech/token-generator
+      - Jwt_Secret=${JWT_SECRET} 
+      - APIKey=${API_Key}
+
+      # (Database)
+      - DB_PROVIDER=${DB_PROVIDER:-SQLite} # SQLite , MySQL , NpgSQL
+      # SQLite
+      # - DB_CONNECTION_STRING=Data Source=.data/data.db # ("Data Source=.data/data.db" is the default value)
+      # MySQL (MySQL, mariaDB)
+      # - DB_CONNECTION_STRING=Server=${DB_HOST:-localhost};Port=${DB_PORT:-3306};Database=${DB};User=${DB_USER};Password=${DB_PW}
+      # PostgreSQL (NpgSQL)
+      # - DB_CONNECTION_STRING=Host=${DB_HOST:-localhost};Port=${DB_PORT:-5432};Database=${DB};Username=${DB_USER};Password=${DB_PW}
+
+      # (Discord)
+      - BotToken=${BOT_TOKEN}
+      - MonitorChannel=${MonitorChannel}
+      - AdminChannel=${AdminChannel}
+      - AdminLoggingChannel=${AdminLoggingChannel}
+      - LoggingChannel=${LoggingChannel}
+
+      # (IN GAME)
+      # - AdminPassword=1234 # (Optional) Admin password for calling admin Commands
+    
+    volumes:
+      - data:/app/.data # Persist data
+      - profiles:/app/.profile # Client templates
+
+volumes:
+  data:
+  profiles:
 ```
 {% endtab %}
 
@@ -178,32 +218,7 @@ pm2 save
 
 ***
 
-### 🗄️ Database Strategies (:wrench:WIP)
-
-#### Single Server / Low Traffic
-
-Currently it uses `Sqlite`. This stores all data in `./test.db`. It is highly efficient and requires zero maintenance.
-
-#### ~~Multi-Server / Hosting Providers~~ (TBD)
-
-~~If you are hosting dozens of Arma 3 servers, use `DATABASE_TYPE=SqlServer`.~~
-
-1. ~~Point all backend instances to a centralized SQL Server.~~
-2. ~~Ensure the connection string in `appsettings.json` or `.env` is properly formatted.~~
-
-***
-
 ### 🛡️ Security for Hosters
 
 1. **Token Protection**: The `BOT_TOKEN` grants full access to your bot. Never place this in the Arma 3 mission files. It must live exclusively on the backend server environment.
-2. **JWT Authentication**: The communication between the extension and the backend is secured via JWT (JSON Web Tokens). Ensure your `Arma3WebService` is reachable via HTTPS if traffic traverses the public internet.
-
-***
-
-### 📡 WebSocket Endpoint Logic
-
-The backend exposes a specific endpoint for the game server: `ws://[YOUR-IP]:[SERVICE-PORT]/api/ws/ingame`
-
-* **Binary Transfers**: Used for sending `.rpt` log or `.json` files from the server to the backend.
-* **JSON Actions**: Standard message triggers (Mission Start, Player Join).
-* **Callbacks**: Allows the backend to send commands back to the game server (e.g., triggering an in-game global hint from Discord).
+2. **Authentication Secrets**: The communication between the extension and the backend is secured via APIKey and JWT (JSON Web Tokens). Ensure your `Arma3WebService` is reachable via HTTPS if traffic traverses the public internet.

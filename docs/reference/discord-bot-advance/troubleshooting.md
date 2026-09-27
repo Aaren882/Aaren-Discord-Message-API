@@ -6,14 +6,14 @@
 
 #### 2. Bot Not Responding
 
-* Check the console or logs for `Discord.Net` exceptions.
+* Check the console and logs for exceptions.
 * Ensure the Bot has "Message Content Intent" enabled in the Discord Developer Portal.
 
 #### 3. High Memory Usage
 
 If memory climbs significantly:
 
-* Reduce the frequency of status updates in the Arma 3 CBA settings (default is usually 300s).
+* Reduce the frequency of status updates in the Arma 3 `Addon Settings` (Recommand 10s).
 * Check the `LOG_LEVEL`; setting it to `Debug` or `Trace` in production can create massive log files and overhead.
 
 #### 4. Where to find the error messages

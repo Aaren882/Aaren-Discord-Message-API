@@ -7,7 +7,7 @@ description: List of Keys explains
 {% hint style="info" %}
 **Good to know:**
 
-You can choose desire _**json**_ file for current Server Profile.
+You can choose desire _**json**_ file for current Server Profile for [Webhooks](reference/).
 
 _(same as the setting for <mark style="color:orange;">**Mission Closed**</mark>)_
 
