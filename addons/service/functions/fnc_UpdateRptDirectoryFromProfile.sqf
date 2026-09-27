@@ -20,16 +20,7 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
-private _profile = call FUNC(GetProfileConfiguration);
-private _RPT_Directory = _profile getOrDefault ["RPT_Directory", ""];
-TRACE_1("fnc_UpdateRptDirectory",_RPT_Directory);
-
-if (_RPT_Directory isEqualTo "") exitWith {
-  ERROR("""fnc_UpdateRptDirectoryFromProfile"" Exception : Missing required parameters (RPT_Directory)");
-  nil
-};
-
-private _result = "DiscordMessageAPIService" callExtension ["UpdateRptDirectory", [_RPT_Directory]];
+private _result = "DiscordMessageAPIService" callExtension ["UpdateRptDirectory", [GVAR(Profiles)]];
 _result params ["_return", "_returnCode"];
 INFO_1("fnc_UpdateRptDirectoryFromProfile || Result : %1",_return);
 

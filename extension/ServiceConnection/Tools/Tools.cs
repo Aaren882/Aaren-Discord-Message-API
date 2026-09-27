@@ -1,9 +1,6 @@
-using System.Text.Json;
-using Components.Entity;
-using ExtensionComponents.Entity;
-using static ServiceConnection.ServiceStartup;
 using static ExtensionComponents.ExtensionStartup;
 using static ExtensionComponents.Tools.Util;
+using static ServiceConnection.ServiceStartup;
 
 namespace ServiceConnection.Tools;
 
@@ -11,7 +8,7 @@ public static class Util
 {
 	public static IEnumerable<FileInfo> GetDirectoryFiles(string path)
 	{
-		var combined= Path.Combine(AssemblyPath, path);
+		var combined = Path.Combine(AssemblyPath, path);
 
 		return Directory.GetFiles(combined)
 			.Select(x => new FileInfo(x));
@@ -22,8 +19,8 @@ public static class Util
 		return paths.Select(path =>
 		{
 			var fileInfo = new FileInfo(Path.Combine(AssemblyPath, path));
-			return fileInfo.Exists ? 
-				fileInfo : 
+			return fileInfo.Exists ?
+				fileInfo :
 				throw new FileNotFoundException($"File \"{path}\" not found");
 		});
 	}
@@ -50,11 +47,15 @@ public static class Util
 	}
 	public static string GetCurrentRpt()
 	{
-		var path = serviceInteractions?.RPTDirectory;
+		if (ServiceInteractions == null)
+			throw new NullReferenceException($"It seems \"{nameof(ServiceInteractions)}\" didn't get initiated correctly.");
+
+		var path = ServiceInteractions.RPTFileDirectory;
+
 		var dateTimeOffset = ExtensionInitTime;
 
-		Tracer(nameof(GetCurrentRpt), $"RPTDirectory : {path}, StartTimeOffset : {dateTimeOffset:F}");
-		
+		Tracer(nameof(GetCurrentRpt), $"RPTFileDirectory : {path}, StartTimeOffset : {dateTimeOffset:F}");
+
 		var fileInfo = GetDirectoryFiles(path)
 			.Where(
 				x => x.Extension == ".rpt" && ExtensionInitTime > x.CreationTime
@@ -62,12 +63,5 @@ public static class Util
 			.MaxBy(x => x.CreationTime);
 
 		return fileInfo?.FullName ?? throw new NullReferenceException($"No file exist in : {path}");
-		
-	}
-
-	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)
-	{
-		var data = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
-		return extensionCallback("DISCORD_API", ((int)payload.Type).ToString(), data);
 	}
 }

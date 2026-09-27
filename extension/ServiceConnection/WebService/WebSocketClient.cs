@@ -20,26 +20,41 @@ public sealed class WebsocketClient(
 
 	public override void PostReceived(in Stream assembledStream, WebSocketMessageType messageType)
 	{
-		using StreamReader reader = new(assembledStream, Encoding.UTF8);
-		var receivedMessage = reader.ReadToEnd();
-		if (string.IsNullOrEmpty(receivedMessage))
+		try
 		{
-			Logger.LogWarning("Received empty \"{MessageType}\" Message.", messageType);
-			return;
-		}
+			if (assembledStream.Length == 0)
+			{
+				Logger.LogWarning("Received empty \"{MessageType}\" Message.", messageType);
+				return;
+			}
 
-		var payload = JsonSerializer.Deserialize(
-			receivedMessage,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		)!;
-		if (payload is Arma3PayloadServiceRequest request)
-		{
-			Task.Run(async () => await serviceRequestHandler.RespondRequest(request))
-				.GetAwaiter().GetResult();
+			var payload = JsonSerializer.Deserialize(
+				assembledStream,
+				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
+			)!;
+
+			//- Processing Requests
+			if (payload is Arma3PayloadServiceRequest request)
+			{
+				if (!serviceRequestHandler.TryAddRequest(request))
+					throw new OverflowException("Service request limit exceeded. Cannot process new requests.");
+			}
+			MessageReceived?.Invoke(payload);
 		}
-		MessageReceived?.Invoke(payload);
+		catch (Exception ex) when (ex is InvalidOperationException || ex is NotSupportedException)
+		{
+			Logger.LogWarning(ex, "Failed to process message due to invalid operation or unsupported type.");
+		}
+		catch (Exception e) when (e is JsonException || e is OverflowException)
+		{
+			Logger.LogWarning(e, "Something went wrong during/after parsing incoming payload.");
+		}
+		catch (Exception e)
+		{
+			Logger.LogError(e, "Fatal Exception: ");
+		}
 	}
-	public async ValueTask SendBinaryAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary, int chunkSize = 60 * 1024)
+	public async ValueTask SendBinaryAsync(string accessName, string filePath, Arma3PayloadBinary payloadBinary)
 	{
 		ArgumentNullException.ThrowIfNull(WebSocketStateMachine, nameof(WebSocketStateMachine));
 
@@ -51,27 +66,24 @@ public sealed class WebsocketClient(
 
 		Logger.LogInformation("Sending Binary: \n File: {File} \n Header: {header}", filePath, payloadBinary);
 		var totalChunks = payloadBinary.TotalChunks;
-		if (totalChunks < 0)
+		if (totalChunks < 1)
 		{
 			FileInfo fileInfo = new(filePath);
-			totalChunks = (int)Math.Ceiling((double)fileInfo.Length / chunkSize);
+			totalChunks = payloadBinary.TotalChunks = (int)Math.Ceiling((double)fileInfo.Length / BufferSize);
 		}
 		// Send Chunks (as binary messages)
-		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, chunkSize))
+		await using (FileStream fs = new(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, BufferSize))
 		{
-			var readBuffer = (new byte[chunkSize]).AsMemory<byte>();
+			var readBuffer = (new byte[BufferSize]).AsMemory<byte>();
 			var identifier = payloadBinary.GetIdentifier(accessName);
 
 			for (var i = 1; i < totalChunks + 1; i++)
 			{
-				int readLength = await fs.ReadAsync(readBuffer, CancellationToken.None);
+				int readLength = await fs.ReadAsync(readBuffer, CancellationToken);
 				Arma3PayloadBinaryContent content = new(identifier, readBuffer[..readLength].ToArray(), i == totalChunks);
 
 				Logger.LogDebug("SendBinaryAsync (Progress): {i}/{TotalChunks}", i, totalChunks);
-				var payload = JsonSerializer.SerializeToUtf8Bytes(
-					content,
-					Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-				);
+				var payload = content.ToJsonBytes();
 				await WebSocketStateMachine.SendMessageAsync(payload, WebSocketMessageType.Binary, true);
 			}
 		}
@@ -101,7 +113,7 @@ public sealed class WebsocketClient(
 		var charCount = 0;
 
 		Arma3PayloadBinaryContent content;
-		byte[] bytes;
+		ReadOnlyMemory<byte> bytes;
 		foreach (var (line, i) in lastLines.Select((value, i) => (value, i)))
 		{
 			var wLine = line + "\n";
@@ -115,13 +127,13 @@ public sealed class WebsocketClient(
 			}
 
 			content = new(identifier, Encoding.UTF8.GetBytes(wLine), false);
-			bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+			bytes = content.ToJsonBytes();
 			await WebSocketStateMachine.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
 		}
 		Logger.LogInformation("SendRptLines [{lineCount}]: {filePath}", lineCount, filePath);
 
 		content = new(identifier, [], true);
-		bytes = JsonSerializer.SerializeToUtf8Bytes(content, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		bytes = content.ToJsonBytes();
 		await WebSocketStateMachine.SendMessageAsync(bytes, WebSocketMessageType.Binary, true);
 
 		sw.Stop();
@@ -153,17 +165,31 @@ public sealed class WebsocketClient(
 		if (authToken != null)
 			webSocket.Options.SetRequestHeader("Authorization", "Bearer " + authToken);
 
-		await webSocket.ConnectAsync(new(uri), CancellationToken.None);
+		await webSocket.ConnectAsync(new(uri), CancellationToken);
 		Logger.LogInformation("Connected to server.");
-		Connected?.Invoke();
+
+		try
+		{
+			Connected?.Invoke();
+		}
+		catch (Exception e)
+		{
+			logger.LogError(e, "WebSocket connected event threw an exception.");
+		}
 
 		WebSocketStateMachine = new(this, Logger);
-		_ = WebSocketStateMachine.StartAsync(webSocket); //- Don't block the thread (Client-Side)
-	}
-	public override async Task CloseAsync()
-	{
-		await base.CloseAsync();
-		Disconnected?.Invoke();
-		Logger.LogInformation("Disconnected from server.");
+		_ = WebSocketStateMachine.StartAsync(webSocket) //- Don't block the thread (Client-Side)
+			.ContinueWith(_ =>
+			{
+				Logger.LogInformation("Disconnected from server.");
+				try
+				{
+					Disconnected?.Invoke();
+				}
+				catch (Exception e)
+				{
+					logger.LogError(e, "WebSocket disconnected event threw an exception.");
+				}
+			});
 	}
 }

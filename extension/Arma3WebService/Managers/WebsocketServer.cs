@@ -26,16 +26,14 @@ public sealed class WebsocketServer(
 	{
 		try
 		{
-			using StreamReader reader = new(assembledStream, Encoding.UTF8);
-			var receivedMessage = reader.ReadToEnd();
-			if (string.IsNullOrEmpty(receivedMessage))
+			if (assembledStream.Length == 0)
 			{
 				Logger.LogTrace("\"{Identity}\" : Received empty \"{MessageType}\" Message.", websocketContext.GetIdentity(), messageType.ToString());
 				return;
 			}
 
 			var payload = JsonSerializer.Deserialize(
-				receivedMessage,
+				assembledStream,
 				Arma3PayloadJsonSerializerContext.Default.Arma3Payload
 			)!;
 
@@ -61,7 +59,7 @@ public sealed class WebsocketServer(
 			Logger.LogError(e, "Fatal Exception: ");
 		}
 	}
-	public async Task StartAsync(HttpContext context)
+	public async Task StartAsync(HttpContext context, params CancellationToken[] cts)
 	{
 		WebsocketContextEntity contextEntity = wsContextEntityFactory.CreateJsonStringContext(context);
 
@@ -70,7 +68,7 @@ public sealed class WebsocketServer(
 		var webSocket = await context.WebSockets.AcceptWebSocketAsync(subProtocol: null);
 		websocketContext = contextEntity;
 
-		await StartAsync(webSocket, websocketContext.CancellationToken);
+		await StartAsync(webSocket, cts);
 		service.RemoveConnection(websocketContext);
 	}
 }

@@ -37,19 +37,4 @@ public static class Arma3PayLoadExtension
 		var loggerFactory = LoggerFactory.Create(loggingBuilder => loggingBuilder.AddConsole());
 		logger = loggerFactory.CreateLogger<Arma3PayloadExtended>();
 	}
-
-	public static string ToJsonString(this Arma3Payload payload)
-	{
-		return JsonSerializer.Serialize(
-			payload,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		);
-	}
-	public static byte[] ToJsonBytes(this Arma3Payload payload)
-	{
-		return JsonSerializer.SerializeToUtf8Bytes(
-			payload,
-			Arma3PayloadJsonSerializerContext.Default.Arma3Payload
-		);
-	}
 }

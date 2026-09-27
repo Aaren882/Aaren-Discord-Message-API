@@ -15,18 +15,18 @@ public class IdentityCheckService(
 )
 {
 	public async Task<(string Result, bool IsNewIdentity, bool IsDifferent)> ProcessProfileCheckAsync(
-		IdentityRolesPayload payload, ProfileIdentityCheck profileIdentity)
+		IdentityRolesPayload payload, ProfileConfigurationDateOffsets ProfileConfigDateOffsets)
 	{
 		var profileName = payload.Identity.AccessName;
-		var (MessageId, ProfileDateOffsets, Configuration) = profileIdentity;
+		var (MessageId, ProfileDateOffsets, Configuration) = ProfileConfigDateOffsets;
 		try
 		{
 			// The repository methods must now accept the 'transaction' parameter!
 			var exist = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
 
-			var messageId = string.IsNullOrEmpty(profileIdentity.MessageId)
+			var messageId = string.IsNullOrEmpty(MessageId)
 				? exist?.messageId ?? 0
-				: ulong.Parse(profileIdentity.MessageId!);
+				: ulong.Parse(MessageId);
 
 			var serverInfoTemplate = await infoRepository.GetByMessageIdAsync(messageId, tracked: false);
 
@@ -45,12 +45,12 @@ public class IdentityCheckService(
 					messageId = message.Id;
 				}
 
-				var infoTemplate = await infoRepository.GetOrCreateTemplateAsync(messageId, profileIdentity.Configuration);
+				var infoTemplate = await infoRepository.GetOrCreateTemplateAsync(messageId, Configuration);
 			}
 
 			// Update Identity
 			var isNewIdentity = exist == null;
-			var profileLastUpdate = profileIdentity.ProfileDateOffsets?.Sum(long.Parse) ?? 0;
+			var profileLastUpdate = ProfileDateOffsets.Sum();
 			var isDifferent = profileLastUpdate != exist?.profileStateStamp
 							|| exist.messageId != messageId
 							|| monitorMessage is null

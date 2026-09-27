@@ -41,9 +41,9 @@ public static class Util
 	public static string DecryptString(string cipherText)
 	{
 		var fullCipher = Convert.FromBase64String(cipherText);
-	
+
 		using var aesAlg = Aes.Create();
-	
+
 		var iv = new byte[aesAlg.BlockSize / 8];
 		Array.Copy(fullCipher, iv, iv.Length);
 
@@ -102,10 +102,10 @@ public static class Util
 		Array.Copy(hash, key, key.Length);
 		return key;
 	}
-	
+
 	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)
 	{
-		var data = JsonSerializer.Serialize(payload, Arma3PayloadJsonSerializerContext.Default.Arma3Payload);
+		var data = payload.ToJsonString();
 		return extensionCallback("DISCORD_API", ((int)payload.Type).ToString(), data);
 	}
 }

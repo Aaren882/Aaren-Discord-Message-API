@@ -58,7 +58,7 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
         INFO_1("DISCORD_API [CallBack Command] || Event : %1",_event);
         TRACE_2("DISCORD_API [CallBack Command] || Event : %1 , Data : %2",_event,_dta);
 
-        [_event, parseSimpleArray _dta] call CBA_fnc_localEvent;
+        [_event, fromJSON _dta] call CBA_fnc_localEvent;
       };
 
       //- Structured Data
@@ -134,38 +134,14 @@ localNamespace setVariable [QGVAR(serverName), _ServerName];
   //- Wait for websocket connection
   [
     {GVAR(Available)}, {
-      params ["_successful","_serviceReturnPayload"];
-      _serviceReturnPayload params ["_profileName","_messageId","_isNewIdentity","_isDifferent"];
-      
-      if (_isNewIdentity || _isDifferent) then {
-        INFO("It seems [ServiceAccessResult] ""_isNewIdentity/_isDifferent"" is changed. Updating backend profile config/data");
-        _messageId spawn {
-          // sleep 1; //- Make sure stack can be released properly
-
-          private _messageId = _this;
-          private _profileConfiguration = call FUNC(GetProfileConfiguration);
-          private _configuration = _profileConfiguration getOrDefault ["Configuration", createHashMap];
-          private _infoTemplateUpdated = [_messageId, _configuration] call FUNC(UpdateServerInfoTemplate);
-
-          if (!_infoTemplateUpdated) exitWith {
-            ERROR("""ServiceAccessResult"" Exception : Failed to update server info template.");
-          };
-          if (count _configuration == 0) exitWith {
-            WARNING("No ""configuration"" found in profile. Skipping directory synchronization. (Will be using default configuration)");
-          };
-          // sleep 1; //- Small delay to ensure profile data is updated
-
-          //- Setup directory for backend storage
-          private _toArray = _configuration toArray true;
-          private _prefixDirectories = (_toArray # 0) apply {".profile/" + _x};
-
-          private _payload = _prefixDirectories createHashMapFromArray (_toArray # 1);
-          "DiscordMessageAPIService" callExtension ["SendWebSocketBinariesFromAssemblyDirectory", [toJSON _payload]];
-
-          INFO("ServiceAccessResult callback executed successfully.");
-        };
-      };
+      params ["_successful","_returnPayloadString"];
+      INFO_1("[ServiceAccessResult]: Profile configuration received %1",_returnPayloadString);
   }, _this, 10, {
     WARNING("ServiceAccessResult callback wait timeout. It seems the service is not responding or taking too long to respond.");
   }] call CBA_fnc_waitUntilAndExecute;
+}] call CBA_fnc_addEventHandler;
+
+[QGVAR(RptDirectoryUpdated), {
+  INFO_1("RptDirectoryUpdated : %1",_this);
+
 }] call CBA_fnc_addEventHandler;

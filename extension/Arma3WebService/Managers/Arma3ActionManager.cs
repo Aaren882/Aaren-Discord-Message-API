@@ -17,23 +17,6 @@ public sealed class Arma3ActionManager(
 	Channel<ActionPayload> _ActionChannel
 ) : BackgroundService, IArma3ActionManager
 {
-	/* private ILogger<Arma3ActionManager> Logger { get; init; }
-	private Task _mainLoop;
-	public readonly CancellationTokenSource Cts = new();
-	private readonly ServiceActionManager ServiceAction;
-	private readonly IDiscordBotService DiscordBotService;
-	public Arma3ActionManager(
-		ILogger<Arma3ActionManager> logger,
-		ServiceActionManager serviceAction,
-		IDiscordBotService discordBotService
-	)
-	{
-		Logger = logger;
-		ServiceAction = serviceAction;
-		DiscordBotService = discordBotService;
-		_mainLoop = DoAction(Cts.Token);
-	} */
-	// public readonly Channel<ActionPayload> _ActionChannel = Channel.CreateBounded<ActionPayload>(1000);
 	public bool TryEnqueueAction(WebsocketServer connection, Arma3Payload payload)
 	{
 		Logger.LogTrace("[Writer] Start writing Channel. Channel Hash: {Hash}", _ActionChannel.GetHashCode());
@@ -84,34 +67,13 @@ public sealed class Arma3ActionManager(
 				await GetAction(action);
 			}
 		}
-		catch (OperationCanceledException) { }
+		catch (OperationCanceledException)
+		{
+			Logger.LogInformation("{Service} shutdown gracefully.", nameof(Arma3ActionManager));
+		}
 		catch (Exception ex)
 		{
-			Logger.LogError(ex, "An error occurred during binary stream processing.");
-		}
-		finally
-		{
-			Logger.LogCritical("Binary stream processing loop terminated.");
+			Logger.LogCritical(ex, "Binary stream processing loop terminated.");
 		}
 	}
-	/* private async Task DoAction(CancellationToken stoppingToken)
-	{
-		Logger.LogInformation("{Service} service started. HashCode : {HashCode}, Thread : {ThreadID}", nameof(Arma3ActionManager), _ActionChannel.GetHashCode(), Environment.CurrentManagedThreadId);
-		try
-		{
-			await foreach (var action in _ActionChannel.Reader.ReadAllAsync(stoppingToken))
-			{
-				await GetAction(action);
-			}
-		}
-		catch (OperationCanceledException) { }
-		catch (Exception ex)
-		{
-			Logger.LogError(ex, "An error occurred during binary stream processing.");
-		}
-		finally
-		{
-			Logger.LogCritical("Binary stream processing loop terminated.");
-		}
-	} */
 }

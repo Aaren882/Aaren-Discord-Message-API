@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace ExtensionComponents.Entity;
 
-public record struct CallContext(
+public record CallContext(
 	UInt64 steamId,
 	string fileSource,
 	string missionName,
@@ -11,7 +11,7 @@ public record struct CallContext(
 );
 
 public delegate int ExtensionCallback(
-	string name, 
+	string name,
 	string function,
 	string data
 );

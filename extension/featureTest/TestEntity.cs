@@ -1,9 +1,8 @@
 using ExtensionComponents.Entity;
-using static ServiceConnection.EntryDelegates;
 
 namespace featureTest;
 
-public record struct TestOutputBuilder(nint Destination, int OutputSize): IOutputBuilder
+public readonly record struct TestOutputBuilder(nint DestinationPtr, int OutputSize) : IOutputBuilder
 {
 	/// <summary>
 	/// Construct output buffer for Arma

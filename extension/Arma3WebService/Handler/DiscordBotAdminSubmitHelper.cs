@@ -145,7 +145,7 @@ internal static class DiscordBotAdminSubmitHelper
 		SubmittedModalSockets[guildId] = component;
 
 		var command = new Arma3PayloadServiceRequest(2, guildId);
-		await websocketServer!.SendAsync(command.ToJsonString(), WebSocketMessageType.Text, true);
+		await websocketServer!.SendAsync(command.ToJsonBytes(), WebSocketMessageType.Text, true);
 
 		return (sessionName, null);
 	}

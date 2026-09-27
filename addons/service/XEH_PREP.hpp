@@ -2,8 +2,6 @@ PREP(AddCBASettings);
 PREP(AdminPanel);
 PREP(GetCurrentRptFilePath);
 PREP(GetPathFiles);
-PREP(GetProfile);
-PREP(GetProfileConfiguration);
 PREP(GetProfileName);
 PREP(GetServerInfo);
 PREP(RegisterServerIdentity);

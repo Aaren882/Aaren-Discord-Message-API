@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Arma3WebService.Migrations.NpgSQL.Migrations
 {
     [DbContext(typeof(ServiceDbContext))]
-    [Migration("20260909142423_JsonMessageTemplete")]
+    [Migration("20260921144243_JsonMessageTemplete")]
     partial class JsonMessageTemplete
     {
         /// <inheritdoc />

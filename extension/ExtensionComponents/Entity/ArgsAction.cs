@@ -1,16 +1,14 @@
-using static ExtensionComponents.LocalServices;
 namespace ExtensionComponents.Entity;
 
 public interface IArgsAction
 {
 	public IOutputBuilder Output { get; init; }
-	public string[] Args { get; init; }
-	public string FunctionName { get; init; }
-	
-	public (IOutputBuilder, string[], string) GetParams();
+	public IArgsBuilder Args { get; init; }
+	public nint FunctionPtr { get; init; }
+	public (IOutputBuilder, string[], nint) GetParams();
 }
 
-public readonly record struct ArgsAction(IOutputBuilder Output, string[] Args, string FunctionName) : IArgsAction
+public readonly record struct ArgsAction(IOutputBuilder Output, IArgsBuilder Args, nint FunctionPtr) : IArgsAction
 {
-	public (IOutputBuilder, string[], string) GetParams() => (Output, Args, FunctionName);
+	public (IOutputBuilder, string[], nint) GetParams() => (Output, Args.GetArgsStringArray(), FunctionPtr);
 }

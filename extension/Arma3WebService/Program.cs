@@ -12,11 +12,16 @@ using Arma3WebService.Identities;
 using Arma3WebService.Managers;
 using Arma3WebService.Models;
 using Components.Entity;
+using Discord;
+using Discord.Interactions;
+using Discord.WebSocket;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Net.Http.Headers;
 using static Arma3WebService.Managers.BinaryStreamManager;
 using static Arma3WebService.Managers.WebsocketServer;
@@ -25,6 +30,7 @@ namespace Arma3WebService
 {
 	public class Program
 	{
+		public const string PersistDirectory = ".data";
 		public static void Main(string[] args)
 		{
 			Env.Load();
@@ -34,7 +40,7 @@ namespace Arma3WebService
 			var provider = Environment.GetEnvironmentVariable("DB_PROVIDER") ?? builder.Configuration["DB_PROVIDER"] ?? "SQLite";
 			builder.Services.AddDbContextFactory<ServiceDbContext>(options =>
 			{
-				var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration["DB_CONNECTION_STRING"] ?? "Data Source=data.db";
+				var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration["DB_CONNECTION_STRING"] ?? $"Data Source={Program.PersistDirectory}/data.db";
 
 				var migrationAssembly = $"Arma3WebService.Migrations.{provider}";
 				var optionsBuilder = (provider) switch
@@ -56,39 +62,63 @@ namespace Arma3WebService
 			builder.Services.AddScoped(sp =>
 				sp.GetRequiredService<IDbContextFactory<ServiceDbContext>>().CreateDbContext());
 
-			builder.Services.AddSingleton<Channel<ActionPayload>>(_ => Channel.CreateBounded<ActionPayload>(1000));
-			builder.Services.AddSingleton<Channel<BinaryPayload>>(_ => Channel.CreateBounded<BinaryPayload>(100));
+			builder.Services.AddSingleton<Channel<ActionPayload>>(_ => Channel.CreateBounded<ActionPayload>(new BoundedChannelOptions(1000)
+			{
+				SingleReader = true,
+			}));
+			builder.Services.AddSingleton<Channel<BinaryPayload>>(_ => Channel.CreateBounded<BinaryPayload>(new BoundedChannelOptions(100)
+			{
+				SingleReader = true,
+			}));
 
-			builder.Services.AddSingleton<Channel<Arma3PayloadBinaryContent>>(_ => Channel.CreateUnbounded<Arma3PayloadBinaryContent>());
+			builder.Services.AddSingleton<Channel<Arma3PayloadBinaryContent>>(_ => Channel.CreateUnbounded<Arma3PayloadBinaryContent>(new UnboundedChannelOptions
+			{
+				SingleReader = true,
+			}));
 			builder.Services.AddSingleton<ConcurrentDictionary<string, Content>>(_ => new());
 			builder.Services.AddSingleton<ConcurrentDictionary<string, Channel<Arma3PayloadBinaryContent>>>(_ => new());
 
-			//- Add controllers
-			builder.Services.AddSingleton<AdminConsoleManager>();
-			builder.Services.AddSingleton<DiscordBotRequestHandler>();
+			//- Add Services
+			builder.Services.AddSingleton(new DiscordSocketClient(
+				new DiscordSocketConfig
+				{
+					GatewayIntents = GatewayIntents.AllUnprivileged,
+					LogLevel = LogSeverity.Info
+				}
+			));
+			builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), new InteractionServiceConfig
+			{
+				LogLevel = LogSeverity.Info,
+				DefaultRunMode = RunMode.Async
+			}));
+
+			//- Bot Background Services
 			builder.Services.AddSingleton<IDiscordBotService, DiscordBotService>();
+			builder.Services.AddSingleton<AdminConsoleManager>();
+
+			//- Websocket Services
+			builder.Services.AddScoped<WebsocketServer>();
+			builder.Services.AddSingleton<DiscordBotRequestHandler>();
 			builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 			builder.Services.AddSingleton<BinaryStreamManager>();
 			builder.Services.AddSingleton<UpdateDBActionBroker>();
-			builder.Services.AddSingleton<IdentityCheckService>();
 			builder.Services.AddSingleton<BinaryPayloadBroker>();
 			builder.Services.AddSingleton<IArma3ActionManager, Arma3ActionManager>();
-			builder.Services.AddScoped<WebsocketServer>();
-			builder.Services.AddScoped<IServerIdentityRepository, ServerIdentityRepository>();
-			builder.Services.AddScoped<IServerInfoTemplateRepository, ServerInfoTemplateRepository>();
-			// builder.Services.AddSingleton<WebSocketConnectionFactory.IConnectionFactory, WebSocketConnectionFactory.ConnectionFactory>();
-			// builder.Services.AddSingleton<WebSocketConnectionManager.IConnectionManager, WebSocketConnectionManager.ConnectionManager>();
-			// builder.Services.AddSingleton<IArma3ActionFactory, Arma3ActionFactory>();
-
 			builder.Services.AddSingleton<WebsocketContextEntityFactory>();
-
-
 			builder.Services.AddSingleton<ServiceActionManager>();
 			builder.Services.AddSingleton<RemoteStateManager>();
+
+			//- DB Repos
+			builder.Services.AddScoped<IServerInfoTemplateRepository, ServerInfoTemplateRepository>();
+			builder.Services.AddScoped<IServerIdentityRepository, ServerIdentityRepository>();
+
+			//- Identity Services
+			builder.Services.AddScoped<IdentityCheckService>();
 			builder.Services.AddScoped<JwtHelpers>();
 
 			// Add services to the container.
 			builder.Services.AddHostedService<DiscordBotService>();
+			builder.Services.AddHostedService<AdminConsoleManager>();
 			//- Register Bot Service -//
 
 			builder.Services.AddHostedService<WebSocketService>();
@@ -98,12 +128,8 @@ namespace Arma3WebService
 			//- Register Connection Services -//
 
 			builder.Services.AddControllers();
-
-			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-			//builder.Services.AddOpenApi();
 			builder.Services.AddSwaggerGen();
 
-			//builder.Services.AddControllersWithViews();
 
 			//- WebSocket
 			builder.Services.AddCors(options =>
@@ -118,6 +144,7 @@ namespace Arma3WebService
 					);
 			});
 
+			//- Auth Settings
 			builder.Services
 				.AddAuthorizationBuilder()
 				.AddPolicy("GameRequest", policy =>
@@ -130,12 +157,11 @@ namespace Arma3WebService
 			builder.Services
 				.AddAuthentication()
 				.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme)
-				.AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
+				.AddScheme<AuthenticationSchemeOptions, BearerAuthenticationHandler>("BasicAuth", null);
 			builder.Services.ConfigureOptions<JwtConfigureOptions>();
 
+			//- Resource monitor
 			builder.Services.AddResourceMonitoring();
-
-
 
 			var app = builder.Build();
 
@@ -144,8 +170,13 @@ namespace Arma3WebService
 			{
 				var dbContext = scope.ServiceProvider.GetRequiredService<ServiceDbContext>();
 
-				// This applies any pending migrations and creates the database if it doesn't exist
-				dbContext.Database.Migrate();
+				var migrator = dbContext.GetService<IMigrator>();
+				var targetMigration = dbContext.Database.GetMigrations().LastOrDefault()
+					?? throw new InvalidOperationException($"No migrations found in <{nameof(ServiceDbContext)}>.");
+				var pendingMigrations = dbContext.Database.GetPendingMigrations().ToArray();
+
+				if (pendingMigrations.Length != 0)
+					migrator.Migrate(targetMigration);
 			}
 
 			// Configure the HTTP request pipeline.
@@ -155,8 +186,6 @@ namespace Arma3WebService
 				app.MapSwagger();
 				app.UseSwaggerUI();
 			}
-
-			//app.UseHttpsRedirection();
 
 			//- Websocket
 			app.UseWebSockets(new WebSocketOptions

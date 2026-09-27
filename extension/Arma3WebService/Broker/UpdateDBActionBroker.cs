@@ -7,8 +7,7 @@ namespace Arma3WebService.Broker;
 public class UpdateDBActionBroker(
 	BinaryStreamManager binaryStreamManager,
 	ILogger<UpdateDBActionBroker> Logger,
-	IServerIdentityRepository identityRepository,
-	IServerInfoTemplateRepository infoRepository
+	IServiceScopeFactory scopeFactory
 )
 {
 	public async Task AddAsync(WebsocketServer connection, Arma3PayloadUpdateDB PayloadUpdate)
@@ -36,37 +35,56 @@ public class UpdateDBActionBroker(
 			string[] propertyNames = [.. typeof(Arma3ClientProfileConfiguration).GetProperties().Select(x => x.Name)];
 			List<string> nativeFileDirectories = [.. metaDataList.Select((metaData, i) => Path.Combine(DirectoryPrefix, propertyNames[i], metaData.FileName))];
 
+			var contentsAsyncEnumerable = metaDataList
+				.Select((binaryPayload, i) =>
+				{
+					var destinationDir = nativeFileDirectories[i];
+					var dirName = Path.GetDirectoryName(destinationDir)
+						?? throw new ArgumentException($"Cannot create directory for file: {destinationDir}");
+
+					if (!Path.Exists(dirName))
+						Directory.CreateDirectory(dirName);
+
+					var payloadId = binaryPayload.GetIdentifier(profileName);
+					var (FileName, _, _, _) = binaryPayload;
+
+					return binaryStreamManager.AddBinaryAsync(
+						payloadId,
+						binaryPayload,
+						new FileStream(
+							destinationDir,
+							FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
+						),
+						TimeSpan.FromMinutes(3),
+						connection.CancellationToken
+					);
+				}).ToArray();
+
 			var newConfiguration = configuration with
 			{
 				MessageTemplate = nativeFileDirectories[0],
 				MessageOfflineTemplate = nativeFileDirectories[1],
 				MessageActions = nativeFileDirectories[2]
 			};
-
-			var contentsAsyncEnumerable = metaDataList
-				.Select((binaryPayload, i) =>
-				{
-					var payloadId = binaryPayload.GetIdentifier(profileName);
-					var (FileName, _, _, _, _) = binaryPayload;
-
-					return binaryStreamManager.AddBinaryAsync(
-						payloadId,
-						binaryPayload,
-						new FileStream(
-							nativeFileDirectories[i],
-							FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite
-						)
-					);
-				});
+			Logger.LogInformation("Waiting for Profile's binary content to be written. Items : {Count}", contentsAsyncEnumerable.Length);
 
 			await foreach (var item in Task.WhenEach(contentsAsyncEnumerable))
 			{
+				Logger.LogInformation("Processing and writing Profile's binary content inside sequential worker.");
+
 				var (identifier, writtenContent) = await item;
+				writtenContent.Dispose();
+
 				Logger.LogInformation("BinaryAction finished DB Request for {profileName} : ID = {identifier}", profileName, identifier);
 			}
-			var identity = await identityRepository.GetByProfileNameAsync(profileName, tracked: false);
+
+			using var serviceScope = scopeFactory.CreateScope();
+			var identityRepository = serviceScope.ServiceProvider.GetRequiredService<IServerIdentityRepository>();
+			var identity = await identityRepository.GetByProfileNameAsync(profileName);
+
 			ArgumentNullException.ThrowIfNull(identity);
 
+			var infoRepository = serviceScope.ServiceProvider.GetRequiredService<IServerInfoTemplateRepository>();
 			var infoTemplate = await infoRepository.GetByMessageIdAsync(identity.messageId);
 
 			//- Create/Update Database value

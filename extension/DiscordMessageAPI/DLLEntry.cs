@@ -9,6 +9,14 @@ namespace DiscordMessageAPI;
 
 public class DllEntry
 {
+	private const ulong RVFeature_ArgumentNoEscapeString = 1UL << 2; // 0x04
+
+	[UnmanagedCallersOnly(EntryPoint = "RVExtensionFeatureFlags")]
+	public static ulong RVExtensionFeatureFlags()
+	{
+		return RVFeature_ArgumentNoEscapeString;
+	}
+
 	/// <summary>
 	/// Register callback for Arma
 	/// </summary>
@@ -39,31 +47,27 @@ public class DllEntry
 	{
 		//- Clean up logs
 		LoggerBase.CleanLogs();
-		
+
 		var services = new ServiceCollection();
-		services.AddSingleton<ILocalServices,LocalServices>();
+		services.AddSingleton<ILocalServices, LocalServices>();
 		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 
 		var serviceProvider = services.BuildServiceProvider();
-		
+
 		//- Setup Service Configuration
-		ExtensionStartup.InitConfiguration(
-			LoggerBase.Trace,
-			LoggerBase.Log,
-			serviceProvider
-		);
-		
-		var version = typeof(DllEntry).GetTypeInfo().Assembly 
+		ExtensionStartup.InitConfiguration(serviceProvider);
+
+		var version = typeof(DllEntry).GetTypeInfo().Assembly
 			.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
 			.InformationalVersion;
-		
+
 		version = version
 			.Substring(0, version.LastIndexOf('+') + 9);
 
 		LoggerBase.Log(null, $"Extension Version : [{version}]");
-		ExtensionStartup.localServices.Output(outputPrt, outputSize, version);
+		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
 	}
-	
+
 	/// <summary>
 	/// Receives context information .
 	/// </summary>from Arma 3 about the execution environment
@@ -87,7 +91,7 @@ public class DllEntry
 			args[3]!,
 			Convert.ToInt16(args[4])
 		);
-		LoggerBase.Trace(nameof(ExtensionStartup.ContextInfo),ExtensionStartup.ContextInfo.ToString());
+		LoggerBase.Trace(nameof(ExtensionStartup.ContextInfo), ExtensionStartup.ContextInfo.ToString());
 	}
 
 	/// <summary>
@@ -115,26 +119,12 @@ public class DllEntry
 	///     numbers
 	/// </returns>
 	[UnmanagedCallersOnly(EntryPoint = "RVExtensionArgs")]
-	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint function, nint argsPrt, int argCount)
+	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
 	{
-		var args = new string[argCount];
-		for (var i = 0; i < argCount; i++)
-		{
-			var str = Marshal.PtrToStringUTF8(
-					Marshal.ReadIntPtr(argsPrt + (i * Marshal.SizeOf<nint>()))
-				)!
-				.Trim('"', ' ') //- Remove Arma quotations
-				.Replace("\"\"", "\"");
+		OutputBuilder output = new(outputPrt, outputSize);
+		ArgsBuilder args = new(argsPrt, argCount);
+		ArgsAction argsAction = new(output, args, functionPtr);
 
-			args[i] = str;
-			LoggerBase.Trace($"DLL Entry => \"{i}\"", $"\"str = {str}\"");
-			//args = args.Select(arg => arg.Trim('"', ' ').Replace("\"\"", "\"")).ToArray();
-		}
-		
-		var functionName = Marshal.PtrToStringUTF8(function)!;
-		var output = new OutputBuilder(outputPrt, outputSize);
-		var argsAction = new ArgsAction(output, args, functionName);
-
-		return ExtensionStartup.localServices.ExecuteArgsAction(argsAction);
+		return ExtensionStartup.LocalServices?.ExecuteArgsAction(argsAction) ?? -1;
 	}
 }
