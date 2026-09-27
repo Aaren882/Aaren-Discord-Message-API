@@ -8,7 +8,7 @@ and it only works <mark style="color:yellow;">**AFTER**</mark> Mission Started.
 
 ## How to Setup ?
 
-Go to <mark style="color:yellow;">"</mark><mark style="color:yellow;">**Better CAS Environment (cTab ATAK  Camera)"**</mark> in "CBA Setting"
+Go to <mark style="color:yellow;">"</mark><mark style="color:yellow;">**Better CAS Environment (cTab ATAK Camera)"**</mark> in "CBA Setting"
 
 1. Make sure **"Send Pictures to Discord"** is checked. :white\_check\_mark:
 2. Select the Webhook _**Index.**_

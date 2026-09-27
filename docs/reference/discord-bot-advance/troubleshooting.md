@@ -1,0 +1,22 @@
+# 🔍 Troubleshooting
+
+#### 1. Connection Refused (Port 5048)
+
+* Ensure your VPS/Cloud provider's hardware firewall allows the TCP port.
+
+#### 2. Bot Not Responding
+
+* Check the console and logs for exceptions.
+* Ensure the Bot has "Message Content Intent" enabled in the Discord Developer Portal.
+
+#### 3. High Memory Usage
+
+If memory climbs significantly:
+
+* Reduce the frequency of status updates in the Arma 3 `Addon Settings` (Recommand 10s).
+* Check the `LOG_LEVEL`; setting it to `Debug` or `Trace` in production can create massive log files and overhead.
+
+#### 4. Where to find the error messages
+
+Please check out `.rpt` and `./Discord_Message_API/logs` for in-game errors.\
+For the backend, simply check the monitor logging.
