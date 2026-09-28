@@ -30,7 +30,12 @@ public sealed class ServiceInteractions
 
 		Arma3PayloadCallBack serviceAccessResult = new(
 			Function: "ServiceAccessResult",
-			Data: $"[{authTokenPayload is not { AuthToken: null }},{returnPayloadString}]"
+			Data: $$"""
+			{
+				"Success": "{{authTokenPayload is not { AuthToken: null }}}",
+				"Return": {{returnPayloadString}},
+			}
+			"""
 		);
 		Callback.CallExtensionCallback(serviceAccessResult);
 
