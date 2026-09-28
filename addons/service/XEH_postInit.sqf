@@ -82,9 +82,6 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
     };
   }];
 
-  INFO("DISCORD_API [Server Info Init] || Start Sending Telemetries");
-  call FUNC(ServerInfo_Loop);
-  
   //- Check Server Entry & Exit
   addMissionEventHandler ["PlayerConnected", {
     [true] call EFUNC(webhook,Update_ServerInfo);
@@ -92,7 +89,10 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
   addMissionEventHandler ["HandleDisconnect", {
     [true] call EFUNC(webhook,Update_ServerInfo);
   }];
-  addMissionEventHandler ["OnUserAdminStateChanged", {
+
+  //- Admin State
+  INFO("DISCORD_API [Server Info Init] || Checking ""Admin State""...");
+  private _userAdminStateAction = {
     params ["_networkId", "_loggedIn", "_votedIn"];
 
     //- Setup Admin panel (on diary)
@@ -109,7 +109,20 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
     TRACE_1("profileFileNames",_profileFileNames);
     
     [_profileFileNames] remoteExecCall [QFUNC(AddCBASettings), _ownerId];
-  }];
+  };
+
+  private _adminList = (call BIS_fnc_listPlayers) select { (admin owner _x) isEqualTo 2 };
+  {
+    INFO_1("AdminConsole assigned to %1.",name _x);
+    [getPlayerID _x, false, true] call _userAdminStateAction;
+  } forEach _adminList;
+  
+  addMissionEventHandler ["OnUserAdminStateChanged", _userAdminStateAction];
+  INFO("DISCORD_API [Server Info Init] || ""Admin State"" Checked.");
+
+  //- Sending Telemetries
+  INFO("DISCORD_API [Server Info Init] || Start Sending Telemetries");
+  call FUNC(ServerInfo_Loop);
 }] call CBA_fnc_addEventHandler;
 
 [QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
