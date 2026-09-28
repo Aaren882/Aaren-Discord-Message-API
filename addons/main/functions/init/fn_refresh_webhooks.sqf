@@ -13,7 +13,7 @@ if (_infoVar findIf {true} < 0) exitWith {};
       LOCAL_STR("Edit_ServerID"),
       LOCAL_STR("Edit_ServerID_Tip")
     ], 
-    ["DiscordMessageAPI Settings", LOCAL_STR("Server_INFO")], 
+    ["DiscordMessageAPI Settings", LOCAL_STR("Webhook")], 
     "",
     1,
     {
@@ -29,7 +29,7 @@ if (_infoVar findIf {true} < 0) exitWith {};
       LOCAL_STR("SERVERINFO_JSON"),
       LOCAL_STR("SERVERINFO_JSON_Tip")
     ], 
-    ["DiscordMessageAPI Settings", LOCAL_STR("Server_INFO")], 
+    ["DiscordMessageAPI Settings", LOCAL_STR("Webhook")], 
     "Server_Info_msg.json",
     1,
     {
@@ -45,7 +45,7 @@ if (_infoVar findIf {true} < 0) exitWith {};
       LOCAL_STR("Closed_JSON"),
       LOCAL_STR("Closed_JSON_Tip")
     ], 
-    ["DiscordMessageAPI Settings", LOCAL_STR("Server_INFO")], 
+    ["DiscordMessageAPI Settings", LOCAL_STR("Webhook")], 
     "Server_Ended_msg.json",
     1,
     {
