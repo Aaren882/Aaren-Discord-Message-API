@@ -1,5 +1,20 @@
 #include "script_component.hpp"
 
+//- Other Settings
+[
+  QGVAR(Connect_On_SP), "CHECKBOX", 
+  [
+    LLSTRING(connect_on_sp),
+    LLSTRING(connect_on_sp_tooltip)
+  ], 
+  ["DiscordMessageAPI Settings", "Service"], 
+  false
+] call CBA_fnc_addSetting;
+
+#ifndef DEBUG_MODE_FULL
+  if (!GVAR(Connect_On_SP) && !isMultiplayer && !isServer) exitWith {};
+#endif
+
 INFO(MSG_INIT);
 
 //- Variables
@@ -33,14 +48,3 @@ if (count _profileFileNames == 0) then
   uiNamespace setVariable [QGVAR(profileFileNames), _profileFileNames];
   INFO_1("DISCORD_API [PreInit] || Profiles : %1",_profileFileNames);
 };
-
-//- Other Settings
-[
-  QGVAR(Connect_On_SP), "CHECKBOX", 
-  [
-    LLSTRING(connect_on_sp),
-    LLSTRING(connect_on_sp_tooltip)
-  ], 
-  ["DiscordMessageAPI Settings", "Service"], 
-  false
-] call CBA_fnc_addSetting;
