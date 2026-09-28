@@ -19,10 +19,14 @@ if (isServer) then {
       //- Fire postInit Event
       INFO(MSG_INIT);
       [QGVARMAIN(postInit_Server)] call CBA_fnc_LocalEvent;
+    }] call CBA_fnc_addEventHandler;
 
-      //- Check Mission Ended (on Server Shutdown)
-      findDisplay 46 displayAddEventHandler ["Unload",
-      {
+    //- Check Mission MPEnded (on Server Shutdown)
+    0 spawn {
+      INFO_1("Mission ""MPEnded"" Registering... (Dedicated Server: %1)",isDedicated);
+      private _action = {
+        INFO("Mission Unloading...");
+
         private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
         private _format = [];
         private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];
@@ -38,9 +42,23 @@ if (isServer) then {
         ] call EFUNC(webhook,sendJsonFormat);
 
         [QGVARMAIN(Mission_Unload_Server)] call CBA_fnc_LocalEvent;
-        (this # 0) displayRemoveEventHandler [_thisEvent, _thisEventHandler];
-      }];
-    }] call CBA_fnc_addEventHandler;
+        INFO("Mission Unloaded.");
+
+        if (!isDedicated) then {
+          INFO("Removing this ""Unload EventHandler""...");
+          (this # 0) displayRemoveEventHandler [_thisEvent, _thisEventHandler];
+          INFO("""Unload EventHandler"" Removed.");
+        };
+      };
+      
+      if (isDedicated) then {
+        private _EndedEH = addMissionEventHandler ["MPEnded", _action];
+        INFO_1("Mission ""MPEnded"" Registered. (ID: %1)",_EndedEH);
+      } else {
+        waitUntil { !isNull findDisplay 46 };
+        findDisplay 46 displayAddEventHandler ["Unload", _action];
+      };
+    };
     
 } else {
   //- Init Clients
