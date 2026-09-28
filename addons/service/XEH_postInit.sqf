@@ -135,15 +135,12 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
 }] call CBA_fnc_addEventHandler;
 
 [QGVAR(ServiceAccessResult), {
-  INFO_1("ServiceAccessResult : %1",_this);
-  
   //- Wait for websocket connection
   [
     {GVAR(Available)}, {
-      params ["_successful","_returnPayloadString"];
-      INFO_1("[ServiceAccessResult]: Profile configuration received %1",_returnPayloadString);
+      INFO("[ServiceAccessResult]: Successfully Connected.");
   }, _this, 10, {
-    WARNING("ServiceAccessResult callback wait timeout. It seems the service is not responding or taking too long to respond.");
+      WARNING("ServiceAccessResult callback wait timeout. It seems the service is not responding or taking too long to respond.");
   }] call CBA_fnc_waitUntilAndExecute;
 }] call CBA_fnc_addEventHandler;
 
