@@ -33,7 +33,7 @@ public class UpdateDBActionBroker(
 				Directory.CreateDirectory(DirectoryPrefix);
 
 			string[] propertyNames = [.. typeof(Arma3ClientProfileConfiguration).GetProperties().Select(x => x.Name)];
-			List<string> nativeFileDirectories = [.. metaDataList.Select((metaData, i) => Path.Combine(DirectoryPrefix, propertyNames[i], metaData.FileName))];
+			string[] nativeFileDirectories = [.. metaDataList.Select((metaData, i) => Path.Combine(DirectoryPrefix, propertyNames[i], metaData.FileName))];
 
 			var contentsAsyncEnumerable = metaDataList
 				.Select((binaryPayload, i) =>
@@ -60,12 +60,7 @@ public class UpdateDBActionBroker(
 					);
 				}).ToArray();
 
-			var newConfiguration = configuration with
-			{
-				MessageTemplate = nativeFileDirectories[0],
-				MessageOfflineTemplate = nativeFileDirectories[1],
-				MessageActions = nativeFileDirectories[2]
-			};
+			var newConfiguration = Arma3ClientProfileConfiguration.CreateWithFiles(nativeFileDirectories);
 			Logger.LogInformation("Waiting for Profile's binary content to be written. Items : {Count}", contentsAsyncEnumerable.Length);
 
 			await foreach (var item in Task.WhenEach(contentsAsyncEnumerable))

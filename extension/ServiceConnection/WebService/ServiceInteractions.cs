@@ -298,9 +298,11 @@ public sealed class ServiceInteractions
 	}
 	public ProfileConfiguration GetServiceProfile(string profileName)
 	{
-		var fileName = Path.Combine("profiles", profileName + ".json");
-		var profileString = Util.ParseJson(fileName)
-			?? throw new FileNotFoundException($"Profile file '{Path.Combine("profile", profileName + ".json")}' not found or could not be parsed.");
+		var filePath = Path.Combine("profiles", profileName + ".json");
+		Logger.LogInformation("Profile \"{Profile}\" file - {Path}", profileName, filePath);
+
+		var profileString = Util.ParseJson(filePath)
+			?? throw new FileNotFoundException($"Profile file '{filePath}' not found or could not be parsed.");
 
 		Logger.LogTrace("UpdateServiceProfile : {Profile}", profileString);
 
@@ -311,17 +313,11 @@ public sealed class ServiceInteractions
 
 		//- Add Assembly Prefix
 		string[] clientProfileConfig = profileConfiguration.Configuration.GetTemplateFileList(Util.AssemblyPath);
-		Logger.LogTrace("clientProfileConfig : Length - {Length}", clientProfileConfig.Length);
+		Logger.LogInformation("clientProfileConfig : Length - {Length}, Configuration - {Config}", clientProfileConfig.Length, profileConfiguration.Configuration);
 
 		profileConfiguration = profileConfiguration with
 		{
-			Configuration = new Arma3ClientProfileConfiguration(
-				clientProfileConfig[0],
-				clientProfileConfig[1],
-				clientProfileConfig.Length < 2 ?
-					null :
-					clientProfileConfig[2]
-			)
+			Configuration = Arma3ClientProfileConfiguration.CreateWithFiles(clientProfileConfig)
 		};
 		Logger.LogTrace("UpdateServiceProfile : {ProfileConfig}", profileConfiguration);
 

@@ -8,6 +8,25 @@ public readonly record struct Arma3ClientProfileConfiguration(
 	string? MessageActions = null
 )
 {
+	public static Arma3ClientProfileConfiguration CreateWithFiles(params string[] files)
+	{
+		if (files.Length <= 2)
+		{
+			return new Arma3ClientProfileConfiguration(
+				files[0],
+				files[1],
+				null
+			);
+		}
+		else
+		{
+			return new Arma3ClientProfileConfiguration(
+				files[0],
+				files[1],
+				files[2]
+			);
+		}
+	}
 	public string[] GetTemplateFileList(string prefix = "")
 	{
 		string[] fileInfos;
