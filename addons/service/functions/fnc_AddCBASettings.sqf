@@ -38,3 +38,14 @@ TRACE_1("fnc_AddCBASettings",_this);
   ],
   1
 ] call CBA_fnc_addSetting;
+
+[
+  QGVAR(Connect_On_SP), "CHECKBOX", 
+  [
+    LLSTRING(connect_on_sp),
+    LLSTRING(connect_on_sp_tooltip)
+  ], 
+  ["DiscordMessageAPI Settings", "Service"], 
+  false,
+  1
+] call CBA_fnc_addSetting;
