@@ -22,10 +22,12 @@ Author:
 
 private _result = "DiscordMessageAPIService" callExtension ["UpdateRptDirectory", [GVAR(Profiles)]];
 _result params ["_return", "_returnCode"];
-INFO_1("fnc_UpdateRptDirectoryFromProfile || Result : ""%1""",_return);
 
 if (_returnCode < 0) then {
+  ERROR_1("fnc_UpdateRptDirectoryFromProfile %1",_return);
   [_result # 1] call BIS_fnc_error;
+} else {
+  INFO_1("fnc_UpdateRptDirectoryFromProfile || Result : ""%1""",_return);
 };
 
 nil
