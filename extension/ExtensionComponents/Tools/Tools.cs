@@ -103,7 +103,7 @@ public static class Util
 		return key;
 	}
 
-	public static int CallExtensionCallback(ExtensionCallback extensionCallback, Arma3Payload payload)
+	public static int CallExtensionCallback(this ExtensionCallback extensionCallback, Arma3Payload payload)
 	{
 		var data = payload.ToJsonString();
 		return extensionCallback("DISCORD_API", ((int)payload.Type).ToString(), data);

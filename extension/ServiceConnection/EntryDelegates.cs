@@ -75,7 +75,7 @@ public sealed class EntryDelegates : EntryDelegatesBase
 			Function: "RptDirectoryUpdated",
 			Data: configString
 		);
-		Util.CallExtensionCallback(Callback, profileUpdated);
+		Callback.CallExtensionCallback(profileUpdated);
 
 		output.Append(rptDir);
 		return 1;

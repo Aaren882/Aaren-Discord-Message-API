@@ -32,7 +32,7 @@ public sealed class ServiceInteractions
 			Function: "ServiceAccessResult",
 			Data: $"[{authTokenPayload is not { AuthToken: null }},{returnPayloadString}]"
 		);
-		Util.CallExtensionCallback(Callback, serviceAccessResult);
+		Callback.CallExtensionCallback(serviceAccessResult);
 
 		var configString = JsonSerializer.Serialize(
 			configuration,
@@ -43,7 +43,7 @@ public sealed class ServiceInteractions
 			Function: "ProfileUpdated",
 			Data: configString
 		);
-		Util.CallExtensionCallback(Callback, profileUpdated);
+		Callback.CallExtensionCallback(profileUpdated);
 	};
 
 	private string? _RPTFileDirectory { get; set; }
@@ -67,7 +67,7 @@ public sealed class ServiceInteractions
 				Function: "ConnectionChanged",
 				Data: "[true]"
 			);
-			Util.CallExtensionCallback(Callback, callBack);
+			Callback.CallExtensionCallback(callBack);
 		};
 		WsClient.Disconnected += () =>
 		{
@@ -75,12 +75,12 @@ public sealed class ServiceInteractions
 				Function: "ConnectionChanged",
 				Data: "[false]"
 			);
-			Util.CallExtensionCallback(Callback, callBack);
+			Callback.CallExtensionCallback(callBack);
 		};
 		WsClient.MessageReceived += (message) =>
 		{
 			// Tracer("MessageReceived (message)", message.ToString());
-			Util.CallExtensionCallback(Callback, message);
+			Callback.CallExtensionCallback(message);
 		};
 	}
 
