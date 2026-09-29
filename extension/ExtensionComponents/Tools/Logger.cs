@@ -6,7 +6,7 @@ namespace ExtensionComponents.Tools;
 
 public static class LoggerBase
 {
-	private const int LogLimitCount = 10;
+	private const int LogLimitCount = 20;
 	private static readonly string ExtFilePath = Util.AssemblyPath!;
 	private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
 	private static string? LogFileName;
