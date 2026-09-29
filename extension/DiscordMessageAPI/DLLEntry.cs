@@ -4,36 +4,16 @@ using ExtensionComponents;
 using ExtensionComponents.Entity;
 using ExtensionComponents.Tools;
 using Microsoft.Extensions.DependencyInjection;
+using static ExtensionComponents.ExtensionStartup;
 
 namespace DiscordMessageAPI;
 
-public class DllEntry
+public sealed class DllEntry
 {
-	private const ulong RVFeature_ArgumentNoEscapeString = 1UL << 2; // 0x04
-
 	[UnmanagedCallersOnly(EntryPoint = "RVExtensionFeatureFlags")]
 	public static ulong RVExtensionFeatureFlags()
 	{
-		return RVFeature_ArgumentNoEscapeString;
-	}
-
-	/// <summary>
-	/// Register callback for Arma
-	/// </summary>
-	/// <param name="functionPtr"></param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionRegisterCallback")]
-	public static void RVExtensionRegisterCallback(nint functionPtr)
-	{
-		try
-		{
-			ExtensionStartup.Callback = Marshal.GetDelegateForFunctionPointer<ExtensionCallback>(functionPtr);
-			LoggerBase.Trace("RVExtensionRegisterCallback", "CallBack Initiated");
-		}
-		catch (Exception e)
-		{
-			LoggerBase.Trace("RVExtensionRegisterCallback", "ERROR...");
-			LoggerBase.Log(e);
-		}
+		return (ulong)(RVFeatureFlags.ContextNoDefaultCall | RVFeatureFlags.ArgumentNoEscapeString);
 	}
 
 	/// <summary>
@@ -68,32 +48,6 @@ public class DllEntry
 	}
 
 	/// <summary>
-	/// Receives context information .
-	/// </summary>from Arma 3 about the execution environment
-	/// <param name="argsPtr">Pointer to the array of strings containing context data.</param>
-	/// <param name="argCount">The number of arguments passed in the context.</param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
-	public static void RVExtensionContext(nint argsPtr, int argCount)
-	{
-		var args = new string?[argCount];
-
-		for (var i = 0; i < argCount; i++)
-		{
-			var str = Marshal.PtrToStringUTF8(Marshal.ReadIntPtr(argsPtr + (i * Marshal.SizeOf<nint>())));
-			args[i] = str;
-		}
-
-		ExtensionStartup.ContextInfo = new CallContext(
-			Convert.ToUInt64(args[0]),
-			args[1]!,
-			args[2]!,
-			args[3]!,
-			Convert.ToInt16(args[4])
-		);
-		LoggerBase.Trace(nameof(ExtensionStartup.ContextInfo), ExtensionStartup.ContextInfo.ToString());
-	}
-
-	/// <summary>
 	/// The entry point for the default callExtension command.
 	/// </summary>
 	/// <param name="outputPrt">The string builder object that contains the result of the function</param>
@@ -111,7 +65,7 @@ public class DllEntry
 	/// </summary>
 	/// <param name="outputPrt"></param>
 	/// <param name="outputSize"></param>
-	/// <param name="function"></param>
+	/// <param name="functionPtr"></param>
 	/// <param name="argsPrt"></param>
 	/// <param name="argCount"></param>
 	/// <returns>
@@ -120,10 +74,8 @@ public class DllEntry
 	[UnmanagedCallersOnly(EntryPoint = "RVExtensionArgs")]
 	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
 	{
-		OutputBuilder output = new(outputPrt, outputSize);
-		ArgsBuilder args = new(argsPrt, argCount);
-		ArgsAction argsAction = new(output, args, functionPtr);
-
-		return ExtensionStartup.LocalServices?.ExecuteArgsAction(argsAction) ?? -1;
+		return
+			ExtensionStartup.LocalServices?.ExecuteArgsAction(outputPrt, outputSize, functionPtr, argsPrt, argCount)
+			?? -1;
 	}
 }
