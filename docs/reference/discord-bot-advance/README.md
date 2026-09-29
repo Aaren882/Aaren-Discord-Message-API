@@ -16,10 +16,13 @@ Unlike basic webhook implementations, this backend provides a robust infrastruct
 
 * **WebSocket Hub**: Maintains a persistent, bidirectional connection with your game server for instant communication.
 * **In-game Management:** Remotely "_Broadcast messages /_ [_Admin commands (ServerHost)_](https://community.bistudio.com/wiki/serverCommandAvailable)_"_.
+* **Custom Mod List (html) Attachment:** Attach your mod list on each running server session for people to grab the mod list more easily.
 * **Log Handling**: Facilitates the streaming of RPT logs or downloading them directly to your staff channels.
 * **Real-Time Game Monitoring**: Better customizations and more reliable status reports.
 
-<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (14).png" alt="" width="563"><figcaption><p>Interactive Discord Message</p></figcaption></figure></div>
+<div align="center" data-with-frame="true"><figure><img src="../../.gitbook/assets/image (14).png" alt="" width="563"><figcaption><p>Interactive Discord Message</p></figcaption></figure></div>
+
+<div data-with-frame="true"><figure><img src="../../.gitbook/assets/image (16).png" alt="" width="515"><figcaption><p>Advanced Commands</p></figcaption></figure></div>
 
 ### :tools: Start hosting your own bot
 
