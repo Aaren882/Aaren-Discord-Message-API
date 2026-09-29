@@ -51,7 +51,7 @@ _payload set ["Url", _url];
 TRACE_1("fnc_sendJsonFormat (Send)",_payload);
 
 //- Send Format Json
-"DiscordMessageAPI" callExtension [ 
+"DiscordMessageAPIv2" callExtension [ 
   "HandlerJsonFormat", 
   [
     toJSON _payload,

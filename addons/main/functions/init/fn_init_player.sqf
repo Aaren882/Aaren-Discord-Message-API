@@ -7,4 +7,4 @@ if (
 ) exitWith {};
 
 systemChat str localize "STR_Discord_MSG_Init_Hint";
-"DiscordMessageAPI" callExtension ["Init_Player",[_infoVar # 1]];
+"DiscordMessageAPIv2" callExtension ["Init_Player",[_infoVar # 1]];

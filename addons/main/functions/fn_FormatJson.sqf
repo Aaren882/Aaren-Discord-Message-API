@@ -52,7 +52,7 @@ if (isNil "_file") exitWith {
 ]
 */
 
-private _Info = "DiscordMessageAPI" callExtension [
+private _Info = "DiscordMessageAPIv2" callExtension [
   "ParseJson", 
   [ //- File Directory
     _file

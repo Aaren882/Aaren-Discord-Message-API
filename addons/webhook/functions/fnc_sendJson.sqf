@@ -27,7 +27,7 @@ if (isNil{DiscordEmbedBuilder_Info}) exitWith {
   ERROR("""fnc_sendJson"" Exception : DiscordEmbedBuilder_Info is not defined.");
 };
 
-"DiscordMessageAPI" callExtension [ 
+"DiscordMessageAPIv2" callExtension [ 
   "HandlerJson", 
   [
     [DiscordEmbedBuilder_Info # 0 # _sel,0],

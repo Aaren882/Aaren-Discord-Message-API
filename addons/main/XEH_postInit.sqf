@@ -10,7 +10,7 @@
 if (isServer) then {
 
   //- Init on Mission Started
-    private _Info = "DiscordMessageAPI" callExtension ["Init_Server",[]]; //- Return webhooks counts
+    private _Info = "DiscordMessageAPIv2" callExtension ["Init_Server",[]]; //- Return webhooks counts
     private _Webhook = ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOutput) + [_Info # 1];
     serverNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook];
     missionNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook,true];

@@ -7,7 +7,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <NativeLib>Shared</NativeLib>
     <Platforms>x64</Platforms>
-    <AssemblyName>$(MSBuildProjectName)_x64</AssemblyName>
+    <AssemblyName>$(MSBuildProjectName)v2_x64</AssemblyName>
     <Version>26.2.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
