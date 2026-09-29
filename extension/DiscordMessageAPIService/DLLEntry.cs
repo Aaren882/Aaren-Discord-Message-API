@@ -77,20 +77,23 @@ public sealed class DllEntry
 		services.AddSingleton<ILocalServices, LocalServices>();
 		services.AddSingleton<ServiceRequestHandler>();
 		services.AddSingleton<WebsocketClient>();
-		services.SetupFileLogger();
 
-		var serviceProvider = services.BuildServiceProvider();
+		//- Assembly Info
+		var assembly = typeof(DllEntry).GetTypeInfo().Assembly;
+		var assemblyName = assembly.GetName().Name!;
+		services.SetupFileLogger(assemblyName);
 
-		var version = typeof(DllEntry).GetTypeInfo().Assembly
+		var version = assembly
 				.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
 				.InformationalVersion;
-
 		version = version[..(version.LastIndexOf('+') + 9)];
 
+
 		// Centralize configuration and initialization via the shared components startup class
+		var serviceProvider = services.BuildServiceProvider();
 		serviceProvider.InitConfiguration(LoggerBase.Trace, LoggerBase.Log);
 
-		LoggerBase.Log(null, $"Extension Version : [{version}]");
+		LoggerBase.Log(null, $"\"{assemblyName}\" Extension Version : [{version}]");
 		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
 	}
 

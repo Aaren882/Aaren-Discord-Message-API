@@ -45,26 +45,25 @@ public class DllEntry
 	[UnmanagedCallersOnly(EntryPoint = "RVExtensionVersion")]
 	public static void RVExtensionVersion(nint outputPrt, int outputSize)
 	{
-		//- Clean up logs
-		LoggerBase.CleanLogs();
-
-		var services = new ServiceCollection();
+		ServiceCollection services = new();
 		services.AddSingleton<ILocalServices, LocalServices>();
 		services.AddSingleton<EntryDelegatesBase, EntryDelegates>();
 
-		var serviceProvider = services.BuildServiceProvider();
+		//- Assembly Info
+		var assembly = typeof(DllEntry).GetTypeInfo().Assembly;
+		var assemblyName = assembly.GetName().Name!;
+		services.SetupFileLogger(assemblyName);
 
-		//- Setup Service Configuration
-		ExtensionStartup.InitConfiguration(serviceProvider);
-
-		var version = typeof(DllEntry).GetTypeInfo().Assembly
+		var version = assembly
 			.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
 			.InformationalVersion;
+		version = version[..(version.LastIndexOf('+') + 9)];
 
-		version = version
-			.Substring(0, version.LastIndexOf('+') + 9);
+		//- Setup Service Configuration
+		var serviceProvider = services.BuildServiceProvider();
+		serviceProvider.InitConfiguration();
 
-		LoggerBase.Log(null, $"Extension Version : [{version}]");
+		LoggerBase.Log(null, $"\"{assemblyName}\" Extension Version : [{version}]");
 		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
 	}
 

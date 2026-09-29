@@ -9,10 +9,24 @@ public static class LoggerBase
 	private const int LogLimitCount = 10;
 	private static readonly string ExtFilePath = Util.AssemblyPath!;
 	private static readonly string LogFilePath = Path.Combine(ExtFilePath, "logs");
-	private static readonly string LogFileName = Path.Combine(
-		LogFilePath,
-		$"{DateTime.Now:yyyy-MM-dd.HH-mm-ss}.log");
-	private readonly static ILogger SystemLogger = LoggerFactory.Create(builder => builder.UseDefaultFileLogger()).CreateLogger("SYSTEM");
+	private static string? LogFileName;
+	private static ILogger? SystemLogger;
+	public static void SetupFileLogger(this ServiceCollection services, string LogName = "")
+	{
+		LogFileName = Path.Combine(
+			LogFilePath,
+			$"{LogName}_{DateTime.Now:yyyy-MM-dd.HH-mm-ss}.log"
+		);
+
+		SystemLogger = LoggerFactory.Create(builder => builder.UseDefaultFileLogger()).CreateLogger("SYSTEM");
+
+		services.AddLogging(Builder =>
+		{
+			Builder.ClearProviders();
+			Builder.UseDefaultFileLogger();
+		});
+		CleanLogs();
+	}
 	public static ILoggingBuilder UseDefaultFileLogger(this ILoggingBuilder Builder)
 	{
 #if DEBUG
@@ -21,7 +35,7 @@ public static class LoggerBase
 		Builder.SetMinimumLevel(LogLevel.Information);
 #endif
 		Builder.AddZLoggerFile(
-			LogFileName,
+			LogFileName ?? throw new InvalidOperationException($"\"{nameof(SetupFileLogger)}()\" didn't setup correctly."),
 			options =>
 			{
 				options.FileShared = true;
@@ -36,29 +50,19 @@ public static class LoggerBase
 		return Builder;
 	}
 
-	public static void SetupFileLogger(this ServiceCollection services)
-	{
-		services.AddLogging(Builder =>
-		{
-			Builder.ClearProviders();
-			Builder.UseDefaultFileLogger();
-		});
-		CleanLogs();
-	}
-
 	public static void Trace(string Name, string content)
 	{
 #if DEBUG
-		SystemLogger.LogTrace("({Name}) => {content}", Name, content);
+		SystemLogger?.LogTrace("({Name}) => {content}", Name, content);
 #endif
 	}
 
 	public static void Log(Exception? e, string s = "")
 	{
 		if (e is null)
-			SystemLogger.LogInformation("{Log}", s);
+			SystemLogger?.LogInformation("{Log}", s);
 		else
-			SystemLogger.LogError(e, "{Log}", s);
+			SystemLogger?.LogError(e, "{Log}", s);
 	}
 
 	public static void CleanLogs()

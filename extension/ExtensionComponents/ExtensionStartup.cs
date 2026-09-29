@@ -21,7 +21,7 @@ public static class ExtensionStartup
 	public static IServiceProvider? ServiceProvider { get; private set; }
 	public static ILocalServices? LocalServices { get; private set; }
 
-	public static void InitConfiguration(IServiceProvider serviceProvider)
+	public static void InitConfiguration(this IServiceProvider serviceProvider)
 	{
 		ServiceProvider = serviceProvider;
 
