@@ -17,7 +17,16 @@ public sealed class ServiceInteractions
 	private const string Secret = "secret.json";
 	private readonly ILogger<ServiceInteractions> Logger;
 	public readonly WebsocketClient WsClient;
-	private readonly Arma3ServiceSecret ServiceSecret;
+	private Arma3ServiceSecret? _ServiceSecret { get; set; }
+	private Arma3ServiceSecret ServiceSecret
+	{
+		get => _ServiceSecret ?? throw new InvalidOperationException("ServiceSecret has not been initialized.");
+		set
+		{
+			_ServiceSecret = value ?? throw new ArgumentNullException(nameof(value), "The ServiceSecret value provided must not be null.");
+			RPTFileDirectory = Path.GetFullPath(value.RPT_Directory);
+		}
+	}
 
 	internal string AccessName { get; private set; } = "";
 
@@ -54,16 +63,19 @@ public sealed class ServiceInteractions
 	private string? _RPTFileDirectory { get; set; }
 	public string RPTFileDirectory
 	{
-		get => _RPTFileDirectory ?? throw new DirectoryNotFoundException("It seems \"RPTDirectory\" didn't get initiate correctly.");
+		get => _RPTFileDirectory ?? DefaultRPTFileDirectory;
 		internal set => _RPTFileDirectory = value;
+	}
+	public string DefaultRPTFileDirectory
+	{
+		get => ServiceSecret.RPT_Directory
+			?? throw new DirectoryNotFoundException("The \"RPTDirectory\" path was not initialized or found correctly.");
 	}
 
 	public ServiceInteractions(ILogger<ServiceInteractions> logger, WebsocketClient websocket)
 	{
 		Logger = logger;
 		ServiceSecret = GetServiceSecret();
-		if (ServiceSecret.RPT_Directory != null)
-			RPTFileDirectory = Path.GetFullPath(ServiceSecret.RPT_Directory);
 
 		WsClient = websocket;
 		WsClient.Connected += () =>
@@ -96,6 +108,9 @@ public sealed class ServiceInteractions
 			Logger.LogWarning("WebSocket connection already established.");
 			return;
 		}
+
+		//- Fetch secret
+		ServiceSecret = GetServiceSecret();
 
 		var (profileConfig, tokenPayload) = await GetAccessToken(accessName, profilePayload);
 		await WsClient.StartAsync(ServiceSecret.WebSocketServiceUri, tokenPayload.AuthToken);
@@ -303,8 +318,8 @@ public sealed class ServiceInteractions
 	}
 	public ProfileConfiguration GetServiceProfile(string profileName)
 	{
-		var filePath = Path.Combine("profiles", profileName + ".json");
-		Logger.LogInformation("Profile \"{Profile}\" file - {Path}", profileName, filePath);
+		var filePath = Path.Combine(Util.AssemblyPath, "profiles", profileName + ".json");
+		Logger.LogInformation("Profile \"{Profile}\" file - {Path}", profileName, Path.GetFullPath(filePath));
 
 		var profileString = Util.ParseJson(filePath)
 			?? throw new FileNotFoundException($"Profile file '{filePath}' not found or could not be parsed.");
@@ -315,6 +330,7 @@ public sealed class ServiceInteractions
 			profileString,
 			ProfileConfigurationJsonSerializerContext.Default.ProfileConfiguration
 		);
+		Logger.LogInformation("Profile : {FullProfile}", profileConfiguration);
 
 		//- Add Assembly Prefix
 		string[] clientProfileConfig = profileConfiguration.Configuration.GetTemplateFileList(Util.AssemblyPath);

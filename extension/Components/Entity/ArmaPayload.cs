@@ -142,7 +142,7 @@ public record Arma3ServiceSecret(
 	string ServiceUri,
 	string WebSocketServiceUri,
 	ServiceAuthenticationHeader Secret,
-	string? RPT_Directory = null
+	string RPT_Directory
 );
 
 [JsonSourceGenerationOptions(WriteIndented = true, PropertyNameCaseInsensitive = true)] // Optional: Add desired options

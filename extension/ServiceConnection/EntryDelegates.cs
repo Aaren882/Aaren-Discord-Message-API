@@ -55,14 +55,15 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	}
 	internal static int UpdateRptDirectory(IOutputBuilder output, string[] args, int argCount)
 	{
-		var profileName = args[0] ?? throw new NullReferenceException("");
+		var profileName = args[0] ?? throw new ArgumentException("Profile name must be provided.");
 		var profileConfig = ServiceInteractions.GetServiceProfile(profileName);
 
 		var rptDir = profileConfig.RPT_Directory
-			?? throw new NullReferenceException("RPT_Directory is not defined in the profile configuration.");
+			?? ServiceInteractions.DefaultRPTFileDirectory
+			?? throw new NullReferenceException("RPT_Directory must be defined in the profile configuration or the default settings (Secret.json).");
 
-		ServiceStartup.RptFileDirectory = rptDir;
-		RptFileDirectory = ServiceConnectionUtil.GetCurrentRpt();
+		ServiceInteractions.RPTFileDirectory = rptDir;
+		ServiceStartup.RptFileDirectory = ServiceConnectionUtil.GetCurrentRpt();
 		Logger.LogInformation("Update RPT File : {RptFileDirectory}", RptFileDirectory);
 
 		//- Callback
