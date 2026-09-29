@@ -106,7 +106,6 @@ public sealed class WebsocketClient(
 		await using var fileStream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
 		var lastLines = await GetLastLinesAsync(fileStream, linesCount);
-		lastLines.Reverse();
 
 		var identifier = payloadBinary.GetIdentifier(accessName);
 		var lineCount = lastLines.Count;
