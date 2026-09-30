@@ -7,8 +7,22 @@
     LLSTRING(connect_on_sp),
     LLSTRING(connect_on_sp_tooltip)
   ], 
-  ["DiscordMessageAPI Settings", "Service"], 
-  false
+  ["DiscordMessageAPI Settings", LLSTRING(setting_category)], 
+  false,
+  2
+] call CBA_fnc_addSetting;
+
+[
+  QGVAR(Enable), "CHECKBOX", 
+  [
+    LLSTRING(enable),
+    LLSTRING(enable_tooltip)
+  ], 
+  ["DiscordMessageAPI Settings", LLSTRING(setting_category)], 
+  false,
+  1,
+  nil,
+  true
 ] call CBA_fnc_addSetting;
 
 #ifndef DEBUG_MODE_FULL
@@ -35,7 +49,7 @@ if (count _profileFileNames == 0) then
     [
       LLSTRING(profile)
     ], 
-    ["DiscordMessageAPI Settings", "Service"], 
+    ["DiscordMessageAPI Settings", LLSTRING(setting_category)], 
     [
       _profileFileNames apply { (_x splitString ".") # 0 },
       _profileFileNames,

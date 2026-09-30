@@ -20,7 +20,10 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
 
 ["CBA_settingsInitialized", {
 
-  INFO("DISCORD_API [PostInit] || ""CBA_settingsInitialized""");
+  //- Catch if it's not enabled
+  if (!GVAR(Enable)) exitWith {
+    INFO("[PostInit] || Aborted. Connection option is not enabled.");
+  };
   
   //- Start Socket Connection
     call FUNC(StartConnection);
