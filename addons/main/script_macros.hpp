@@ -1,5 +1,7 @@
 #include "\x\cba\addons\main\script_macros_common.hpp"
 
+#define LOCAL_STR(STRING) localize ("STR_Discord_MSG_" + STRING)
+
 #ifdef DISABLE_COMPILE_CACHE
     #undef PREP
     #define PREP(fncName) DFUNC(fncName) = compile preprocessFileLineNumbers QPATHTOF(functions\DOUBLES(fnc,fncName).sqf)
