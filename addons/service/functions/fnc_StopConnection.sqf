@@ -21,4 +21,4 @@ Author:
 ---------------------------------------------------------------------------- */
 
 INFO("Closing WebSocket connection");
-"DiscordMessageAPIService" callExtension ["DisconnectWebSocket", []];
+["DisconnectWebSocket", []] call FUNC(callExtension);

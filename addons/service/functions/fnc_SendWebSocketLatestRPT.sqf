@@ -21,7 +21,7 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
-private _rptDir = ("DiscordMessageAPIService" callExtension ["SendWebSocketRPT", []]) # 0;
+private _rptDir = (["SendWebSocketRPT", []] call FUNC(callExtension)) # 0;
 INFO_1("SendWebSocket RPT Directory : ""%1""",_rptDir);
 
 _rptDir

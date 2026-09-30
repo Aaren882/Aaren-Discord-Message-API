@@ -30,7 +30,7 @@ TRACE_1("fnc_AddCBASettings",_this);
   [
     "Service Profile"
   ], 
-  ["DiscordMessageAPI Settings", "Service"], 
+  ["DiscordMessageAPI Settings", LLSTRING(setting_category)], 
   [
     _profileFileNames apply { (_x splitString ".") # 0 },
     _profileFileNames,
@@ -45,7 +45,7 @@ TRACE_1("fnc_AddCBASettings",_this);
     LLSTRING(connect_on_sp),
     LLSTRING(connect_on_sp_tooltip)
   ], 
-  ["DiscordMessageAPI Settings", "Service"], 
+  ["DiscordMessageAPI Settings", LLSTRING(setting_category)], 
   false,
   1
 ] call CBA_fnc_addSetting;

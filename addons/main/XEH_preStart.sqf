@@ -4,5 +4,4 @@
 if !(isDedicated) exitWith {};
 
 //- Load Extension on startup to prepare game infos (e.g. RPT directory...)
-"DiscordMessageAPIv2" callExtension "";
-"DiscordMessageAPIService" callExtension "";
+["DiscordMessageAPIService", ""] call DiscordAPI_fnc_callExtension;

@@ -20,7 +20,7 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
-private _result = "DiscordMessageAPIService" callExtension ["UpdateRptDirectory", [GVAR(Profiles)]];
+private _result = ["UpdateRptDirectory", [GVAR(Profiles)]] call FUNC(callExtension);
 _result params ["_return", "_returnCode"];
 
 if (_returnCode < 0) then {

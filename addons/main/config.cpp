@@ -42,14 +42,14 @@ class CfgFunctions
         preStart = 1;
         headerType = -1;
       };
-			class init_player {};
-			class refresh_webhooks {};
 		};
 		class functions
 		{
 			file=QPATHTOF(functions);
 			class FormatJson {};
 			class Deserialize_ExtensionOutput {};
+      class ServerInfo_Loop {};
+      class callExtension {};
 		};
     //#TODO - Deprecate these
 		class Deprecation

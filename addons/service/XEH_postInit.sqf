@@ -11,8 +11,8 @@ _ServerName = [
 
 localNamespace setVariable [QGVAR(serverName), _ServerName];
 
-INFO_1("DISCORD_API [PostInit] || Register ServerName ""%1"".",_ServerName);
-INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...");
+INFO_1("[PostInit] || Register ServerName ""%1"".",_ServerName);
+INFO("[PostInit] || Registering ""Interactive events components""...");
 
 //- Register interactive events
 [QGVAR(StartConnection), FUNC(StartConnection)] call CBA_fnc_addEventHandler;
@@ -20,7 +20,12 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
 
 ["CBA_settingsInitialized", {
 
-  INFO("DISCORD_API [PostInit] || ""CBA_settingsInitialized""");
+  INFO("[PostInit] || ""CBA_settingsInitialized""");
+
+  //- Catch if it's not enabled
+  if (!GVAR(Enable)) exitWith {
+    INFO("[PostInit] || Aborted. Connection option is not enabled.");
+  };
   
   //- Start Socket Connection
     call FUNC(StartConnection);
@@ -39,7 +44,7 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
       case __Text__: {
         private _message = _props getOrDefault ["Message",""];
         
-        INFO_1("DISCORD_API [CallBack Text] || Message : %1",_message);
+        INFO_1("[CallBack Text] || Message : %1",_message);
       };
       
       case __Rpt__: {
@@ -53,7 +58,7 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
         private _fileSize = _props getOrDefault ["FileSize",0];
         private _createdTime = _props getOrDefault ["CreatedTime",""];
         private _totalChunks = _props getOrDefault ["TotalChunks",0];
-        INFO_4("DISCORD_API [CallBack Rpt] || _FileName : %1 , _FileSize : %2 , _CreatedTime : %3 , _TotalChunks : %4",_fileName,_fileSize,_createdTime,_totalChunks);
+        INFO_4("[CallBack Rpt] || _FileName : %1 , _FileSize : %2 , _CreatedTime : %3 , _TotalChunks : %4",_fileName,_fileSize,_createdTime,_totalChunks);
       };
       
       case __Command__: {
@@ -61,8 +66,8 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
         private _dta = _props getOrDefault ["Data", "[]"];
 
         private _event = QUOTE(ADDON) + "_" + _eventName;
-        INFO_1("DISCORD_API [CallBack Command] || Event : %1",_event);
-        TRACE_2("DISCORD_API [CallBack Command] || Event : %1 , Data : %2",_event,_dta);
+        INFO_1("[CallBack Command] || Event : %1",_event);
+        TRACE_2("[CallBack Command] || Event : %1 , Data : %2",_event,_dta);
 
         [_event, fromJSON _dta] call CBA_fnc_localEvent;
       };
@@ -70,11 +75,11 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
       //- Structured Data
       case __JsonString__: {
         private _jsonString = _props getOrDefault ["JsonString","{}"];
-        INFO_1("DISCORD_API [CallBack JsonString] || JsonString : %1",_jsonString);
+        INFO_1("[CallBack JsonString] || JsonString : %1",_jsonString);
       };
       case __FlatJsonString__: {
         private _flatJsonString = _props getOrDefault ["FlatJsonString",[]];
-        INFO_1("DISCORD_API [CallBack FlatJsonString] || FlatJsonString : %1",_flatJsonString);
+        INFO_1("[CallBack FlatJsonString] || FlatJsonString : %1",_flatJsonString);
       };
       default {
         ERROR_1("Invalid callback type ""%1""",_callBackType);
@@ -84,14 +89,14 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
 
   //- Check Server Entry & Exit
   addMissionEventHandler ["PlayerConnected", {
-    [true] call EFUNC(webhook,Update_ServerInfo);
+    [true] call FUNC(Update_ServerInfo);
   }];
   addMissionEventHandler ["HandleDisconnect", {
-    [true] call EFUNC(webhook,Update_ServerInfo);
+    [true] call FUNC(Update_ServerInfo);
   }];
 
   //- Admin State
-  INFO("DISCORD_API [Server Info Init] || Checking ""Admin State""...");
+  INFO("[Server Info Init] || Checking ""Admin State""...");
   private _userAdminStateAction = {
     params ["_networkId", "_loggedIn", "_votedIn"];
 
@@ -118,11 +123,11 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
   } forEach _adminList;
   
   addMissionEventHandler ["OnUserAdminStateChanged", _userAdminStateAction];
-  INFO("DISCORD_API [Server Info Init] || ""Admin State"" Checked.");
+  INFO("[Server Info Init] || ""Admin State"" Checked.");
 
   //- Sending Telemetries
-  INFO("DISCORD_API [Server Info Init] || Start Sending Telemetries");
-  call FUNC(ServerInfo_Loop);
+  [QGVARMAIN(ServerInfoLoop), FUNC(Update_ServerInfo)] call CBA_fnc_addEventHandler;
+  INFO("[Server Info Init] || Server Telemetries service successfully registered.");
 }] call CBA_fnc_addEventHandler;
 
 [QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
@@ -162,4 +167,4 @@ INFO("DISCORD_API [PostInit] || Registering ""Interactive events components""...
 
 }] call CBA_fnc_addEventHandler;
 
-INFO("DISCORD_API [PostInit] || ""Interactive events components"" Registered.");
+INFO("[PostInit] || ""Interactive events components"" Registered.");

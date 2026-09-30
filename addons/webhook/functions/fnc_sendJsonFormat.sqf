@@ -36,25 +36,48 @@ params [
   "_payload"
 ];
 
-TRACE_1("fnc_sendJsonFormat",_this);
+TRACE_2("fnc_sendJsonFormat",_Sel,_payload);
 
 if (isNil "_Sel" || isNil "_payload") exitWith {
   ERROR_3("""fnc_sendJsonFormat"" Exception : ""_Sel"" = %1, ""_msg"" = %2, ""_payload"" = %3",_Sel,_msg,_payload);
 };
 
+private _isV2 = "v2" in GVAR(ExtensionVersion);
 private _url = DiscordEmbedBuilder_Info # 0 # _Sel;
 
 //- Struct hashMap
-_payload = createHashMapFromArray _payload;
-_payload set ["Url", _url];
+private _headerMap = createHashMapFromArray _payload;
+TRACE_1("fnc_sendJsonFormat (PAYLOAD HEADER)",_headerMap);
 
-TRACE_1("fnc_sendJsonFormat (Send)",_payload);
+private _argHeader = if (_isV2) then {
+  _headerMap set ["Url", _url];
+
+  toJSON _headerMap
+} else {
+
+  private _type = _headerMap getOrDefault ["HandlerType", 0];
+  private _messageId = _headerMap getOrDefault ["MessageID", ""];
+  
+  private _result = switch (_type) do {
+    case 1: { //- Refresh
+      if (_messageId isEqualTo "") then {
+        throw "Invalid _messageId. please make sure ""_payload"" has valid ""MessageID"" property.";
+      };
+      [_url, _type, _messageId]
+    };
+    default {
+      [_url, _type]
+    };
+  };
+
+  _result
+};
 
 //- Send Format Json
-"DiscordMessageAPIv2" callExtension [ 
+[ 
   "HandlerJsonFormat", 
   [
-    toJSON _payload,
+    _argHeader,
     _msg
   ] 
-];
+] call FUNC(callExtension);

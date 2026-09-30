@@ -64,6 +64,6 @@ private _json = toJSON _map;
 
 TRACE_1("WebSocket Message",_json);
 
-"DiscordMessageAPIService" callExtension ["SendWebSocketMessage", [_json]];
+["SendWebSocketMessage", [_json]] call FUNC(callExtension);
 
 nil

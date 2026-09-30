@@ -25,9 +25,9 @@
         <ChineseSimp>服务器信息 [JSON 信息文件]</ChineseSimp>
       </Key>
       <Key ID="STR_Discord_MSG_SERVERINFO_JSON_Tip">
-        <Original>The File locat beside the [DiscordMessageAPI.Dll].\nYou Should see "Server_Info_msg.json" by default.\n</Original>
-        <Chinese>該檔案位於 [DiscordMessageAPI.Dll] 旁邊。\n預設情況下您應該會看到 "Server_Info_msg.json"。\n</Chinese>
-        <ChineseSimp>该文件位于 [DiscordMessageAPI.Dll] 旁边。\n默认情况下您应看到 "Server_Info_msg.json"。\n</ChineseSimp>
+        <Original>The Message Info Template "*.json" File. e.g. "Server_Info_msg.json".\n</Original>
+        <Chinese>訊息資訊模板 "*.json"。例如："Server_Info_msg.json"。\n</Chinese>
+        <ChineseSimp>信息模板文件 "*.json"。例如："Server_Info_msg.json"。\n</ChineseSimp>
       </Key>
 
       <Key ID="STR_Discord_MSG_Closed_JSON">

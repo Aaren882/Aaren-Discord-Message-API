@@ -27,7 +27,7 @@ params [
   ["_path","",[""]]
 ];
 
-private _paths = "DiscordMessageAPIService" callExtension ["GetDirectoryFileNames",[_path]];
+private _paths = ["GetDirectoryFileNames",[_path]] call FUNC(callExtension);
 TRACE_1("fnc_GetPathFiles",_paths # 0);
 
 // Return

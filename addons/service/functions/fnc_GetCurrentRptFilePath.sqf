@@ -21,7 +21,7 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
-private _result = "DiscordMessageAPIService" callExtension ["GetCurrentRpt", []];
+private _result = ["GetCurrentRpt", []] call FUNC(callExtension);
 _result params ["_return", "_returnCode"];
 
 if (_returnCode < 0) then {
