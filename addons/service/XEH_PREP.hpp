@@ -9,7 +9,6 @@ PREP(SendBotMessage);
 PREP(SendWebSocketJSON);
 PREP(SendWebSocketLatestRPT);
 PREP(SendWebSocketMessage);
-PREP(ServerInfo_Loop);
 PREP(SetServiceAvailability);
 PREP(StartConnection);
 PREP(StopConnection);

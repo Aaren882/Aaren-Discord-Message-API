@@ -19,6 +19,10 @@ if (isServer) then {
       //- Fire postInit Event
       INFO(MSG_INIT);
       [QGVARMAIN(postInit_Server)] call CBA_fnc_LocalEvent;
+      
+      //- Start info loop
+      call DiscordAPI_fnc_ServerInfo_Loop;
+      INFO("Server Monitoring Loop initialized and running.");
     }] call CBA_fnc_addEventHandler;
 
     //- Check Mission MPEnded (on Server Shutdown)
