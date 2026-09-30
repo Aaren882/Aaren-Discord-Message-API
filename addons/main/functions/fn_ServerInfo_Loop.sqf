@@ -17,7 +17,11 @@ Author:
 INFO("Starting Server Monitoring Loop.");
 [
   {
-    [QGVARMAIN(ServerInfoLoop)] call CBA_fnc_LocalEvent;
+    try {  
+      [QGVARMAIN(ServerInfoLoop)] call CBA_fnc_LocalEvent;
+    } catch {
+      WARNING_1("[ServerInfo Loop] threw an exception : ""%1""",_exception);
+    };
     call DiscordAPI_fnc_ServerInfo_Loop;
   }, 
   [],
