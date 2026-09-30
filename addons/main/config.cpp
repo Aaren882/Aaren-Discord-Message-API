@@ -50,6 +50,7 @@ class CfgFunctions
 			file=QPATHTOF(functions);
 			class FormatJson {};
 			class Deserialize_ExtensionOutput {};
+      class callExtension {};
 		};
     //#TODO - Deprecate these
 		class Deprecation
