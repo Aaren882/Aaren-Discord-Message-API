@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project name="Discord_SERVICE">
+	<Package name="Localized_Descriptions">
+    <Key ID="str_discordapi_webhook_ExtensionVersion">
+      <Original>Use Extension Version (dll)</Original>
+      <Chinese>使用擴充套件版本 (dll)</Chinese>
+      <ChineseSimp>使用扩展程序版本 (dll)</ChineseSimp>
+    </Key>
+    <Key ID="str_discordapi_webhook_ExtensionVersion_Tip">
+      <Original>It's used for hot swapping webhook extensions.\n - "v1" : Default value, it's old slow ,but whiteListed by BattlEye.\n - "v2" : Much faster + Memory efficient + Auto logs pruning ,but not whiteListed (YET).\n\n (NOTE) : "webhooks.json" and other ".json" files need to be moved from mod directory to "Discord_Message_API" folder by "Arma3_x64.exe" directory.\n * Need to restart the mission to apply the setting for server monitoring.\n</Original>
+      <Chinese>它用於熱替換 webhook 擴充套件。\n - "v1"：預設值，它老慢，但被 BattlEye 列入白名單。\n - "v2"：速度快 + 記憶體效率高 + 自動日誌修剪，但未被列入白名單 (尚未)。\n\n (注意)："webhooks.json" 以及其他 ".json" 檔案需要從 mod 目錄移動到 "Discord_Message_API" 的資料夾中（位於 "Arma3_x64.exe" 的目錄）。\n * 需要重啟任務，才能應用伺服器監控設置。\n</Chinese>
+      <ChineseSimp>它用于热替换 webhook 扩展程序。\n - "v1"：默认值，它老慢，但被 BattlEye 列入白名单。\n - "v2"：速度快 + 内存效率高 + 自动日志修剪，未被列入白名单 (尚未)。\n\n (注意)："webhooks.json" 其他 ".json" 档案需要从 mod 目录移动到 "Discord_Message_API" 的目录中（位于 "Arma3_x64.exe" 的目录）。\n * 需要重启任务，才能应用伺服器监控设置。\n</ChineseSimp>
+    </Key>
+  </Package>
+</Project>

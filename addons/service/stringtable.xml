@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project name="Discord_SERVICE">
 	<Package name="Localized_Descriptions">
+    <Key ID="str_discordapi_service_setting_category">
+      <Original>Discord Bot Service</Original>
+      <Chinese>Discord Bot 服務</Chinese>
+    </Key>
     <Key ID="str_discordapi_service_profile">
       <Original>Service Profile</Original>
       <Chinese>服務設定檔</Chinese>
@@ -11,7 +15,15 @@
     </Key>
     <Key ID="str_discordapi_service_connect_on_sp_tooltip">
       <Original>This is primary used on Development.</Original>
-      <Chinese>主要用於開發環境</Chinese>
+      <Chinese>主要用於開發環境。</Chinese>
+    </Key>
+    <Key ID="str_discordapi_service_enable">
+      <Original>Enable</Original>
+      <Chinese>啟用</Chinese>
+    </Key>
+    <Key ID="str_discordapi_service_enable_tooltip">
+      <Original>Enable backend connection for Discord Bot.\n\n (NOTE) : Please restart the mission if want to apply the setting.\n</Original>
+      <Chinese>是否啟用 Discord Bot 後端連線。\n\n (注意) : 想要套用設定時請重新啟動任務。\n</Chinese>
     </Key>
   </Package>
 </Project>
