@@ -89,10 +89,10 @@ INFO("[PostInit] || Registering ""Interactive events components""...");
 
   //- Check Server Entry & Exit
   addMissionEventHandler ["PlayerConnected", {
-    [true] call EFUNC(webhook,Update_ServerInfo);
+    [true] call FUNC(Update_ServerInfo);
   }];
   addMissionEventHandler ["HandleDisconnect", {
-    [true] call EFUNC(webhook,Update_ServerInfo);
+    [true] call FUNC(Update_ServerInfo);
   }];
 
   //- Admin State
@@ -126,8 +126,8 @@ INFO("[PostInit] || Registering ""Interactive events components""...");
   INFO("[Server Info Init] || ""Admin State"" Checked.");
 
   //- Sending Telemetries
-  INFO("DISCORD_API [Server Info Init] || Start Sending Telemetries");
-  call FUNC(ServerInfo_Loop);
+  [QGVARMAIN(ServerInfoLoop), FUNC(Update_ServerInfo)] call CBA_fnc_addEventHandler;
+  INFO("[Server Info Init] || Server Telemetries service successfully registered.");
 }] call CBA_fnc_addEventHandler;
 
 [QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;

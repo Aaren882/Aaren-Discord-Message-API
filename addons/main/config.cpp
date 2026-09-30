@@ -42,8 +42,6 @@ class CfgFunctions
         preStart = 1;
         headerType = -1;
       };
-			class init_player {};
-			class refresh_webhooks {};
 		};
 		class functions
 		{

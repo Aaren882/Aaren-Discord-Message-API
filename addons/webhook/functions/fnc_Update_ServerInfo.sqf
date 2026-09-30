@@ -22,50 +22,59 @@ Author:
 ---------------------------------------------------------------------------- */
 params [["_bypass", false]];
 
-TRACE_1(QFUNC(fnc_Update_ServerInfo),_this);
+TRACE_1("fnc_Update_ServerInfo",_this);
 
-private _messageID = serverNamespace getVariable ["DiscordMessageAPI_ServerID", ""];
+try {
+  if (!isMultiplayer) then {
+    throw "fnc_Update_ServerInfo must be executed in a multiplayer environment.";
+  };
 
-//- Check Refresh time
-if (
-  !isServer || 
-  _messageID == "" ||
-  ((time <= localNamespace getVariable ["DiscordAPI_ServerRefresh_Time",0]) && !_bypass)) exitWith {};
+  private _messageID = serverNamespace getVariable ["DiscordMessageAPI_ServerID", ""];
 
-localNamespace setVariable ["DiscordAPI_ServerRefresh_Time", time + DiscordMsg_API_Delay];
+  //- Check Refresh time
+  if (
+    !isServer || 
+    _messageID == "" ||
+    ((time <= localNamespace getVariable ["DiscordAPI_ServerRefresh_Time",0]) && !_bypass)) exitWith {};
 
-private _infoList = call EFUNC(service,GetServerInfo);
+  localNamespace setVariable ["DiscordAPI_ServerRefresh_Time", time + DiscordMsg_API_Delay];
 
-//- Payload with Message ID
-private _payload =  [
-  ["HandlerType", 1],
-  ["MessageID", _messageID]
-];
+  private _infoList = call EFUNC(service,GetServerInfo);
 
-//- Exit with Shutdown Msg
-if (_infoList isEqualTo []) exitWith {
-  private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
-  private _format = [];
-  private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];
-  
+  //- Payload with Message ID
+  private _payload =  [
+    ["HandlerType", 1],
+    ["MessageID", _messageID]
+  ];
+
+  //- Exit with Shutdown Msg
+  if (_infoList isEqualTo []) exitWith {
+    private _file = serverNamespace getVariable ["DiscordMessageAPI_ClosedJSON", ""];
+    private _format = [];
+    private _webhook_Sel = serverNamespace getVariable ["DiscordMessageAPI_ServerWebhookSel", ""];
+    
+    [
+      [_file, _format] call DiscordAPI_fnc_FormatJson,
+      _webhook_Sel,
+      _payload
+    ] call FUNC(sendJsonFormat);
+  };
+
+  private _JSON_String = [
+    serverNamespace getVariable ["DiscordMessageAPI_ServerJSON", ""],
+    _infoList
+  ] call DiscordAPI_fnc_FormatJson;
+
   [
-    [_file, _format] call DiscordAPI_fnc_FormatJson,
-    _webhook_Sel,
+    _JSON_String,
+    DiscordMessageAPI_ServerWebhookSel,
     _payload
+    /* *** Payload Format ***
+      - [0] Send by default
+      - [1, "Message ID"] Refresh
+    */
   ] call FUNC(sendJsonFormat);
+
+} catch {
+  ERROR(_exception);
 };
-
-private _JSON_String = [
-  serverNamespace getVariable ["DiscordMessageAPI_ServerJSON", ""],
-  _infoList
-] call DiscordAPI_fnc_FormatJson;
-
-[
-  _JSON_String,
-  DiscordMessageAPI_ServerWebhookSel,
-  _payload
-  /* *** Payload Format ***
-    - [0] Send by default
-    - [1, "Message ID"] Refresh
-  */
-] call FUNC(sendJsonFormat);

@@ -6,5 +6,5 @@ if (
   _infoVar findIf {true} < 0
 ) exitWith {};
 
-systemChat str localize "STR_Discord_MSG_Init_Hint";
-"DiscordMessageAPIv2" callExtension ["Init_Player",[_infoVar # 1]];
+systemChat str LOCAL_STR("Init_Hint");
+["Init_Player", [_infoVar # 1]] call FUNC(callExtension);

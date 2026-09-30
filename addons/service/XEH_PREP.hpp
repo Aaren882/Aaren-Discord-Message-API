@@ -15,4 +15,5 @@ PREP(StopConnection);
 PREP(UpdateProfileIdentity);
 PREP(UpdateRptDirectoryFromProfile);
 PREP(UpdateServerInfoTemplate);
+PREP(Update_ServerInfo);
 PREP(callExtension);
