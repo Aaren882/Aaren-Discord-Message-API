@@ -51,17 +51,20 @@ if (isNil "_file") exitWith {
   ["Key", "Value"]
 ]
 */
-
-private _Info = "DiscordMessageAPIv2" callExtension [
+private _Info = [
   "ParseJson", 
   [ //- File Directory
     _file
   ] 
-];
+] call EFUNC(webhook,callExtension);
 
-// private _msg = toString ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOutput);
+//- #NOTE : (Backward compat)
+private _msg = if ("v2" in EGVAR(webhook,ExtensionVersion)) then {
+  _Info # 0
+} else {
+  toString parseSimpleArray (_Info # 0)
+};
 
-private _msg = _Info # 0;
 {
   _msg = [_msg, _x # 0, _x # 1] call CBA_fnc_replace;
 } forEach _formats;

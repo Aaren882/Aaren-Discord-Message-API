@@ -55,7 +55,7 @@ private _payload = createHashMapFromArray [
   ["MessageID", ""]
 ];
 
-"DiscordMessageAPIv2" callExtension [
+[
   "SendMessage",
   [
     toJSON _payload, //- [Webhook, Mode]
@@ -67,7 +67,7 @@ private _payload = createHashMapFromArray [
     _embeds,
     _fields
   ]
-];
+] call FUNC(callExtension);
 
 /**********Embeds************
   Title -                                        "Title"

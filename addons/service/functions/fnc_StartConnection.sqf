@@ -23,4 +23,4 @@ Author:
 private _params = [call FUNC(GetProfileName), GVAR(Profiles)];
 INFO_1("Try to Connect : %1",_params);
 
-"DiscordMessageAPIService" callExtension ["ConnectWebSocket", _params];
+["ConnectWebSocket", _params] call FUNC(callExtension);
