@@ -10,7 +10,7 @@ Parameters:
     _args - Optional array of arguments to pass to the function.
 
 Returns:
-    The result returned by callExtension, or an empty array if an error is caught.
+    The result returned by callExtension, or nil if an error is caught.
 
 Author:
     Aaren
@@ -23,15 +23,12 @@ try {
   if (_extension isEqualTo "") then {
     throw "Error: Missing parameters (_extension) in fnc_callExtension";
   };
-  if (_paramName isEqualTo "") then {
-    throw "Error: Missing parameters (_paramName) in fnc_callExtension";
-  };
 
   //- IF NONE "_args" RETURN
   if (isNil "_args") exitWith { _extension callExtension _paramName };
 
   private _result = _extension callExtension [_paramName, _args];
-  _result params ["", "_returnCode", "_errorCode"];
+  _result params ["", "", "_errorCode"];
 
   private _errorMsg = switch (_errorCode) do {
     case 101: {"SYNTAX_ERROR_WRONG_PARAMS_SIZE"};
@@ -44,6 +41,10 @@ try {
     case 412: {"EXTENSION_BLOCKED_BY_SCRIPT"};
     case 415: {"EXTENSION_WRONG_ARCHITECTURE"};
     default {nil};
+  };
+
+  if (!isNil "_errorMsg") then {
+    throw format ["Cannot call ""%1"" Extension (%2) | %3", _extension, _errorCode, _errorMsg];
   };
 
   _result;
