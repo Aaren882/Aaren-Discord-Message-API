@@ -16,6 +16,7 @@ if (isServer) then {
       [QGVARMAIN(postInit_Server)] call CBA_fnc_LocalEvent;
       
       //- Start info loop
+      INFO("Starting Server Monitoring Loop.");
       call DiscordAPI_fnc_ServerInfo_Loop;
       INFO("Server Monitoring Loop initialized and running.");
     }] call CBA_fnc_addEventHandler;

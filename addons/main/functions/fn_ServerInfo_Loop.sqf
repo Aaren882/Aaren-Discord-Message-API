@@ -14,7 +14,6 @@ Author:
     Aaren
 ---------------------------------------------------------------------------- */
 
-INFO("Starting Server Monitoring Loop.");
 [
   {
     try {  

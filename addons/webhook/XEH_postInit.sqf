@@ -1,5 +1,8 @@
 #include "script_component.hpp"
 
+INFO(MSG_INIT);
+
+
 if (isServer) then {
   try {
     //- Return webhooks counts (#NOTE : Backward compat)
@@ -9,6 +12,8 @@ if (isServer) then {
       } else {
         ["Refresh_Webhooks",[-1]] call FUNC(callExtension);
       };
+
+      if (isNil "_Info") throw "Extension failed to return necessary webhook initialization data.";
 
       private _Webhook = ((_Info # 0) call DiscordAPI_fnc_Deserialize_ExtensionOutput) + [_Info # 1];
       serverNamespace setVariable ["DiscordEmbedBuilder_Info", _Webhook];
