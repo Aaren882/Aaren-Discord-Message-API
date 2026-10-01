@@ -1,7 +1,12 @@
 #include "script_component.hpp"
 
-//- Catch SP
+if (!GVAR(Enable)) exitWith {};
 if (!GVAR(Connect_On_SP) && !isMultiplayer) exitWith {};
+
+INFO(MSG_INIT);
+
+//- Variables
+GVAR(Available) = false;
 
 private _ServerName = serverName;
 _ServerName = [
@@ -22,112 +27,143 @@ INFO("[PostInit] || Registering ""Interactive events components""...");
 
   INFO("[PostInit] || ""CBA_settingsInitialized""");
 
-  //- Catch if it's not enabled
-  if (!GVAR(Enable)) exitWith {
-    INFO("[PostInit] || Aborted. Connection option is not enabled.");
-  };
-  
-  //- Start Socket Connection
-    call FUNC(StartConnection);
-  
-  //- Setup callBack tunnel
-  addMissionEventHandler ["ExtensionCallback", 
-  {
-    params ["_name", "_callBackType", "_data"];
-    if (_name isNotEqualTo "DISCORD_API") exitWith {}; //- Check source
+  //- List of profiles
+  try {
+    private _profileFileNames = "profiles" call FUNC(GetPathFiles);
 
-    TRACE_1("ExtensionCallback",_data);
-    private _props = fromJSON _data;
+    if (isNil "_profileFileNames")
+      throw "Service extension cannot be called: Failed to retrieve profile file list.";
+    if (count _profileFileNames == 0)
+      throw "The 'profiles' directory is empty. Please ensure the 'profiles' folder exists and contains at least one profile. Restart the mission to scan again...";
 
-    //- Specify callback Type
-    switch (parseNumber _callBackType) do {
-      case __Text__: {
-        private _message = _props getOrDefault ["Message",""];
-        
-        INFO_1("[CallBack Text] || Message : %1",_message);
-      };
-      
-      case __Rpt__: {
-        /*
-        string FileName,
-        long FileSize,
-        DateTime CreatedTime,
-        int TotalChunks
-        */
-        private _fileName = _props getOrDefault ["FileName",""];
-        private _fileSize = _props getOrDefault ["FileSize",0];
-        private _createdTime = _props getOrDefault ["CreatedTime",""];
-        private _totalChunks = _props getOrDefault ["TotalChunks",0];
-        INFO_4("[CallBack Rpt] || _FileName : %1 , _FileSize : %2 , _CreatedTime : %3 , _TotalChunks : %4",_fileName,_fileSize,_createdTime,_totalChunks);
-      };
-      
-      case __Command__: {
-        private _eventName = _props getOrDefault ["Function",""];
-        private _dta = _props getOrDefault ["Data", "[]"];
-
-        private _event = QUOTE(ADDON) + "_" + _eventName;
-        INFO_1("[CallBack Command] || Event : %1",_event);
-        TRACE_2("[CallBack Command] || Event : %1 , Data : %2",_event,_dta);
-
-        [_event, fromJSON _dta] call CBA_fnc_localEvent;
-      };
-
-      //- Structured Data
-      case __JsonString__: {
-        private _jsonString = _props getOrDefault ["JsonString","{}"];
-        INFO_1("[CallBack JsonString] || JsonString : %1",_jsonString);
-      };
-      case __FlatJsonString__: {
-        private _flatJsonString = _props getOrDefault ["FlatJsonString",[]];
-        INFO_1("[CallBack FlatJsonString] || FlatJsonString : %1",_flatJsonString);
-      };
-      default {
-        ERROR_1("Invalid callback type ""%1""",_callBackType);
-      };
-    };
-  }];
-
-  //- Check Server Entry & Exit
-  addMissionEventHandler ["PlayerConnected", {
-    [true] call FUNC(Update_ServerInfo);
-  }];
-  addMissionEventHandler ["HandleDisconnect", {
-    [true] call FUNC(Update_ServerInfo);
-  }];
-
-  //- Admin State
-  INFO("[Server Info Init] || Checking ""Admin State""...");
-  private _userAdminStateAction = {
-    params ["_networkId", "_loggedIn", "_votedIn"];
-
-    //- Setup Admin panel (on diary)
+    INFO_1("[PostInit Profiles] || Profiles found ""%1"".",count _profileFileNames);
     [
-      _networkId, 
-      ["logout", "login"] select _loggedIn
-    ] call FUNC(AdminPanel);
+      QGVAR(Profiles), "LIST", 
+      [
+        LLSTRING(profile)
+      ], 
+      ["DiscordMessageAPI Settings", LLSTRING(setting_category)], 
+      [
+        _profileFileNames apply { (_x splitString ".") # 0 },
+        _profileFileNames,
+        0
+      ],
+      1,
+      FUNC(UpdateRptDirectoryFromProfile)
+    ] call CBA_fnc_addSetting;
 
-    //- Add CBA Addon Option
-    if (!_loggedIn) exitWith {};
-    private _ownerId = _networkId getUserInfo 1;
-    INFO_1("Admin ""%1"" logged in. Syncing profiles...",_networkId);
-    private _profileFileNames = uiNamespace getVariable [QGVAR(profileFileNames), []];
-    TRACE_1("profileFileNames",_profileFileNames);
-    
-    [_profileFileNames] remoteExecCall [QFUNC(AddCBASettings), _ownerId];
-  };
-
-  private _adminList = (call BIS_fnc_listPlayers) select { (admin owner _x) isEqualTo 2 };
-  {
-    INFO_1("AdminConsole assigned to %1.",name _x);
-    [getPlayerID _x, false, true] call _userAdminStateAction;
-  } forEach _adminList;
+    uiNamespace setVariable [QGVAR(profileFileNames), _profileFileNames];
+    INFO_1("[PostInit Profiles] || Profiles : %1",_profileFileNames);
   
-  addMissionEventHandler ["OnUserAdminStateChanged", _userAdminStateAction];
-  INFO("[Server Info Init] || ""Admin State"" Checked.");
+    //- Start Socket Connection
+      call FUNC(StartConnection);
+    
+    //- Setup callBack tunnel
+    addMissionEventHandler ["ExtensionCallback", 
+    {
+      params ["_name", "_callBackType", "_data"];
+      if (_name isNotEqualTo "DISCORD_API") exitWith {}; //- Check source
 
-  //- Sending Telemetries
-  [QGVARMAIN(ServerInfoLoop), FUNC(Update_ServerInfo)] call CBA_fnc_addEventHandler;
-  INFO("[Server Info Init] || Server Telemetries service successfully registered.");
+      TRACE_1("ExtensionCallback",_data);
+      private _props = fromJSON _data;
+
+      //- Specify callback Type
+      switch (parseNumber _callBackType) do {
+        case __Text__: {
+          private _message = _props getOrDefault ["Message",""];
+          
+          INFO_1("[CallBack Text] || Message : %1",_message);
+        };
+        
+        case __Rpt__: {
+          /*
+          string FileName,
+          long FileSize,
+          DateTime CreatedTime,
+          int TotalChunks
+          */
+          private _fileName = _props getOrDefault ["FileName",""];
+          private _fileSize = _props getOrDefault ["FileSize",0];
+          private _createdTime = _props getOrDefault ["CreatedTime",""];
+          private _totalChunks = _props getOrDefault ["TotalChunks",0];
+          INFO_4("[CallBack Rpt] || _FileName : %1 , _FileSize : %2 , _CreatedTime : %3 , _TotalChunks : %4",_fileName,_fileSize,_createdTime,_totalChunks);
+        };
+        
+        case __Command__: {
+          private _eventName = _props getOrDefault ["Function",""];
+          private _dta = _props getOrDefault ["Data", "[]"];
+
+          private _event = QUOTE(ADDON) + "_" + _eventName;
+          INFO_1("[CallBack Command] || Event : %1",_event);
+          TRACE_2("[CallBack Command] || Event : %1 , Data : %2",_event,_dta);
+
+          [_event, fromJSON _dta] call CBA_fnc_localEvent;
+        };
+
+        //- Structured Data
+        case __JsonString__: {
+          private _jsonString = _props getOrDefault ["JsonString","{}"];
+          INFO_1("[CallBack JsonString] || JsonString : %1",_jsonString);
+        };
+        case __FlatJsonString__: {
+          private _flatJsonString = _props getOrDefault ["FlatJsonString",[]];
+          INFO_1("[CallBack FlatJsonString] || FlatJsonString : %1",_flatJsonString);
+        };
+        default {
+          ERROR_1("Invalid callback type ""%1""",_callBackType);
+        };
+      };
+    }];
+
+    //- Check Server Entry & Exit
+    addMissionEventHandler ["PlayerConnected", {
+      [true] call FUNC(Update_ServerInfo);
+    }];
+    addMissionEventHandler ["HandleDisconnect", {
+      [true] call FUNC(Update_ServerInfo);
+    }];
+
+    //- Admin State
+    INFO("[Server Info Init] || Checking ""Admin State""...");
+    private _userAdminStateAction = {
+      params ["_networkId", "_loggedIn", "_votedIn"];
+
+      //- Setup Admin panel (on diary)
+      [
+        _networkId, 
+        ["logout", "login"] select _loggedIn
+      ] call FUNC(AdminPanel);
+
+      //- Add CBA Addon Option
+      if (!_loggedIn) exitWith {};
+      private _ownerId = _networkId getUserInfo 1;
+      INFO_1("Admin ""%1"" logged in. Syncing profiles...",_networkId);
+      private _profileFileNames = uiNamespace getVariable [QGVAR(profileFileNames), []];
+      TRACE_1("profileFileNames",_profileFileNames);
+      
+      [_profileFileNames] remoteExecCall [QFUNC(AddCBASettings), _ownerId];
+    };
+
+    private _adminList = (call BIS_fnc_listPlayers) select { (admin owner _x) isEqualTo 2 };
+    {
+      INFO_1("AdminConsole assigned to %1.",name _x);
+      [getPlayerID _x, false, true] call _userAdminStateAction;
+    } forEach _adminList;
+    
+    addMissionEventHandler ["OnUserAdminStateChanged", _userAdminStateAction];
+    INFO("[Server Info Init] || ""Admin State"" Checked.");
+
+    //- Sending Telemetries
+    [QGVARMAIN(ServerInfoLoop), FUNC(Update_ServerInfo)] call CBA_fnc_addEventHandler;
+    INFO("[Server Info Init] || Server Telemetries service successfully registered.");
+
+  } catch {
+    ERROR_1("[PostInit] || %1",_exception);
+
+    [{
+      ["[DISCORD API | SERVICE] Failed to initialize on server. Check mission RPT for more details."] remoteExecCall ["systemChat", 0];
+    }] call CBA_fnc_execNextFrame;
+  };
 }] call CBA_fnc_addEventHandler;
 
 [QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
