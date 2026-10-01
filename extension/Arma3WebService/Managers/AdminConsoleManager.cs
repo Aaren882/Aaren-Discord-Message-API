@@ -166,8 +166,11 @@ public sealed class AdminConsoleManager(
 		}
 		catch (Exception e)
 		{
-			logger.LogError(e, "CreateAdminConsole: ");
-			await channel.SendMessageAsync($"Exception : {e}");
+            logger.LogError(e, "CreateAdminConsole: ");
+
+			var loggingId = discordBotService.GetPresetMessageChannelId(DiscordBotChannel.Logging);
+			var loggingChannel = await discordBotService.GetMessageChannelAsync(loggingId);
+			await loggingChannel.SendMessageAsync($"```Exception : {e}```");
 			throw;
 		}
 	}
