@@ -2,6 +2,10 @@
 
 INFO(MSG_INIT);
 
+//- Must Be Multiplayer
+#ifndef DEBUG_MODE_FULL
+  if !(isMultiplayer) exitWith {};
+#endif
 
 if (isServer) then {
   try {
@@ -44,7 +48,7 @@ if (isServer) then {
     ERROR_1("Failed to initiate Webhooks. Please make sure ""webhooks.json"" and other templates is exist at correct directory. Exception: ""%1"".",_exception);
 
     [{
-      ["[DISCORD API] failed to initiate Webhooks on Server. Check mission RPT for more details."] remoteExecCall ["systemChat", 0];
+      ["[DISCORD API | WEBHOOK] Failed to initiate Webhooks on Server. Check mission RPT for more details."] remoteExecCall ["systemChat", 0];
     }] call CBA_fnc_execNextFrame;
   };
   
