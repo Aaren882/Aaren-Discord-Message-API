@@ -49,16 +49,23 @@ params [
 ];
 TRACE_1("fnc_sendMessage",_this);
 
-private _payload = createHashMapFromArray [
-  ["Url", DiscordEmbedBuilder_Info # 0 # _webhook_Sel],
-  ["HandlerType", 0],
-  ["MessageID", ""]
-];
+private _isV2 = "v2" in GVAR(ExtensionVersion);
+private _url = DiscordEmbedBuilder_Info # 0 # _webhook_Sel;
+
+private _payload = if (_isV2) then {
+  toJSON createHashMapFromArray [
+    ["Url", _url],
+    ["HandlerType", 0],
+    ["MessageID", ""]
+  ];
+} else {
+  [_url, 0]; //- [Webhook, Mode]
+};
 
 [
   "SendMessage",
   [
-    toJSON _payload, //- [Webhook, Mode]
+    _payload,
     _content, //- Content
     _user, //- User name
     _avatar, //- Avatar
