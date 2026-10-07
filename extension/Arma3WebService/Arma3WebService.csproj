@@ -44,23 +44,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- <Content Include=".data/**/*.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" /> -->
-    <!-- <Content Include=".profile/**/default.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" /> -->
+    <Content Include=".data/**/*.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
+    <Content Include=".profile/**/default.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
     <Content Include="ecosystem.config.js" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
   </ItemGroup>
-
-  <Target Name="RegisterPersistDataForSingleFilePublish" AfterTargets="ComputeFilesToPublish">
-    <ItemGroup>
-      <_FolderFiles Include=".data/**/*.json" />
-
-      <ResolvedFileToPublish Include="@(_FolderFiles)">
-        <RelativePath>.data/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      </ResolvedFileToPublish>
-    </ItemGroup>
-
-    <Message Importance="high" Text="[CI-SUCCESS] Successfully registered @(_FolderFiles->Count()) files from .data into .NET Official Publish List!" />
-  </Target>
 
 </Project>
