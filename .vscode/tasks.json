@@ -38,6 +38,24 @@
             "--self-contained"
           ],
           "problemMatcher": "$msCompile"
+        },
+        {
+          "label": "Build Service",
+          "command": "dotnet",
+          "type": "process",
+          "args": [
+            "publish",
+            "${workspaceFolder}/extension/Arma3WebService/Arma3WebService.csproj",
+            "-c", "Release", //- Configuration
+            "-r", "win-x64", //- RID
+            "-o", "./dist", //- Output
+            "--self-contained",
+            "-p:PublishReadyToRun=true",
+            "-p:PublishReadyToRunComposite=false",
+            "-p:PublishSingleFile=true",
+            "-p:TieredCompilation=true"
+          ],
+          "problemMatcher": "$msCompile"
         }
     ]
 }
