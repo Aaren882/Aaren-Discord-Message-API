@@ -49,14 +49,18 @@
     <Content Include="ecosystem.config.js" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
   </ItemGroup>
 
-  <Target Name="CopyCustomPersistDataOnPublish" AfterTargets="Publish">
+  <Target Name="RegisterPersistDataForSingleFilePublish" AfterTargets="ComputeFilesToPublish">
     <ItemGroup>
       <_FolderFiles Include=".data/**/*.json" />
+
+      <ResolvedFileToPublish Include="@(_FolderFiles)">
+        <RelativePath>.data/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
     </ItemGroup>
 
-    <Message Importance="high" Text="[CI-DEBUG] Found @(_FolderFiles->Count()) files in .data" />
-    <Message Importance="high" Text="[CI-DEBUG] Copying .data directly to Target Publish Directory: $(PublishDir)" />
-
-    <Copy SourceFiles="@(_FolderFiles)" DestinationFiles="@(_FolderFiles->'$(PublishDir).data/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="false" />
+    <Message Importance="high" Text="[CI-SUCCESS] Successfully registered @(_FolderFiles->Count()) files from .data into .NET Official Publish List!" />
   </Target>
+
 </Project>
