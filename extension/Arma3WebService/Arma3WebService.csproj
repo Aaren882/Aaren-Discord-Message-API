@@ -44,14 +44,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include=".\.data\*.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
-    <Content Include=".\.data\*\*.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
-    <Content Include=".\.profile\*\default.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
-    <Content Include=".\ecosystem.config.js" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="bin\Release\net9.0\" />
+    <Content Include=".data/**/*.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
+    <Content Include=".profile/**/default.json" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
+    <Content Include="ecosystem.config.js" ExcludeFromSingleFile="true" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);$(DefaultWebContentItemExcludes)" Condition="'$(ExcludeConfigFilesFromBuildOutput)'!='true'" />
   </ItemGroup>
 
 </Project>

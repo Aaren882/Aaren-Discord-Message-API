@@ -135,6 +135,7 @@ jobs:
       with:
         name: artifact.${{ matrix.RID }}
         path: dist
+        include-hidden-files: true
   
   release:
     needs: build
