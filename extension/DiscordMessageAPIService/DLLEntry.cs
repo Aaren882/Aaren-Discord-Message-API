@@ -31,9 +31,8 @@ public sealed class DllEntry
 	{
 		try
 		{
-			var context = ExtensionStartup.LocalServices?.GetCallContext(argsPtr, argCount);
-			if (context is null)
-				throw new NullReferenceException("CallContext parse failed.");
+            var context = ExtensionStartup.LocalServices?.GetCallContext(argsPtr, argCount)
+            	?? throw new NullReferenceException("CallContext parse failed.");
 
 			ContextInfo = context;
 			LoggerBase.Trace(nameof(ContextInfo), ContextInfo.ToString());
