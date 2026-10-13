@@ -15,7 +15,25 @@
     <EmbedUntrackedSources>false</EmbedUntrackedSources>
     <StripSymbols>true</StripSymbols>
     <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+
+    <!-- Get OS Platform -->
+    <IsWindows>$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))</IsWindows>
+    <IsLinux>$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))</IsLinux>
+
+    <!-- Define Platform constants -->
+    <DefineConstants Condition="'$(IsWindows)' == 'true'">$(DefineConstants);WINDOWS</DefineConstants>
+    <DefineConstants Condition="'$(IsLinux)' == 'true'">$(DefineConstants);LINUX</DefineConstants>
   </PropertyGroup>
+
+  <Target Name="PrintBuildDetails" BeforeTargets="BeforeBuild">
+    <Message Importance="high" Text="====================================================" />
+    <Message Importance="high" Text="[🏷️ Version] Build Version: $(Version)" />
+    <Message Importance="high" Text="[🏠 Platform] $(Configuration)" />
+    <Message Importance="high" Condition="'$(IsWindows)' == 'true'" Text="[🔧 Notice] Target Platform Detected: WINDOWS (__stdcall)" />
+    <Message Importance="high" Condition="'$(IsLinux)' == 'true'" Text="[🔧 Notice] Target Platform Detected: LINUX (__cdecl)" />
+    <Message Importance="high" Text="====================================================" />
+  </Target>
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DefineConstants>TRACE</DefineConstants>
     <DebugType>embedded</DebugType>
