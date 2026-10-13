@@ -8,7 +8,7 @@
       <IsAotCompatible>true</IsAotCompatible>
       <NativeLib>Shared</NativeLib>
       <Platforms>x64</Platforms>
-      <AssemblyName>$(MSBuildProjectName)_x64</AssemblyName>
+      <AssemblyName>$([System.String]::Copy('$(MSBuildProjectName)_x64').ToLower())</AssemblyName>
       <Version>26.2.0</Version>
       <AssemblyVersion>$(Version)</AssemblyVersion>
       <FileVersion>$(Version)</FileVersion>
@@ -26,10 +26,19 @@
       <DefineConstants Condition="'$(IsLinux)' == 'true'">$(DefineConstants);LINUX</DefineConstants>
     </PropertyGroup>
 
+    <!-- Mapping for Linux -->
+    <ItemGroup Condition="'$(IsLinux)' == 'true'">
+      <LinkerArg Include="-Wl,--version-script=$(MSBuildProjectDirectory)/exports.map" />
+    </ItemGroup>
+    <PropertyGroup Condition="'$(IsLinux)' == 'true'">
+      <LinkerFlavor>lld</LinkerFlavor>
+    </PropertyGroup>
+
     <Target Name="PrintBuildDetails" BeforeTargets="BeforeBuild">
       <Message Importance="high" Text="====================================================" />
+      <Message Importance="high" Text="[🔶 Assembly] Assembly Name: $(AssemblyName)" />
       <Message Importance="high" Text="[🏷️ Version] Build Version: $(Version)" />
-      <Message Importance="high" Text="[🏠 Platform] $(Configuration)" />
+      <Message Importance="high" Text="[🏠 Platform] $(Configuration) | $(Platforms)" />
       <Message Importance="high" Condition="'$(IsWindows)' == 'true'" Text="[🔧 Notice] Target Platform Detected: WINDOWS (__stdcall)" />
       <Message Importance="high" Condition="'$(IsLinux)' == 'true'" Text="[🔧 Notice] Target Platform Detected: LINUX (__cdecl)" />
       <Message Importance="high" Text="====================================================" />
