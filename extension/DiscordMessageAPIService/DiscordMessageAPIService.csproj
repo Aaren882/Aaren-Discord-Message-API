@@ -37,6 +37,7 @@
     <Target Name="PrintBuildDetails" BeforeTargets="BeforeBuild">
       <Message Importance="high" Text="====================================================" />
       <Message Importance="high" Text="[🔶 Assembly] Assembly Name: $(AssemblyName)" />
+      <Message Importance="high" Text="[📫 Directory] Project Directory: $(MSBuildProjectDirectory)" />
       <Message Importance="high" Text="[🏷️ Version] Build Version: $(Version)" />
       <Message Importance="high" Text="[🏠 Platform] $(Configuration) | $(Platforms)" />
       <Message Importance="high" Condition="'$(IsWindows)' == 'true'" Text="[🔧 Notice] Target Platform Detected: WINDOWS (__stdcall)" />

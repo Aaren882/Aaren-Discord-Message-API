@@ -78,9 +78,9 @@ public sealed class DllEntry
 	///     numbers
 	/// </returns>
 	[UnmanagedCallersOnly(
-			EntryPoint = nameof(RvExtensionArgs),
+			EntryPoint = nameof(RVExtensionArgs),
 			CallConvs = new[] { typeof(CallConv) })]
-	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
+	public static int RVExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
 	{
 		return
 			ExtensionStartup.LocalServices?.ExecuteArgsAction(outputPrt, outputSize, functionPtr, argsPrt, argCount)
