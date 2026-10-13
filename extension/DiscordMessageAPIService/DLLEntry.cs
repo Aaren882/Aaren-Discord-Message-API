@@ -106,7 +106,7 @@ public sealed class DllEntry
 		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
 	}
 
-	/* /// <summary>
+	/// <summary>
 	/// The entry point for the default callExtension command.
 	/// </summary>
 	/// <param name="outputPrt">The string builder object that contains the result of the function</param>
@@ -119,7 +119,7 @@ public sealed class DllEntry
 	{
 		// var inputKey = Marshal.PtrToStringUTF8(function)!;
 		// ServiceStartup.localServices.Output(outputPrt, outputSize, inputKey);
-	} */
+	}
 
 	/// <summary>
 	/// The entry point for the callExtensionArgs command.
