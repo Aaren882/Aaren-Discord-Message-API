@@ -21,6 +21,7 @@
             "-c", "Release", //- Configuration
             "-r", "win-x64", //- RID
             "-o", ".", //- Output
+            "-v", "detailed",
             "--self-contained"
           ],
           "problemMatcher": "$msCompile"
@@ -35,6 +36,7 @@
             "-c", "Release", //- Configuration
             "-r", "win-x64", //- RID
             "-o", ".", //- Output
+            "-v", "detailed",
             "--self-contained"
           ],
           "problemMatcher": "$msCompile"
