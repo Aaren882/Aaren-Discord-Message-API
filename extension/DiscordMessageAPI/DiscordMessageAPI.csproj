@@ -7,7 +7,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <NativeLib>Shared</NativeLib>
     <Platforms>x64</Platforms>
-    <AssemblyName>$([System.String]::Copy('$(MSBuildProjectName)_x64').ToLower())</AssemblyName>
+    <AssemblyName>$([System.String]::Copy('$(MSBuildProjectName)v2_x64').ToLower())</AssemblyName>
     <Version>26.2.5</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
