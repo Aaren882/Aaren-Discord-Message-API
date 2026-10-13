@@ -254,7 +254,7 @@ jobs:
 
     - run: |
         cd releases
-        mv -v DiscordAPI-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+        mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
       
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v3
