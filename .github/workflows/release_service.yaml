@@ -53,7 +53,7 @@ jobs:
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Checkout Source Code
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v6
 
     - name: Set project versions
       id: update
@@ -199,7 +199,10 @@ jobs:
       CLEAN_VERSION: ${{ needs.release.outputs.CLEAN_VERSION }}
 
     steps:
-      # Push image to github registry
+    - name: Checkout Source Code
+      uses: actions/checkout@v6
+
+    # Push image to github registry
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@v6
