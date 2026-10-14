@@ -127,6 +127,22 @@ jobs:
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_OUTPUT
 
+    - name: Checkout Source Code
+      uses: actions/checkout@v6
+
+    # Building Addons
+    - name: Setup HEMTT
+      uses: arma-actions/hemtt@v1
+    
+    - name: Run HEMTT release
+      run: hemtt release
+
+    - run: |
+        cd releases
+        mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+        cd ..
+
+    # Get all extension artifacts
     - name: Download All Artifacts
       uses: actions/download-artifact@v7
       with:
@@ -178,6 +194,8 @@ jobs:
         files: |
           dist/extension/*.zip
           dist/service/*.zip
+          releases/DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+
         prerelease: ${{ env.TAG_SUFFIX != 'latest' }}
         generate_release_notes: true
         draft: true
@@ -236,35 +254,35 @@ jobs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
 
-  Addons:
-    needs: release
-    runs-on: ubuntu-latest
+  # Addons:
+  #   needs: release
+  #   runs-on: ubuntu-latest
 
-    env:
-      UPLOAD_URL: ${{ needs.release.outputs.UPLOAD_URL }}
-      TAG_SUFFIX: ${{ needs.release.outputs.TAG_SUFFIX }}
-      CLEAN_VERSION: ${{ needs.release.outputs.CLEAN_VERSION }}
+  #   env:
+  #     UPLOAD_URL: ${{ needs.release.outputs.UPLOAD_URL }}
+  #     TAG_SUFFIX: ${{ needs.release.outputs.TAG_SUFFIX }}
+  #     CLEAN_VERSION: ${{ needs.release.outputs.CLEAN_VERSION }}
 
-    steps:
-    - name: Checkout Source Code
-      uses: actions/checkout@v6.0.3
+  #   steps:
+  #   - name: Checkout Source Code
+  #     uses: actions/checkout@v6
 
-    - name: Setup HEMTT
-      uses: arma-actions/hemtt@v1
+  #   - name: Setup HEMTT
+  #     uses: arma-actions/hemtt@v1
     
-    - name: Run HEMTT release
-      run: hemtt release
+  #   - name: Run HEMTT release
+  #     run: hemtt release
 
-    - run: |
-        cd releases
-        mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+  #   - run: |
+  #       cd releases
+  #       mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
       
-    - name: Upload Release Asset
-      uses: softprops/action-gh-release@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        working_directory: releases
-        draft: true
-        files: |
-          DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+  #   - name: Upload Release Asset
+  #     uses: softprops/action-gh-release@v3
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     with:
+  #       working_directory: releases
+  #       draft: true
+  #       files: |
+  #         DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
