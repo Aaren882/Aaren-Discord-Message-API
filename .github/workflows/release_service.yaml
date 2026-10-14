@@ -154,6 +154,9 @@ jobs:
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_OUTPUT
 
+    - name: Checkout Source Code
+      uses: actions/checkout@v6
+
     # Get all extension artifacts
     - name: Download All Artifacts
       uses: actions/download-artifact@v7
@@ -208,9 +211,6 @@ jobs:
         done
 
     # Building Addons
-    - name: Checkout Source Code
-      uses: actions/checkout@v6
-
     - name: Setup HEMTT
       uses: arma-actions/hemtt@v1
 
