@@ -91,6 +91,33 @@ jobs:
         -p:PublishSingleFile=true \
         -p:TieredCompilation=true
 
+    # Check extension's entries
+    - name: List RVExtension symbols on Linux
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      working-directory: ./dist/extension
+      run: |
+        # Find and Check RVExtension symbols from ".so"
+        for file in *.so; do
+          if [ -f "$file" ]; then
+            echo "=== Checking symbols in $file ==="
+            nm -D "$file" | grep "RVExtension" || echo "No matches in $file"
+          fi
+        done
+
+    - name: List RVExtension symbols on Windows
+      if: ${{ matrix.os == 'windows-latest' }}
+      working-directory: ./dist/extension
+      shell: cmd # Forces the use of Windows Command Prompt to support dumpbin natively
+      run: |
+        for %%f in (*.dll) do (
+            echo === Checking symbols in %%f ===
+            dumpbin /exports "%%f" | findstr "RVExtension"
+            if errorlevel 1 (
+                echo ❌ Missing RVExtension export in %%f!
+                exit 1
+            )
+        )
+
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v7
       with:
