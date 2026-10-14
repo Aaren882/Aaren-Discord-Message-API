@@ -21,7 +21,7 @@ INFO(MSG_INIT);
         _start call _TimeOuted
       };
 
-      if (_start call _TimeOuted)
+      if (isNil{GVAR(ExtensionVersion)})
         throw format ["Initialization Timed out! ""%1"" Addon option still nil.", QGVAR(ExtensionVersion)];
 
       //- Return webhooks counts (#NOTE : Backward compat)
@@ -75,7 +75,7 @@ INFO(MSG_INIT);
         !isNil{DiscordEmbedBuilder_Info} ||
         _start call _TimeOuted
       };
-      if (_start call _TimeOuted)
+      if (isNil{DiscordEmbedBuilder_Info})
         throw "Initialization Timed out! Server didn't initialize in time.";
 
       call FUNC(init_player);
