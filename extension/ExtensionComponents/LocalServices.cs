@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using System.Text;
 using ExtensionComponents.Entity;
 using Microsoft.Extensions.Logging;
@@ -12,7 +11,7 @@ public class LocalServices(ILogger<LocalServices> Logger, EntryDelegatesBase ent
 		//- Execution Time: 0.1319 ms  |  Cycles: 7583/10000  (ORIGIN)
 		//- Execution Time: 0.1290 ms  |  Cycles: 7751/10000  (Improved "output()")
 		//- Execution Time: 0.1164 ms  |  Cycles: 8593/10000  (Improved "output()" + Improved Args parsing)
-		//- Execution Time: 0.0713 ms  |  Cycles: 10000/10000 (Improved "output()" + Improved Args parsing + Improved RVContext parsing)
+		//- Execution Time: 0.0664 ms  |  Cycles: 10000/10000 (Improved "output()" + Improved Args parsing + Improved RVContext parsing)
 		//- Execution Time: 0.0293 ms  |  Cycles: 10000/10000 (Improved "output()" + Improved Args parsing + "RVFeature_ArgumentNoEscapeString" + "RVFeature_RvContextNoDefaultCall")
 		//- Execution Time: 0.0084 ms  |  Cycles: 10000/10000 (Improved "output()" + Improved Args parsing + "RVFeature_ArgumentNoEscapeString" + NO RVExtensionContext)
 		try
@@ -36,24 +35,24 @@ public class LocalServices(ILogger<LocalServices> Logger, EntryDelegatesBase ent
 	public unsafe CallContext? GetCallContext(nint argsPtr, int argCount)
 	{
 		if (argsPtr == nint.Zero) return null;
+		if (argCount < 5)
+			throw new IndexOutOfRangeException($"Expected more than 5 arguments, but got {argCount}.");
 
 		var sourcePtr = (byte**)argsPtr;
 		ReadOnlySpan<nint> sourceSpan = new(sourcePtr, argCount);
 
-		var result = new string[argCount];
-		for (var i = 0; i < argCount; i++)
-		{
-			var rawString = Marshal.PtrToStringUTF8(sourceSpan[i]) ?? string.Empty;
-			Logger.LogTrace("{GetCallContext} {VarName}: {rawString}", nameof(GetCallContext), nameof(rawString), rawString);
-			result[i] = rawString;
-		}
+		var steamId = GetUtf8Span(sourceSpan[0]);
+		var fileSource = GetUtf8Span(sourceSpan[1]);
+		var missionName = GetUtf8Span(sourceSpan[2]);
+		var serverName = GetUtf8Span(sourceSpan[3]);
+		var remoteExecutedOwner = GetUtf8Span(sourceSpan[4]);
 
 		return new CallContext(
-			UInt64.Parse(result[0]),
-			result[1],
-			result[2],
-			result[3],
-			short.Parse(result[4])
+			UInt64.Parse(steamId),
+			Encoding.UTF8.GetString(fileSource),
+			Encoding.UTF8.GetString(missionName),
+			Encoding.UTF8.GetString(serverName),
+			short.Parse(remoteExecutedOwner)
 		);
 	}
 
