@@ -127,9 +127,6 @@ jobs:
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-    - name: Checkout Source Code
-      uses: actions/checkout@v6
-
     # Get all extension artifacts
     - name: Download All Artifacts
       uses: actions/download-artifact@v7
@@ -168,22 +165,27 @@ jobs:
           zip -r "webService.${rid}.zip" "$rid"
         done
 
-    # Building Addons
-    - name: Setup HEMTT
-      uses: arma-actions/hemtt@v1
-    
-    - name: Move Service Extension to Addon Directory
+    # Copy service extension
+    - name: Copy Service Extension to Addon Directory
       run: |
         # Loop through every directory (RID) inside
-        for rid_dir in */; do
+        for rid_dir in dist/extension/*/; do
 
           # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
           rid="${rid_dir%/}"
+          rid="${rid##*/}"
           echo "Copying RID: $rid"
 
           # Find and Copy *service ".dll" OR ".so" to cwd without overwriting
           find "$rid_dir" -type f \( -name "*service_x64.dll" -o -name "*service_x64.so" \) -exec cp -v -n {} . \;
         done
+
+    # Building Addons
+    - name: Checkout Source Code
+      uses: actions/checkout@v6
+
+    - name: Setup HEMTT
+      uses: arma-actions/hemtt@v1
 
     - name: Run HEMTT release
       run: hemtt release
@@ -263,36 +265,3 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-
-  # Addons:
-  #   needs: release
-  #   runs-on: ubuntu-latest
-
-  #   env:
-  #     UPLOAD_URL: ${{ needs.release.outputs.UPLOAD_URL }}
-  #     TAG_SUFFIX: ${{ needs.release.outputs.TAG_SUFFIX }}
-  #     CLEAN_VERSION: ${{ needs.release.outputs.CLEAN_VERSION }}
-
-  #   steps:
-  #   - name: Checkout Source Code
-  #     uses: actions/checkout@v6
-
-  #   - name: Setup HEMTT
-  #     uses: arma-actions/hemtt@v1
-    
-  #   - name: Run HEMTT release
-  #     run: hemtt release
-
-  #   - run: |
-  #       cd releases
-  #       mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
-      
-  #   - name: Upload Release Asset
-  #     uses: softprops/action-gh-release@v3
-  #     env:
-  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     with:
-  #       working_directory: releases
-  #       draft: true
-  #       files: |
-  #         DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
