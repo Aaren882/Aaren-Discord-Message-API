@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
       <TargetFramework>net9.0</TargetFramework>
@@ -45,16 +45,22 @@
       <Message Importance="high" Text="====================================================" />
     </Target>
 
-    <PropertyGroup>
+    <!-- <PropertyGroup>
       <ActualSignTool>signtool</ActualSignTool>
       <ActualSignTool Condition="'$(SignToolExePath)' != ''">$(SignToolExePath)</ActualSignTool>
     </PropertyGroup>
 
-    <Target Name="Signing" AfterTargets="Publish" Condition="$(IsWindows) And '$(PfxPath)' != '' And '$(PfxPassword)' != ''">
+    <Target Name="Signing" AfterTargets="LinkNative" Condition="$(IsWindows) And '$(PfxPath)' != '' And '$(PfxPassword)' != ''">
+      <PropertyGroup>
+        <AbsolutePfxPath>$([System.IO.Path]::GetFullPath('$(PfxPath)'))</AbsolutePfxPath>
+      </PropertyGroup>
+
       <Message Importance="high" Text="[🔑 Signing] Certificate detected, signing the Native AOT native DLL..." />
       <Message Importance="high" Text="[🔑 Target] &quot;$(PublishDir)$(TargetName).dll&quot;" />
-      <Exec Command="&quot;$(ActualSignTool)&quot; sign /f &quot;$(PfxPath)&quot; /p &quot;$(PfxPassword)&quot; /fd SHA256 /tr http://timestamp.sectigo.com /td sha256 &quot;$(PublishDir)$(TargetName).dll&quot;" />
-    </Target>
+
+      <Exec Command="&quot;$(ActualSignTool)&quot; sign /f &quot;$(AbsolutePfxPath)&quot; /p &quot;$(PfxPassword)&quot; /fd SHA256 /tr http://timestamp.sectigo.com /td sha256 &quot;$(PublishDir)$(TargetName).dll&quot;" />
+      <Exec Command="&quot;$(ActualSignTool)&quot; verify /pa &quot;$(PublishDir)$(TargetName).dll&quot;" ContinueOnError="true" />
+    </Target> -->
   
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
       <DefineConstants>TRACE</DefineConstants>

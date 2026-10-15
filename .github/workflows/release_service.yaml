@@ -82,12 +82,6 @@ jobs:
       shell: pwsh
       id: signCert
       run: |
-        $signToolPath = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -First 1).FullName
-        Write-Host "The SignTool path found is: $signToolPath" -ForegroundColor Green
-        
-        #Output
-        Add-Content -Path $env:GITHUB_OUTPUT -Value "signTool=$signToolPath"
-        
         $SecurePassword = ConvertTo-SecureString("${{ secrets.SIGNING_PASSWORD }}") -AsPlainText -Force
         & ./Main.ps1 -pfxName "${{ secrets.SIGNING_CERT_NAME }}" -certPassword $SecurePassword -certBase64 "${{ secrets.SIGNING_CERT }}"
         
@@ -105,12 +99,10 @@ jobs:
     - name: Publish with Crossgen2
       shell: bash
       run: |
-        SIGNTOOL_EXE='${{ steps.signCert.outputs.signTool }}'
         PFX_PATH="${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}"
         PFX_PASSWORD="${{ secrets.SIGNING_PASSWORD }}"
         
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          export SignToolExePath="$SIGNTOOL_EXE"
           export PfxPath="$PFX_PATH"
           export PfxPassword="$PFX_PASSWORD"
         fi
@@ -125,6 +117,14 @@ jobs:
         -p:PublishReadyToRunComposite=false \
         -p:PublishSingleFile=true \
         -p:TieredCompilation=true
+
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          pwsh -ExecutionPolicy Bypass -File "./Signing/Signing.ps1" \
+            -rootDirectory "${{ github.workspace }}"
+            -pfxPath "${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}"
+            -certPassword "${{ secrets.SIGNING_PASSWORD }}"
+            -extension "./dist/extension/${{ matrix.RID }}/DiscordMessageAPIService_x64.dll" \
+        fi
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v7
