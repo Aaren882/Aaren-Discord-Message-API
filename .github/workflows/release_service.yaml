@@ -123,7 +123,13 @@ jobs:
             -rootDirectory "${{ github.workspace }}" \ 
             -pfxPath "${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}" \
             -certPassword "${{ secrets.SIGNING_PASSWORD }}" \
-            -extension "./dist/extension/${{ matrix.RID }}/discordmessageapiservice_x64.dll"
+            -extension "${{ github.workspace }}/dist/extension/${{ matrix.RID }}/discordmessageapiv2_x64.dll"
+
+          pwsh -ExecutionPolicy Bypass -File "./Signing/Signing.ps1" \
+            -rootDirectory "${{ github.workspace }}" \ 
+            -pfxPath "${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}" \
+            -certPassword "${{ secrets.SIGNING_PASSWORD }}" \
+            -extension "${{ github.workspace }}/dist/extension/${{ matrix.RID }}/discordmessageapiservice_x64.dll"
         fi
 
     - name: Upload Build Artifact
