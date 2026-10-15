@@ -221,8 +221,8 @@ jobs:
     # Copy public key
     - name: Move public key to Include Directory
       run: |
-        mv -v dist/z include/z
-        ls -r include/z
+        cat -v dist/z/publicKey.hpp > include/z/publicKey.hpp
+        cat include/z/publicKey.hpp
 
     # Building Addons
     - name: Setup HEMTT
