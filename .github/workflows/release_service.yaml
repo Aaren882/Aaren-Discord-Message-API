@@ -221,7 +221,7 @@ jobs:
     # Overwrite public key
     - name: Overwrite public key in Include Directory
       run: |
-        cat -v dist/z/publicKey.hpp > include/z/publicKey.hpp
+        cp dist/z/publicKey.hpp include/z/publicKey.hpp
         cat include/z/publicKey.hpp
 
     # Building Addons
