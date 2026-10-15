@@ -120,10 +120,10 @@ jobs:
 
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           pwsh -ExecutionPolicy Bypass -File "./Signing/Signing.ps1" \
-            -rootDirectory "${{ github.workspace }}"
-            -pfxPath "${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}"
-            -certPassword "${{ secrets.SIGNING_PASSWORD }}"
-            -extension "./dist/extension/${{ matrix.RID }}/DiscordMessageAPIService_x64.dll" \
+            -rootDirectory "${{ github.workspace }}" \ 
+            -pfxPath "${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}" \
+            -certPassword "${{ secrets.SIGNING_PASSWORD }}" \
+            -extension "./dist/extension/${{ matrix.RID }}/discordmessageapiservice_x64.dll"
         fi
 
     - name: Upload Build Artifact

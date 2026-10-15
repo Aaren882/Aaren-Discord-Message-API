@@ -4,10 +4,20 @@ private _metaDta = _this;
 
 if !("signatures" in _metaDta) exitWith { true }; // This must be linux, it doesn't have signature reading. We'll just skip validation here
 
-TRACE_1("""fn_checkExtension"" Checking extension: ",(_metaDta get "name"));
+TRACE_1("fn_checkExtension",_metaDta);
+
+//- Set variable for debug
+#ifdef DEBUG_MODE_FULL
+  uiNamespace setVariable [(_metaDta get "name"), _metaDta];
+#endif
+
+INFO_1("""fn_checkExtension"" Checking extension ""%1""",(_metaDta get "name"));
 
 // must have signature, so signatures can't be empty
-if ((_metaDta get "signatures") isEqualTo []) exitWith { false; };
+if ((_metaDta get "signatures") isEqualTo []) exitWith {
+  ERROR("Extension is not signed.");
+  false;
+};
 
 // Find a signature that is..
 private _validSignatureFound = ((_metaDta get "signatures") apply {
