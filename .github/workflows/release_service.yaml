@@ -87,8 +87,9 @@ jobs:
         
         #Output
         Add-Content -Path $env:GITHUB_OUTPUT -Value "signTool=$signToolPath"
-
-        & ./Main.ps1 -pfxName ${{ secrets.SIGNING_CERT_NAME }} -certPassword ${{ secrets.SIGNING_PASSWORD }} -certBase64 ${{ secrets.SIGNING_CERT }}
+        
+        $SecurePassword = ConvertTo-SecureString("${{ secrets.SIGNING_PASSWORD }}") -AsPlainText -Force
+        & ./Main.ps1 -pfxName "${{ secrets.SIGNING_CERT_NAME }}" -certPassword $SecurePassword -certBase64 "${{ secrets.SIGNING_CERT }}"
         
         # Move public key to dist into artifacts
         $publicKey = "../include/z/publicKey.hpp"
