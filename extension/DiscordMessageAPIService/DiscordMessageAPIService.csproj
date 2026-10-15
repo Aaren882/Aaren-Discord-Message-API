@@ -44,6 +44,17 @@
       <Message Importance="high" Condition="'$(IsLinux)' == 'true'" Text="[🔧 Notice] Target Platform Detected: LINUX (__cdecl)" />
       <Message Importance="high" Text="====================================================" />
     </Target>
+
+    <PropertyGroup>
+      <ActualSignTool>signtool</ActualSignTool>
+      <ActualSignTool Condition="'$(SignToolExePath)' != ''">$(SignToolExePath)</ActualSignTool>
+    </PropertyGroup>
+
+    <Target Name="Signing" AfterTargets="Publish" Condition="$(IsWindows) And '$(PfxPath)' != '' And '$(PfxPassword)' != ''">
+      <Message Importance="high" Text="[🔑 Signing] Certificate detected, signing the Native AOT native DLL..." />
+      <Message Importance="high" Text="[🔑 Target] &quot;$(PublishDir)$(TargetName).dll&quot;" />
+      <Exec Command="&quot;$(ActualSignTool)&quot; sign /f &quot;$(PfxPath)&quot; /p &quot;$(PfxPassword)&quot; /fd SHA256 /tr http://timestamp.sectigo.com /td sha256 &quot;$(PublishDir)$(TargetName).dll&quot;" />
+    </Target>
   
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
       <DefineConstants>TRACE</DefineConstants>

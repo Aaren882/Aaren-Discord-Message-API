@@ -75,13 +75,34 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y clang zlib1g-dev
-    
+
+    - name: Decode Extension Signing Certificate (Windows)
+      if: ${{ matrix.os == 'windows-latest' }} 
+      working-directory: Signing
+      shell: powershell
+      id: signCert
+      run: |
+        $signToolPath = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -First 1).FullName
+        Write-Host "The SignTool path found is: $signToolPath" -ForegroundColor Green
+        
+        #Output
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "signTool=$signToolPath"
+
+        & ./Main.ps1 -pfxName ${{ secrets.SIGNING_CERT_NAME }} -certPassword ${{ secrets.SIGNING_PASSWORD }} -certBase64 ${{ secrets.SIGNING_CERT }}
+        
+        # Move public key to dist into artifacts
+        $publicKey = "../include/z/publicKey.hpp"
+        Move-Item -Path $publicKey -Destination "../dist/z/publicKey.hpp"
+
     # Building binaries
     - name: Publish with Crossgen2
       shell: bash
       run: |
         dotnet publish extension/DiscordMessageAPI/DiscordMessageAPI.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
-        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
+        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj  -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained \
+        -p:SignToolExePath=${{ steps.signCert.outputs.signTool || '' }} \
+        -p:PfxPath=./Signing/${{ secrets.SIGNING_CERT_NAME }} \
+        -p:PfxPassword=${{ secrets.SIGNING_PASSWORD }}
         dotnet publish extension/Arma3WebService/Arma3WebService.csproj --self-contained \
         -c Release \
         -o ./dist/service/${{ matrix.RID }} \
@@ -182,6 +203,12 @@ jobs:
           # Find and Copy *service ".dll" OR ".so" to cwd without overwriting
           find "$rid_dir" -type f \( -name "*service_x64.dll" -o -name "*service_x64.so" \) -exec cp -v -n {} . \;
         done
+    
+    # Copy public key
+    - name: Move public key to Include Directory
+      run: |
+        mv -v dist/z include/z
+        ls -r include/z
 
     # Building Addons
     - name: Setup HEMTT
