@@ -1,6 +1,5 @@
 param(
-  [string]$rootDirectory,
-  [string]$pfxPath = "$rootDirectory/Signing/extension.pfx",
+  [string]$pfxPath,
   [string]$certPassword,
   [string]$extension
 )
