@@ -92,8 +92,13 @@ jobs:
         & ./Main.ps1 -pfxName "${{ secrets.SIGNING_CERT_NAME }}" -certPassword $SecurePassword -certBase64 "${{ secrets.SIGNING_CERT }}"
         
         # Move public key to dist into artifacts
-        $publicKey = "../include/z/publicKey.hpp"
-        Move-Item -Path $publicKey -Destination "../dist/z/publicKey.hpp"
+        $publicKey = (Resolve-Path "../include/z/publicKey.hpp").Path
+        $dist = "../dist/z"
+        if (-not (Test-Path $dist))
+        {
+          New-Item -ItemType Directory -Path $dist
+        }
+        Move-Item -Path $publicKey -Destination $dist
 
     # Building binaries
     - name: Publish with Crossgen2
