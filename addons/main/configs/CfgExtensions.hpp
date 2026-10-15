@@ -4,6 +4,6 @@ class CfgExtensions {
     onCheckLoad = QUOTE(call COMPILE_FILE(functions\fn_checkExtension));
 
     // The handler has access to the config class, so we can store some properties here)
-    #include "\z\publicKey.cert"
+    #include "\z\publicKey.hpp"
   };
 };
