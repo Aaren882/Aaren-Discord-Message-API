@@ -218,8 +218,8 @@ jobs:
           find "$rid_dir" -type f \( -name "*service_x64.dll" -o -name "*service_x64.so" \) -exec cp -v -n {} . \;
         done
     
-    # Copy public key
-    - name: Move public key to Include Directory
+    # Overwrite public key
+    - name: Overwrite public key in Include Directory
       run: |
         cat -v dist/z/publicKey.hpp > include/z/publicKey.hpp
         cat include/z/publicKey.hpp
