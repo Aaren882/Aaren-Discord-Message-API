@@ -79,7 +79,7 @@ jobs:
     - name: Decode Extension Signing Certificate (Windows)
       if: ${{ matrix.os == 'windows-latest' }} 
       working-directory: Signing
-      shell: powershell
+      shell: pwsh
       id: signCert
       run: |
         $signToolPath = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -First 1).FullName
@@ -96,19 +96,27 @@ jobs:
         $dist = "../dist/z"
         if (-not (Test-Path $dist))
         {
-          New-Item -ItemType Directory -Path $dist
+          New-Item -ItemType Directory -Path $dist | Out-Null
         }
         Move-Item -Path $publicKey -Destination $dist
+        Write-Host "Moved public key to dist directory." -ForegroundColor Green
 
     # Building binaries
     - name: Publish with Crossgen2
       shell: bash
       run: |
+        SIGNTOOL_EXE='${{ steps.signCert.outputs.signTool }}'
+        PFX_PATH="./Signing/${{ secrets.SIGNING_CERT_NAME }}"
+        PFX_PASSWORD="${{ secrets.SIGNING_PASSWORD }}"
+        
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          export SignToolExePath="$SIGNTOOL_EXE"
+          export PfxPath="$PFX_PATH"
+          export PfxPassword="$PFX_PASSWORD"
+        fi
+
         dotnet publish extension/DiscordMessageAPI/DiscordMessageAPI.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
-        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj  -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained \
-        -p:SignToolExePath=${{ steps.signCert.outputs.signTool || '' }} \
-        -p:PfxPath=./Signing/${{ secrets.SIGNING_CERT_NAME }} \
-        -p:PfxPassword=${{ secrets.SIGNING_PASSWORD }}
+        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj  -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
         dotnet publish extension/Arma3WebService/Arma3WebService.csproj --self-contained \
         -c Release \
         -o ./dist/service/${{ matrix.RID }} \
