@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -52,6 +52,7 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\..\CLICK ME !! (Basic Files)\**" />
     <ProjectReference Include="..\ExtensionComponents\ExtensionComponents.csproj" />
     <ProjectReference Include="..\Component.DiscordEntity\Component.DiscordEntity.csproj" />
   </ItemGroup>
