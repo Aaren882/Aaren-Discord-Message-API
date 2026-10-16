@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using Components.Entity;
 using ExtensionComponents.Entity;
 using static ExtensionComponents.ExtensionStartup;
@@ -17,6 +16,13 @@ public static class Util
 		// if no disk "dir" defined
 		var dir = file.IndexOf(':') < 0 ? Path.Combine(AssemblyPath, file) : file;
 		return File.ReadAllText(dir);
+	}
+	public static ReadOnlyMemory<byte> ParseJsonMemory(string file)
+	{
+		// if no disk "dir" defined
+		var dir = file.IndexOf(':') < 0 ? Path.Combine(AssemblyPath, file) : file;
+		var bytes = File.ReadAllBytes(dir);
+		return bytes.AsMemory<byte>();
 	}
 
 	public static int[] StringToCode32(string str)
