@@ -24,8 +24,6 @@ try {
     throw "Error: Missing parameters (_extension) in fnc_callExtension";
   };
 
-  private _extensionName = toLowerANSI _extension;
-
   //- IF NONE "_args" RETURN
   if (isNil "_args") exitWith { _extensionName callExtension _paramName };
 

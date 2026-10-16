@@ -25,7 +25,7 @@ Author:
 params [["_paramName", "", [""]], ["_args", nil, [ [] ]]];
 TRACE_1("fnc_callExtension",_this);
 
-private _result = ["DiscordMessageAPIService", _paramName, _args] call DiscordAPI_fnc_callExtension;
+private _result = [toLowerANSI "DiscordMessageAPIService", _paramName, _args] call DiscordAPI_fnc_callExtension;
 
 if (_result isEqualType []) then {
   _result params ["_message", "_returnCode"];
