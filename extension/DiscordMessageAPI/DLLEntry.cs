@@ -51,35 +51,42 @@ public sealed class DllEntry
 		LoggerBase.Log(null, $"\"{assemblyName}\" Extension Version : [{version}]");
 		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
 
-		// Create Template Files (Check on each initiation)
-		var basicDir = Path.Combine(Util.AssemblyPath, "CLICK ME !! (Basic Files)");
-
-		if (!Directory.Exists(basicDir))
-			Directory.CreateDirectory(basicDir);
-
-		var resourceNames = assembly.GetManifestResourceNames();
-		foreach (var name in resourceNames)
+		try
 		{
-			using var stream = assembly.GetManifestResourceStream(name);
-			if (stream == null) continue;
+			// Create Template Files (Check on each initiation)
+			var basicDir = Path.Combine(Util.AssemblyPath, "CLICK ME !! (Basic Files)");
 
-			var fileName = string.Join(
-					'.',
-					name.Split('.').TakeLast(2)
-				);
-			var path = Path.GetFullPath($"{basicDir}/{fileName}");
+			if (!Directory.Exists(basicDir))
+				Directory.CreateDirectory(basicDir);
 
-			//- Create default templates files
-			try
+			var resourceNames = assembly.GetManifestResourceNames();
+			foreach (var name in resourceNames)
 			{
-				using FileStream fileStream = new(path, FileMode.CreateNew);
-				stream.CopyTo(fileStream);
-				LoggerBase.Log(null, $"[Create] default templates file \"{path}\".");
+				using var stream = assembly.GetManifestResourceStream(name);
+				if (stream == null) continue;
+
+				var fileName = string.Join(
+						'.',
+						name.Split('.').TakeLast(2)
+					);
+				var path = Path.GetFullPath($"{basicDir}/{fileName}");
+
+				//- Create default templates files
+				try
+				{
+					using FileStream fileStream = new(path, FileMode.CreateNew);
+					stream.CopyTo(fileStream);
+					LoggerBase.Log(null, $"[Create] default templates file \"{path}\".");
+				}
+				catch (IOException)
+				{
+					LoggerBase.Log(null, $"[Skip] existing default templates file \"{path}\".");
+				}
 			}
-			catch (IOException)
-			{
-				LoggerBase.Log(null, $"[Skip] existing default templates file \"{path}\".");
-			}
+		}
+		catch (Exception ex)
+		{
+			LoggerBase.Log(ex, $"[Error] creating default templates: {ex.Message}");
 		}
 	}
 
