@@ -12,11 +12,11 @@ public static class Worker
 	public static async Task HandlerJson(string[] args)
 	{
 		//- ["url","json"]
-		var json = Util.ParseJson(args[1]);
-		
-		using var package = new MultipartFormDataContent();
+		var json = Util.ParseJsonMemory(args[1]);
 
-		package.Add(new StringContent(json, Encoding.UTF8), "payload_json");
+		using MultipartFormDataContent package = new();
+
+		package.Add(new ReadOnlyMemoryContent(json), "payload_json");
 		await DiscordMsg(args[0], package);
 	}
 	public static async Task HandlerJsonFormat(string[] args)
