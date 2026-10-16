@@ -1,6 +1,6 @@
 name = "Aaren Discord Message API"
 mainprefix = "z"
-prefix = "DiscordAPI"
+prefix = "discordapi"
 
 [properties]
 author = "Aaren"

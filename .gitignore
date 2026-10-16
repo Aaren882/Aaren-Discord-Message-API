@@ -6,6 +6,11 @@ hemtt.exe
 *.biprivatekey
 releases
 
+# Signing
+.cert
+*.pfx
+/Signing/*.txt
+
 # Extension
 *.dll
 !DiscordMessageAPI_x64.dll

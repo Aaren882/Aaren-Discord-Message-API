@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ExtensionComponents;
 using ExtensionComponents.Entity;
@@ -12,21 +13,25 @@ namespace DiscordMessageAPIService;
 
 public sealed class DllEntry
 {
-	/* [UnmanagedCallersOnly(EntryPoint = "RVExtensionFeatureFlags")]
-	public static ulong RVExtensionFeatureFlags()
-	{
-		return (ulong)(
-			// RVFeatureFlags.ContextNoDefaultCall | //- Turn-off Call Context automatically
-			RVFeatureFlags.ArgumentNoEscapeString
-		);
-	} */
+	/* UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtensionFeatureFlags),
+			CallConvs = new[] { typeof(CallConv) })]
+		public static ulong RVExtensionFeatureFlags()
+		{
+			return (ulong)(
+				// RVFeatureFlags.ContextNoDefaultCall | //- Turn-off Call Context automatically
+				RVFeatureFlags.ArgumentNoEscapeString
+			);
+		} */
 
 	/// <summary>
 	/// Receives context information .
 	/// </summary>from Arma 3 about the execution environment
 	/// <param name="argsPtr">Pointer to the array of strings containing context data.</param>
 	/// <param name="argCount">The number of arguments passed in the context.</param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionContext")]
+	[UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtensionContext),
+			CallConvs = new[] { typeof(CallConv) })]
 	public static void RVExtensionContext(nint argsPtr, int argCount)
 	{
 		try
@@ -47,7 +52,9 @@ public sealed class DllEntry
 	/// Register callback for Arma
 	/// </summary>
 	/// <param name="functionPtr"></param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionRegisterCallback")]
+	[UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtensionRegisterCallback),
+			CallConvs = new[] { typeof(CallConv) })]
 	public static void RVExtensionRegisterCallback(nint functionPtr)
 	{
 		try
@@ -67,7 +74,9 @@ public sealed class DllEntry
 	/// </summary>
 	/// <param name="outputPrt"></param>
 	/// <param name="outputSize"></param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionVersion")]
+	[UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtensionVersion),
+			CallConvs = new[] { typeof(CallConv) })]
 	public static void RVExtensionVersion(nint outputPrt, int outputSize)
 	{
 		ServiceCollection services = new();
@@ -96,18 +105,20 @@ public sealed class DllEntry
 		ExtensionStartup.LocalServices?.Output(outputPrt, outputSize, version);
 	}
 
-	/* /// <summary>
+	/// <summary>
 	/// The entry point for the default callExtension command.
 	/// </summary>
 	/// <param name="outputPrt">The string builder object that contains the result of the function</param>
 	/// <param name="outputSize">The maximum size of bytes that can be returned</param>
 	/// <param name="function">The string argument that is used along with callExtension</param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtension")]
+	[UnmanagedCallersOnly(
+		EntryPoint = nameof(RVExtension),
+		CallConvs = new[] { typeof(CallConv) })]
 	public static void RVExtension(nint outputPrt, int outputSize, nint function)
 	{
 		// var inputKey = Marshal.PtrToStringUTF8(function)!;
 		// ServiceStartup.localServices.Output(outputPrt, outputSize, inputKey);
-	} */
+	}
 
 	/// <summary>
 	/// The entry point for the callExtensionArgs command.
@@ -120,8 +131,10 @@ public sealed class DllEntry
 	/// <returns>
 	///     numbers
 	/// </returns>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionArgs")]
-	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
+	[UnmanagedCallersOnly(
+		EntryPoint = nameof(RVExtensionArgs),
+		CallConvs = new[] { typeof(CallConv) })]
+	public static int RVExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
 	{
 		return
 			ExtensionStartup.LocalServices?.ExecuteArgsAction(outputPrt, outputSize, functionPtr, argsPrt, argCount)

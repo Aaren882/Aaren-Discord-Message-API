@@ -1,0 +1,10 @@
+{
+  global:
+    RVExtension;
+    RVExtensionArgs;
+    RVExtensionVersion;
+    RVExtensionRegisterCallback;
+    RVExtensionContext;
+  local:
+    *;
+};

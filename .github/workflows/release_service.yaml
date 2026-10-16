@@ -53,7 +53,7 @@ jobs:
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Checkout Source Code
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v6
 
     - name: Set project versions
       id: update
@@ -75,13 +75,40 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y clang zlib1g-dev
-    
+
+    - name: Decode Extension Signing Certificate (Windows)
+      if: ${{ matrix.os == 'windows-latest' }} 
+      working-directory: Signing
+      shell: pwsh
+      id: signCert
+      run: |
+        $SecurePassword = ConvertTo-SecureString("${{ secrets.SIGNING_PASSWORD }}") -AsPlainText -Force
+        & ./Main.ps1 -pfxName "${{ secrets.SIGNING_CERT_NAME }}" -certPassword $SecurePassword -certBase64 "${{ secrets.SIGNING_CERT }}"
+        
+        # Move public key to dist into artifacts
+        $publicKey = (Resolve-Path "../include/z/publicKey.hpp").Path
+        $dist = "../dist/z"
+        if (-not (Test-Path $dist))
+        {
+          New-Item -ItemType Directory -Path $dist | Out-Null
+        }
+        Move-Item -Path $publicKey -Destination $dist
+        Write-Host "Moved public key to dist directory." -ForegroundColor Green
+
     # Building binaries
     - name: Publish with Crossgen2
       shell: bash
       run: |
+        PFX_PATH="${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}"
+        PFX_PASSWORD="${{ secrets.SIGNING_PASSWORD }}"
+        
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          export PfxPath="$PFX_PATH"
+          export PfxPassword="$PFX_PASSWORD"
+        fi
+
         dotnet publish extension/DiscordMessageAPI/DiscordMessageAPI.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
-        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
+        dotnet publish extension/DiscordMessageAPIService/DiscordMessageAPIService.csproj  -c Release -r ${{ matrix.RID }} -o ./dist/extension/${{ matrix.RID }} --self-contained
         dotnet publish extension/Arma3WebService/Arma3WebService.csproj --self-contained \
         -c Release \
         -o ./dist/service/${{ matrix.RID }} \
@@ -91,44 +118,12 @@ jobs:
         -p:PublishSingleFile=true \
         -p:TieredCompilation=true
 
-    # Push image to github registry
-    - name: Docker meta
-      if: ${{ matrix.os == 'ubuntu-latest' }} 
-      id: meta
-      uses: docker/metadata-action@v6
-      with:
-        # list of Docker images to use as base name for tags
-        images: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-        # generate Docker tags based on the following events/attributes
-        tags: |
-          type=raw,value=v${{ env.CLEAN_VERSION }}
-          type=raw,value=${{ env.TAG_SUFFIX }}
-      
-    - name: Login to GitHub Container Registry
-      if: ${{ matrix.os == 'ubuntu-latest' }} 
-      uses: docker/login-action@v4
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Set up QEMU
-      if: ${{ matrix.os == 'ubuntu-latest' }} 
-      uses: docker/setup-qemu-action@v4
-
-    - name: Set up Docker Buildx
-      if: ${{ matrix.os == 'ubuntu-latest' }} 
-      uses: docker/setup-buildx-action@v4
-
-    - name: Build docker image
-      if: ${{ matrix.os == 'ubuntu-latest' }} 
-      uses: docker/build-push-action@v7
-      with:
-        context: ./extension
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        if [ "${{ matrix.os }}" = "windows-latest" ]; then
+          pwsh -ExecutionPolicy Bypass -File "./Signing/Signing.ps1" \
+            -pfxPath "${{ github.workspace }}/Signing/${{ secrets.SIGNING_CERT_NAME }}" \
+            -certPassword "${{ secrets.SIGNING_PASSWORD }}" \
+            -extension "${{ github.workspace }}/dist/extension/${{ matrix.RID }}"
+        fi
 
     - name: Upload Build Artifact
       uses: actions/upload-artifact@v7
@@ -166,6 +161,10 @@ jobs:
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_ENV
         echo "CLEAN_VERSION=$VERSION" >> $GITHUB_OUTPUT
 
+    - name: Checkout Source Code
+      uses: actions/checkout@v6
+
+    # Get all extension artifacts
     - name: Download All Artifacts
       uses: actions/download-artifact@v7
       with:
@@ -176,9 +175,8 @@ jobs:
     - run: ls -R dist
 
     - name: Zip extension by RID
+      working-directory: dist/extension
       run: |
-        cd dist/extension
-        
         # Loop through every directory (RID) inside
         for rid_dir in */; do
           # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
@@ -191,9 +189,8 @@ jobs:
         done
       
     - name: Zip service by RID
+      working-directory: dist/service
       run: |
-        cd dist/service
-        
         # Loop through every directory (RID) inside
         for rid_dir in */; do
           # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
@@ -204,6 +201,38 @@ jobs:
           # Zip the directory. Output will be "linux-x64.zip"
           zip -r "webService.${rid}.zip" "$rid"
         done
+
+    # Copy service extension
+    - name: Copy Service Extension to Addon Directory
+      run: |
+        # Loop through every directory (RID) inside
+        for rid_dir in dist/extension/*/; do
+
+          # Remove the trailing slash to get the clean RID name (e.g., "linux-x64")
+          rid="${rid_dir%/}"
+          rid="${rid##*/}"
+          echo "Copying RID: $rid"
+
+          # Find and Copy *service ".dll" OR ".so" to cwd without overwriting
+          find "$rid_dir" -type f \( -name "*service_x64.dll" -o -name "*service_x64.so" \) -exec cp -v -n {} . \;
+        done
+    
+    # Overwrite public key
+    - name: Overwrite public key in Include Directory
+      run: |
+        cp dist/z/publicKey.hpp include/z/publicKey.hpp
+        cat include/z/publicKey.hpp
+
+    # Building Addons
+    - name: Setup HEMTT
+      uses: arma-actions/hemtt@v1
+
+    - name: Run HEMTT release
+      run: hemtt release
+
+    - working-directory: releases
+      run: |
+        mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip        
 
     - name: Publish GitHub Release
       id: do-release
@@ -217,6 +246,8 @@ jobs:
         files: |
           dist/extension/*.zip
           dist/service/*.zip
+          releases/DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+
         prerelease: ${{ env.TAG_SUFFIX != 'latest' }}
         generate_release_notes: true
         draft: true
@@ -227,8 +258,9 @@ jobs:
         name: artifact.* 
         failOnError: false
   
-  Addons:
+  push_image:
     needs: release
+    if: ${{ needs.release.outputs.TAG_SUFFIX != 'TEST' }}
     runs-on: ubuntu-latest
 
     env:
@@ -238,24 +270,38 @@ jobs:
 
     steps:
     - name: Checkout Source Code
-      uses: actions/checkout@v6.0.3
+      uses: actions/checkout@v6
 
-    - name: Setup HEMTT
-      uses: arma-actions/hemtt@v1
-    
-    - name: Run HEMTT release
-      run: hemtt release
-
-    - run: |
-        cd releases
-        mv -v DiscordAPI-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
-      
-    - name: Upload Release Asset
-      uses: softprops/action-gh-release@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Push image to github registry
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v6
       with:
-        working_directory: releases
-        draft: true
-        files: |
-          DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip
+        # list of Docker images to use as base name for tags
+        images: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        # generate Docker tags based on the following events/attributes
+        tags: |
+          type=raw,value=v${{ env.CLEAN_VERSION }}
+          type=raw,value=${{ env.TAG_SUFFIX }}
+      
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v4
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Build docker image
+      uses: docker/build-push-action@v7
+      with:
+        context: ./extension
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}

@@ -1,0 +1,9 @@
+{
+  global:
+    RVExtension;
+    RVExtensionArgs;
+    RVExtensionFeatureFlags;
+    RVExtensionVersion;
+  local:
+    *;
+};

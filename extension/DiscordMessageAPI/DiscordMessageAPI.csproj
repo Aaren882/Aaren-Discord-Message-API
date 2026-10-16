@@ -7,15 +7,43 @@
     <IsAotCompatible>true</IsAotCompatible>
     <NativeLib>Shared</NativeLib>
     <Platforms>x64</Platforms>
-    <AssemblyName>$(MSBuildProjectName)v2_x64</AssemblyName>
-    <Version>26.2.0</Version>
+    <AssemblyName>$([System.String]::Copy('$(MSBuildProjectName)v2_x64').ToLower())</AssemblyName>
+    <Version>26.2.7</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
     <EmbedUntrackedSources>false</EmbedUntrackedSources>
     <StripSymbols>true</StripSymbols>
     <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+
+    <!-- Get OS Platform -->
+    <IsWindows>$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))</IsWindows>
+    <IsLinux>$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))</IsLinux>
+
+    <!-- Define Platform constants -->
+    <DefineConstants Condition="'$(IsWindows)' == 'true'">$(DefineConstants);WINDOWS</DefineConstants>
+    <DefineConstants Condition="'$(IsLinux)' == 'true'">$(DefineConstants);LINUX</DefineConstants>
   </PropertyGroup>
+
+  <!-- Mapping for Linux -->
+  <ItemGroup Condition="'$(IsLinux)' == 'true'">
+    <LinkerArg Include="-Wl,--version-script=$(MSBuildProjectDirectory)/exports.map" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(IsLinux)' == 'true'">
+    <LinkerFlavor>lld</LinkerFlavor>
+  </PropertyGroup>
+
+  <Target Name="PrintBuildDetails" BeforeTargets="BeforeBuild">
+    <Message Importance="high" Text="====================================================" />
+    <Message Importance="high" Text="[🔶 Assembly] Assembly Name: $(AssemblyName)" />
+    <Message Importance="high" Text="[📫 Directory] Project Directory: $(MSBuildProjectDirectory)" />
+    <Message Importance="high" Text="[🏷️ Version] Build Version: $(Version)" />
+    <Message Importance="high" Text="[🏠 Platform] $(Configuration) | $(Platforms)" />
+    <Message Importance="high" Condition="'$(IsWindows)' == 'true'" Text="[🔧 Notice] Target Platform Detected: WINDOWS (__stdcall)" />
+    <Message Importance="high" Condition="'$(IsLinux)' == 'true'" Text="[🔧 Notice] Target Platform Detected: LINUX (__cdecl)" />
+    <Message Importance="high" Text="====================================================" />
+  </Target>
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DefineConstants>TRACE</DefineConstants>
     <DebugType>embedded</DebugType>

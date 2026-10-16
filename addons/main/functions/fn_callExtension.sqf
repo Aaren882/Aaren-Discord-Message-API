@@ -24,10 +24,12 @@ try {
     throw "Error: Missing parameters (_extension) in fnc_callExtension";
   };
 
-  //- IF NONE "_args" RETURN
-  if (isNil "_args") exitWith { _extension callExtension _paramName };
+  private _extensionName = toLowerANSI _extension;
 
-  private _result = _extension callExtension [_paramName, _args];
+  //- IF NONE "_args" RETURN
+  if (isNil "_args") exitWith { _extensionName callExtension _paramName };
+
+  private _result = _extensionName callExtension [_paramName, _args];
   _result params ["", "", "_errorCode"];
 
   private _errorMsg = switch (_errorCode) do {

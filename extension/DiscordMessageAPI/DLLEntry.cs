@@ -10,7 +10,9 @@ namespace DiscordMessageAPI;
 
 public sealed class DllEntry
 {
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionFeatureFlags")]
+	[UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtensionFeatureFlags),
+			CallConvs = new[] { typeof(CallConv) })]
 	public static ulong RVExtensionFeatureFlags()
 	{
 		return (ulong)(RVFeatureFlags.ContextNoDefaultCall | RVFeatureFlags.ArgumentNoEscapeString);
@@ -22,7 +24,9 @@ public sealed class DllEntry
 	/// </summary>
 	/// <param name="outputPrt"></param>
 	/// <param name="outputSize"></param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionVersion")]
+	[UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtensionVersion),
+			CallConvs = new[] { typeof(CallConv) })]
 	public static void RVExtensionVersion(nint outputPrt, int outputSize)
 	{
 		ServiceCollection services = new();
@@ -53,7 +57,9 @@ public sealed class DllEntry
 	/// <param name="outputPrt">The string builder object that contains the result of the function</param>
 	/// <param name="outputSize">The maximum size of bytes that can be returned</param>
 	/// <param name="function">The string argument that is used along with callExtension</param>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtension")]
+	[UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtension),
+			CallConvs = new[] { typeof(CallConv) })]
 	public static void RVExtension(nint outputPrt, int outputSize, nint function)
 	{
 		// var inputKey = Marshal.PtrToStringUTF8(function)!;
@@ -71,8 +77,10 @@ public sealed class DllEntry
 	/// <returns>
 	///     numbers
 	/// </returns>
-	[UnmanagedCallersOnly(EntryPoint = "RVExtensionArgs")]
-	public static int RvExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
+	[UnmanagedCallersOnly(
+			EntryPoint = nameof(RVExtensionArgs),
+			CallConvs = new[] { typeof(CallConv) })]
+	public static int RVExtensionArgs(nint outputPrt, int outputSize, nint functionPtr, nint argsPrt, int argCount)
 	{
 		return
 			ExtensionStartup.LocalServices?.ExecuteArgsAction(outputPrt, outputSize, functionPtr, argsPrt, argCount)
