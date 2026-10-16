@@ -6,9 +6,10 @@ if !("signatures" in _metaDta) exitWith { true }; // This must be linux, it does
 
 TRACE_1("fn_checkExtension",_metaDta);
 
-//- Set variable for debug
+//- Set variable for debug + Skip for Debugging
 #ifdef DEBUG_MODE_FULL
   uiNamespace setVariable [(_metaDta get "name"), _metaDta];
+  if (true) exitWith { true };
 #endif
 
 INFO_1("""fn_checkExtension"" Checking extension ""%1""",(_metaDta get "name"));
