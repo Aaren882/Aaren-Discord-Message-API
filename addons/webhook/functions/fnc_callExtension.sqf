@@ -27,7 +27,8 @@ params [["_paramName", "", [""]], ["_args", nil, [ [] ]]];
 private _isV2 = "v2" in GVAR(ExtensionVersion);
 TRACE_2("fnc_callExtension",_isV2,_this);
 
-private _result = [GVAR(ExtensionVersion), _paramName, _args] call DiscordAPI_fnc_callExtension;
+private _extensionName = [GVAR(ExtensionVersion), toLowerANSI GVAR(ExtensionVersion)] select _isV2;
+private _result = [_extensionName, _paramName, _args] call DiscordAPI_fnc_callExtension;
 
 if (_result isEqualType []) then {
   _result params ["_message", "_returnCode"];
