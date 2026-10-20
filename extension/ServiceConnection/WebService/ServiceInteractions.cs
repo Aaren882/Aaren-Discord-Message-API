@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
