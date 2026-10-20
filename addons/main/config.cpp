@@ -15,8 +15,6 @@ class CfgPatches
   class ADDON: DiscordMessageAPI {};
 };
 
-#include "configs/CfgExtensions.hpp"
-
 class Extended_PreInit_EventHandlers 
 {
 	class ADDON

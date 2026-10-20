@@ -14,6 +14,8 @@ class CfgPatches
 	};
 };
 
+#include "configs/CfgExtensions.hpp"
+
 class Extended_PreInit_EventHandlers 
 {
 	class ADDON
