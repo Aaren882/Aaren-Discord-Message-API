@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
 using Components.Entity;
 using DiscordMessageAPI.ServiceConnection.WebService;
@@ -75,7 +74,20 @@ public sealed class ServiceInteractions
 	public ServiceInteractions(ILogger<ServiceInteractions> logger, WebsocketClient websocket)
 	{
 		Logger = logger;
-		ServiceSecret = GetServiceSecret();
+
+		//- Try to parse secret
+		try
+		{
+			ServiceSecret = GetServiceSecret();
+		}
+		catch (FileNotFoundException ex)
+		{
+			logger.LogError("Cannot parse \"{Secret}\". Please make sure it's setup properly: {message}.", Secret, ex.Message);
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "Something went wrong when parsing \"{Secret}\": ", Secret);
+		}
 
 		WsClient = websocket;
 		WsClient.Connected += () =>

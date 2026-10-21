@@ -14,11 +14,13 @@ class CfgPatches
 	};
 };
 
+#include "configs/CfgExtensions.hpp"
+
 class Extended_PreInit_EventHandlers 
 {
 	class ADDON
 	{
-		serverInit = QUOTE(call COMPILE_FILE(XEH_preInit));
+		serverInit = QUOTE(call COMPILE_FILE(XEH_preInitServer));
 		clientInit = QUOTE(call COMPILE_FILE(XEH_preInitClient));
 	};
 };
