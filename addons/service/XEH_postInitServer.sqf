@@ -1,31 +1,75 @@
 #include "script_component.hpp"
 
-if (!GVAR(Enable)) exitWith {};
-if (!GVAR(Connect_On_SP) && !isMultiplayer) exitWith {};
-
-INFO(MSG_INIT);
-
-//- Variables
-GVAR(Available) = false;
-
-private _ServerName = serverName;
-_ServerName = [
-  _ServerName,
-  format ["SP_Server %1", profileName]
-] select (_ServerName == "");
-
-localNamespace setVariable [QGVAR(serverName), _ServerName];
-
-INFO_1("[PostInit] || Register ServerName ""%1"".",_ServerName);
-INFO("[PostInit] || Registering ""Interactive events components""...");
-
-//- Register interactive events
-[QGVAR(StartConnection), FUNC(StartConnection)] call CBA_fnc_addEventHandler;
-[QGVAR(StopConnection), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
-
 ["CBA_settingsInitialized", {
 
-  INFO("[PostInit] || ""CBA_settingsInitialized""");
+  INFO(MSG_INIT);
+
+  //- Catch if shouldn't 
+  if (
+    !GVAR(Enable) ||
+    (
+      !GVAR(Connect_On_SP) &&
+      !isMultiplayer
+    )
+  ) exitWith {};
+
+  //- Variables
+  GVAR(Available) = false;
+
+  private _ServerName = serverName;
+  _ServerName = [
+    _ServerName,
+    format ["SP_Server %1", profileName]
+  ] select (_ServerName == "");
+
+  localNamespace setVariable [QGVAR(serverName), _ServerName];
+
+  INFO_1("[PostInit] || Register ServerName ""%1"".",_ServerName);
+  INFO("[PostInit] || Registering ""Interactive events components""...");
+
+  //- Register interactive events
+  [QGVAR(StartConnection), FUNC(StartConnection)] call CBA_fnc_addEventHandler;
+  [QGVAR(StopConnection), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
+
+  [QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
+  [QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
+  [QGVAR(AdminBroadcast), {
+    params ["_msg"];
+    INFO_1("AdminBroadcast ""%1""",_this);
+    [_msg] remoteExec ["BIS_fnc_infoText"];
+  }] call CBA_fnc_addEventHandler;
+  [QGVAR(AdminMpCommand), {
+    params ["_data","_callerGlobalName","_callerId"];
+    _data params ["_password","_cmd"];
+    INFO_2("Admin MP Command by ""%1 | Discord Id : %2""",_callerGlobalName,_callerId);
+
+    private _passwordWasOK = _password serverCommand _cmd;
+    if (_passwordWasOK) then
+    {
+      WARNING_2("MP Command by Admin ""%1:%2""",_callerGlobalName,_callerId);
+    } else
+    {
+      WARNING_2("Failed MP Command Attempt by Admin ""%1:%2""",_callerGlobalName,_callerId);
+    }
+  }] call CBA_fnc_addEventHandler;
+
+  [QGVAR(ServiceAccessResult), {
+    //- Wait for websocket connection
+    [
+      {GVAR(Available)}, {
+        INFO("[ServiceAccessResult]: Successfully Connected.");
+    }, _this, 10, {
+        WARNING("ServiceAccessResult callback wait timeout. It seems the service is not responding or taking too long to respond.");
+    }] call CBA_fnc_waitUntilAndExecute;
+  }] call CBA_fnc_addEventHandler;
+
+  [QGVAR(RptDirectoryUpdated), {
+    INFO_1("RptDirectoryUpdated : %1",_this);
+
+  }] call CBA_fnc_addEventHandler;
+
+  INFO("[PostInit] || ""Interactive events components"" Registered.");
+/////////////////////////////////////////////////////////////////////////
 
   //- List of profiles
   try {
@@ -166,41 +210,5 @@ INFO("[PostInit] || Registering ""Interactive events components""...");
   };
 }] call CBA_fnc_addEventHandler;
 
-[QGVARMAIN(Mission_Unload_Server), FUNC(StopConnection)] call CBA_fnc_addEventHandler;
-[QGVAR(ConnectionChanged), FUNC(SetServiceAvailability)] call CBA_fnc_addEventHandler;
-[QGVAR(AdminBroadcast), {
-  params ["_msg"];
-  INFO_1("AdminBroadcast ""%1""",_this);
-  [_msg] remoteExec ["BIS_fnc_infoText"];
-}] call CBA_fnc_addEventHandler;
-[QGVAR(AdminMpCommand), {
-  params ["_data","_callerGlobalName","_callerId"];
-  _data params ["_password","_cmd"];
-  INFO_2("Admin MP Command by ""%1 | Discord Id : %2""",_callerGlobalName,_callerId);
 
-  private _passwordWasOK = _password serverCommand _cmd;
-  if (_passwordWasOK) then
-  {
-    WARNING_2("MP Command by Admin ""%1:%2""",_callerGlobalName,_callerId);
-  } else
-  {
-    WARNING_2("Failed MP Command Attempt by Admin ""%1:%2""",_callerGlobalName,_callerId);
-  }
-}] call CBA_fnc_addEventHandler;
 
-[QGVAR(ServiceAccessResult), {
-  //- Wait for websocket connection
-  [
-    {GVAR(Available)}, {
-      INFO("[ServiceAccessResult]: Successfully Connected.");
-  }, _this, 10, {
-      WARNING("ServiceAccessResult callback wait timeout. It seems the service is not responding or taking too long to respond.");
-  }] call CBA_fnc_waitUntilAndExecute;
-}] call CBA_fnc_addEventHandler;
-
-[QGVAR(RptDirectoryUpdated), {
-  INFO_1("RptDirectoryUpdated : %1",_this);
-
-}] call CBA_fnc_addEventHandler;
-
-INFO("[PostInit] || ""Interactive events components"" Registered.");
