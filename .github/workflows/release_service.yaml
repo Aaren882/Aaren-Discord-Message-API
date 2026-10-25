@@ -140,6 +140,7 @@ jobs:
       CLEAN_VERSION: ${{ steps.get-version.outputs.CLEAN_VERSION }}
       TAG_SUFFIX: ${{ steps.get-version.outputs.TAG_SUFFIX }}
       UPLOAD_URL: ${{ steps.do-release.outputs.upload_url }}
+      CHECK_TAG: ${{ steps.check-tag.outputs.tag }}
 
     steps:
     - name: Strip prefix 'v' and suffix '-service'
@@ -257,10 +258,22 @@ jobs:
       with:
         name: artifact.* 
         failOnError: false
+    
+    - name: Set lowercase IMAGE_NAME
+      run: |
+        echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
+    - name: Check if Docker tag exists
+      id: check-tag
+      uses: tyriis/docker-image-tag-exists@v3.0.1
+      with:
+        registry: ${{ env.REGISTRY }}
+        repository: ${{ env.IMAGE_NAME }}
+        tag: v${{ env.CLEAN_VERSION }}
   
   push_image:
     needs: release
-    if: ${{ needs.release.outputs.TAG_SUFFIX != 'TEST' }}
+    if: ${{ needs.release.outputs.TAG_SUFFIX != 'TEST' && needs.release.outputs.CHECK_TAG == 'not found' }}
     runs-on: ubuntu-latest
 
     env:
