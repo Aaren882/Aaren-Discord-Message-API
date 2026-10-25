@@ -140,6 +140,7 @@ jobs:
       CLEAN_VERSION: ${{ steps.get-version.outputs.CLEAN_VERSION }}
       TAG_SUFFIX: ${{ steps.get-version.outputs.TAG_SUFFIX }}
       UPLOAD_URL: ${{ steps.do-release.outputs.upload_url }}
+      CHECK_TAG: ${{ steps.check-tag.outputs.tag }}
 
     steps:
     - name: Strip prefix 'v' and suffix '-service'
@@ -232,7 +233,7 @@ jobs:
 
     - working-directory: releases
       run: |
-        mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX }}.zip        
+        mv -v discordapi-latest.zip DiscordAPI-Addons.${{ env.CLEAN_VERSION }}.${{ env.TAG_SUFFIX == '' && 'latest' || env.TAG_SUFFIX }}.zip        
 
     - name: Publish GitHub Release
       id: do-release
@@ -257,10 +258,22 @@ jobs:
       with:
         name: artifact.* 
         failOnError: false
+    
+    - name: Set lowercase IMAGE_NAME
+      run: |
+        echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
+    - name: Check if Docker tag exists
+      id: check-tag
+      uses: tyriis/docker-image-tag-exists@v3.0.1
+      with:
+        registry: ${{ env.REGISTRY }}
+        repository: ${{ env.IMAGE_NAME }}
+        tag: v${{ env.CLEAN_VERSION }}
   
   push_image:
     needs: release
-    if: ${{ needs.release.outputs.TAG_SUFFIX != 'TEST' }}
+    if: ${{ needs.release.outputs.TAG_SUFFIX != 'TEST' && needs.release.outputs.CHECK_TAG == 'not found' }}
     runs-on: ubuntu-latest
 
     env:
@@ -283,7 +296,7 @@ jobs:
         # generate Docker tags based on the following events/attributes
         tags: |
           type=raw,value=v${{ env.CLEAN_VERSION }}
-          type=raw,value=${{ env.TAG_SUFFIX }}
+          type=raw,value=${{ env.TAG_SUFFIX == '' && 'latest' || env.TAG_SUFFIX }}
       
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v4

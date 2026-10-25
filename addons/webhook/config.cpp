@@ -14,7 +14,7 @@ class CfgPatches
 	};
 };
 
-#include "configs/CfgExtensions.hpp"
+#include "configs\CfgExtensions.hpp"
 
 class Extended_PreInit_EventHandlers 
 {
