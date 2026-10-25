@@ -1,5 +1,8 @@
 #include "script_component.hpp"
 
+//- Variables
+GVAR(Available) = false;
+
 ["CBA_settingsInitialized", {
 
   INFO(MSG_INIT);
@@ -12,9 +15,6 @@
       !isMultiplayer
     )
   ) exitWith {};
-
-  //- Variables
-  GVAR(Available) = false;
 
   private _ServerName = serverName;
   _ServerName = [
