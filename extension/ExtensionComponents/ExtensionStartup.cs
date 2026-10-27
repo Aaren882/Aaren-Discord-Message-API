@@ -10,7 +10,15 @@ public static class ExtensionStartup
 
 	public static Action<Exception?, string> Logger { get; private set; } = LoggerBase.Log;
 
-	public static string? InitTime { get; set; }
+	private static string? _InitTime;
+	public static string? InitTime
+	{
+		get => _InitTime;
+		set {
+			_InitTime = value;
+			Util.RefreshKey();
+		}
+	}
 
 	public static bool ExtensionWebhookInit { get; set; }
 	public static WebhooksStorage? ALLWebhooks { get; set; }

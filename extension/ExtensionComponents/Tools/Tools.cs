@@ -9,7 +9,7 @@ namespace ExtensionComponents.Tools;
 public static class Util
 {
 	public static readonly string AssemblyPath = Path.Combine(AppContext.BaseDirectory, "Discord_Message_API");
-	private static byte[] Webkey => GenerateRandomWebKey();
+	private static byte[] Webkey = GenerateRandomWebKey();
 
 	public static string ParseJson(string file)
 	{
@@ -70,6 +70,11 @@ public static class Util
 
 		// Return the encrypted bytes from the memory stream as a base64 encoded string
 		return Convert.ToBase64String(encrypted);
+	}
+	public static void RefreshKey()
+	{
+		Logger(null, "Refreshing Key.");
+		Webkey = GenerateRandomWebKey();
 	}
 	private static byte[] GenerateRandomWebKey()
 	{
