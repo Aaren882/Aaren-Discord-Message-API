@@ -73,7 +73,6 @@ public static class Util
 	}
 	private static byte[] GenerateRandomWebKey()
 	{
-		using var sha256 = SHA256.Create();
 		string time;
 		if (InitTime is null)
 		{
@@ -84,10 +83,11 @@ public static class Util
 		{
 			time = InitTime;
 		}
-		var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(time));
-		var key = new byte[32];
-		Array.Copy(hash, key, key.Length);
-		return key;
+		Tracer(nameof(GenerateRandomWebKey), time);
+
+		var hash = SHA256.HashData(Encoding.UTF8.GetBytes(time))[..32];
+
+		return hash;
 	}
 
 	public static int CallExtensionCallback(this ExtensionCallback extensionCallback, Arma3Payload payload)
