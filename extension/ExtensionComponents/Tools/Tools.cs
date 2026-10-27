@@ -9,7 +9,7 @@ namespace ExtensionComponents.Tools;
 public static class Util
 {
 	public static readonly string AssemblyPath = Path.Combine(AppContext.BaseDirectory, "Discord_Message_API");
-	private static readonly byte[] Webkey = GenerateRandomWebKey();
+	private static byte[] Webkey => GenerateRandomWebKey();
 
 	public static string ParseJson(string file)
 	{
@@ -25,26 +25,7 @@ public static class Util
 		return bytes.AsMemory<byte>();
 	}
 
-	public static int[] StringToCode32(string str)
-	{
-		var code32 = new int[str.Length];
-
-		for (var i = 0; i < str.Length; i++)
-		{
-			// Get the Unicode code point of each character in the string
-			code32[i] = char.ConvertToUtf32(str, i);
-
-			// If the character is a surrogate pair, skip the next character
-			if (char.IsHighSurrogate(str, i))
-			{
-				i++;
-			}
-		}
-
-		return code32;
-	}
-
-	public static string DecryptString(string cipherText)
+	public static string DecryptString(string cipherText, byte[]? key = null)
 	{
 		var fullCipher = Convert.FromBase64String(cipherText);
 
@@ -53,7 +34,7 @@ public static class Util
 		var iv = new byte[aesAlg.BlockSize / 8];
 		Array.Copy(fullCipher, iv, iv.Length);
 
-		aesAlg.Key = Webkey;
+		aesAlg.Key = key ?? Webkey;
 		aesAlg.IV = iv;
 
 		var decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
@@ -63,11 +44,11 @@ public static class Util
 		using var srDecrypt = new StreamReader(csDecrypt);
 		return srDecrypt.ReadToEnd();
 	}
-	public static string EncryptString(string plainText)
+	public static string EncryptString(string plainText, byte[]? key = null)
 	{
 		// Generate a new AES object with a random IV
 		using var aesAlg = Aes.Create();
-		aesAlg.Key = Webkey;
+		aesAlg.Key = key ?? Webkey;
 		aesAlg.GenerateIV();
 		var iv = aesAlg.IV;
 
@@ -92,7 +73,6 @@ public static class Util
 	}
 	private static byte[] GenerateRandomWebKey()
 	{
-		using var sha256 = SHA256.Create();
 		string time;
 		if (InitTime is null)
 		{
@@ -103,10 +83,11 @@ public static class Util
 		{
 			time = InitTime;
 		}
-		var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(time));
-		var key = new byte[32];
-		Array.Copy(hash, key, key.Length);
-		return key;
+		Tracer(nameof(GenerateRandomWebKey), time);
+
+		var hash = SHA256.HashData(Encoding.UTF8.GetBytes(time))[..32];
+
+		return hash;
 	}
 
 	public static int CallExtensionCallback(this ExtensionCallback extensionCallback, Arma3Payload payload)

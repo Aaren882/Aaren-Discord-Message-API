@@ -4,6 +4,7 @@ using DiscordMessageAPI.ServiceConnection.WebService;
 using ExtensionComponents.Tools;
 using Component.DiscordEntity;
 using static ExtensionComponents.ExtensionStartup;
+using System.Security.Cryptography;
 
 namespace DiscordMessageAPI.Discord;
 
@@ -117,14 +118,24 @@ public static class Worker
 		Tracer("DiscordMsg => \"MessageID\"", handlerType.MessageID!);
 		var url = handlerType.Url;
 
-		url = Util.DecryptString(url);
-
-		_ = (handlerType!) switch
+		try
 		{
-			//- Http(s) (Patch) request for Editing Message 
-			{ HandlerType: 1 } => await APIRequest.PatchRequest($"https://discord.com/api/webhooks/{url}/messages/{handlerType.MessageID}", package),
-			_ => await APIRequest.PostRequest($"https://discord.com/api/webhooks/{url}", package)
-		};
+			url = Util.DecryptString(url);
+			_ = (handlerType!) switch
+			{
+				//- Http(s) (Patch) request for Editing Message 
+				{ HandlerType: 1 } => await APIRequest.PatchRequest($"https://discord.com/api/webhooks/{url}/messages/{handlerType.MessageID}", package),
+				_ => await APIRequest.PostRequest($"https://discord.com/api/webhooks/{url}", package)
+			};
+		}
+		catch (CryptographicException ex)
+		{
+			Logger(ex, "ERROR: Cannot Send Message due to: ");
+		}
+		catch (Exception)
+		{
+			Logger(null, "ERROR: Cannot Send Message.");
+		}
 	}
 
 	private static void Resize<T>(this List<T> list, int sz, T c)

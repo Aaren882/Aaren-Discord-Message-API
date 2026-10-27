@@ -10,7 +10,7 @@ public record WebhooksStorage
 	public ImmutableArray<string> Webhooks
 	{
 		get => _webhooks;
-		set => _webhooks = [.. value.Select(Util.EncryptString)];
+		set => _webhooks = [.. value.Select(x => Util.EncryptString(x))];
 	}
 };
 
