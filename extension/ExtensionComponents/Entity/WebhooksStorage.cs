@@ -1,15 +1,16 @@
+using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using ExtensionComponents.Tools;
 
 namespace ExtensionComponents.Entity;
 
-public record struct WebhooksStorage
+public record WebhooksStorage
 {
-	private string[] _webhooks { get; set; }
-	public string[] Webhooks
+	private ImmutableArray<string> _webhooks;
+	public ImmutableArray<string> Webhooks
 	{
 		get => _webhooks;
-		set => _webhooks = value.Select(Util.EncryptString).ToArray();
+		set => _webhooks = [.. value.Select(x => Util.EncryptString(x))];
 	}
 };
 

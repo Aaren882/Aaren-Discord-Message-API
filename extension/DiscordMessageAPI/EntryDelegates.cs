@@ -25,18 +25,16 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	{
 		if (ExtensionWebhookInit)
 		{
-			throw new Exception("Extension has already been initiated.");
+			Logger.LogWarning("Trying to re-invoke \"Init_Player\".");
 		}
 		InitTime = args[0]; //- From Server
+		Logger.LogDebug("InitTime => \"{InitTime}\"", InitTime);
 
 		return 1;
 	}
 
 	internal static int Init_Server(IOutputBuilder output, string[] args, int argCount)
 	{
-		// var webhooksCount = 0;
-		// if (ExtensionWebhookInit) return webhooksCount;
-		// _ = ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
 		var webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
 
 		return webhooksCount;
@@ -49,15 +47,16 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	/// <returns></returns>
 	internal static int Refresh_Webhooks(IOutputBuilder output, string[] args, int argCount)
 	{
-		var jsonString = Util.ParseJson("Webhooks.json");
-		Tracer("Refresh_Webhooks", jsonString);
+		var webhookJson = Util.ParseJsonMemory("Webhooks.json");
 
 		ALLWebhooks = JsonSerializer.Deserialize(
-			jsonString,
+			webhookJson.Span,
 			WebhooksStorage_JsonContext.Default.WebhooksStorage
-		);
+        ) ?? throw new InvalidDataException("Failed to deserialize webhooks from \"Webhooks.json.\"");
 
-		var webhooksCount = ALLWebhooks?.Webhooks.Length ?? 0;
+		Tracer("Refresh_Webhooks", ALLWebhooks.ToString());
+
+		var webhooksCount = ALLWebhooks.Webhooks.Length;
 		var webhookSel = Math.Min(int.Parse(args[0]), webhooksCount - 1);
 		ExtensionWebhookInit = true;
 
@@ -68,8 +67,8 @@ public sealed class EntryDelegates : EntryDelegatesBase
 		}
 
 		output.Append(webhookSel < 0 // output can be like ["ww", "ww"]
-			? $"[[\"{string.Join("\",\"", ALLWebhooks?.Webhooks)}\"],\"{InitTime}\"]"
-			: $"[\"{ALLWebhooks?.Webhooks[webhookSel]}\",\"{InitTime}\"]");
+			? $"[[\"{string.Join("\",\"", ALLWebhooks.Webhooks)}\"],\"{InitTime}\"]"
+			: $"[\"{ALLWebhooks.Webhooks[webhookSel]}\",\"{InitTime}\"]");
 
 		return webhooksCount;
 	}
