@@ -35,9 +35,6 @@ public sealed class EntryDelegates : EntryDelegatesBase
 
 	internal static int Init_Server(IOutputBuilder output, string[] args, int argCount)
 	{
-		// var webhooksCount = 0;
-		// if (ExtensionWebhookInit) return webhooksCount;
-		// _ = ConnectWebSocket(output, args, argCount); //- Access Backend (Setup Relay)
 		var webhooksCount = Refresh_Webhooks(output, ["-1"], argCount); //- Get Webhooks
 
 		return webhooksCount;
