@@ -7,4 +7,10 @@ if (
 ) exitWith {};
 
 systemChat str LOCAL_STR("Init_Hint");
-["Init_Player", [_infoVar # 1]] call FUNC(callExtension);
+
+//- v2 uses different name
+private _IsV2 = "v2" in GVAR(ExtensionVersion);
+[
+  ["init_player","Init_Player"] select _IsV2,
+  [_infoVar # 1]
+] call FUNC(callExtension);
