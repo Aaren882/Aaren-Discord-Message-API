@@ -25,9 +25,10 @@ public sealed class EntryDelegates : EntryDelegatesBase
 	{
 		if (ExtensionWebhookInit)
 		{
-			throw new Exception("Extension has already been initiated.");
+			Logger.LogWarning("Trying to re-invoke \"Init_Player\".");
 		}
 		InitTime = args[0]; //- From Server
+		Logger.LogDebug("InitTime => \"{InitTime}\"", InitTime);
 
 		return 1;
 	}
