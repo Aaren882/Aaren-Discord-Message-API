@@ -8,7 +8,7 @@ public interface IWebsocketWorker : IDisposable
 {
 	int BufferSize { get; init; }
 	CancellationToken CancellationToken { get; }
-	internal void DoAssemble(in WebSocketStateMachine.InboundMessage inboundMessage);
+	internal void DoAssemble(in InboundMessage inboundMessage);
 	void PostReceived(in Stream assembledStream, WebSocketMessageType messageType);
 }
 
@@ -21,14 +21,13 @@ public abstract class WebsocketWorker : IWebsocketWorker
 
 	public virtual bool HasConnection => (WebSocketStateMachine?.State) switch
 	{
-		WebSocketStateMachine.OperationalState.Idle => true,
-		WebSocketStateMachine.OperationalState.Text => true,
-		WebSocketStateMachine.OperationalState.Binary => true,
+		OperationalState.Idle => true,
+		OperationalState.Working => true,
 		_ => false
 	};
 
 	protected Stream? _assembleStream;
-	private readonly object _assembleLock = new();
+	private readonly Lock _assembleLock = new();
 	protected virtual Stream? AssembleStream
 	{
 		get
@@ -85,7 +84,7 @@ public abstract class WebsocketWorker : IWebsocketWorker
 		return WebSocketStateMachine.TrySendMessage(payload, messageType, endOfMessage);
 	}
 
-	protected virtual bool TryAssemble(in WebSocketStateMachine.InboundMessage inboundMessage)
+	protected virtual bool TryAssemble(in InboundMessage inboundMessage)
 	{
 		var (bytes, _, endOfMessage) = inboundMessage;
 
@@ -95,7 +94,7 @@ public abstract class WebsocketWorker : IWebsocketWorker
 		}
 		return endOfMessage;
 	}
-	internal virtual void DoAssemble(in WebSocketStateMachine.InboundMessage inboundMessage)
+	internal virtual void DoAssemble(in InboundMessage inboundMessage)
 	{
 		if (!TryAssemble(inboundMessage)) return;
 		var (_, messageType, _) = inboundMessage;
@@ -109,7 +108,7 @@ public abstract class WebsocketWorker : IWebsocketWorker
 	{
 		return this.WebSocketStateMachine?.State switch
 		{
-			WebSocketStateMachine.OperationalState.Text => new MemoryStream(),
+			OperationalState.Working => new MemoryStream(),
 			_ => throw new NotImplementedException($"State \"{this.WebSocketStateMachine?.State}\" is not supported for assembly.")
 		};
 	}
@@ -121,7 +120,7 @@ public abstract class WebsocketWorker : IWebsocketWorker
 		WebSocketStateMachine = null;
 	}
 
-	void IWebsocketWorker.DoAssemble(in WebSocketStateMachine.InboundMessage inboundMessage) => DoAssemble(inboundMessage);
+	void IWebsocketWorker.DoAssemble(in InboundMessage inboundMessage) => DoAssemble(inboundMessage);
 	public virtual void Dispose()
 	{
 		AssembleStream = null;

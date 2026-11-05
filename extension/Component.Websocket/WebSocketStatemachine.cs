@@ -7,16 +7,6 @@ namespace Component.Websocket;
 
 public class WebSocketStateMachine : IDisposable
 {
-
-	public enum OperationalState
-	{
-		Empty, //- _websocket is not created
-		Abort, //- _websocket is exist but with no connection (can be aborted)
-		Idle, Text, Binary //- Working States
-	}
-	public readonly record struct OutboundMessage(ReadOnlyMemory<byte> messageBytes, WebSocketMessageType messageType, bool endOfMessage);
-	public readonly record struct InboundMessage(ReadOnlyMemory<byte> bytes, WebSocketMessageType messageType, bool endOfMessage);
-
 	private Task? _mainLoop { get; set; }
 	private WebSocket? _webSocket;
 	private readonly ILogger Logger;
@@ -25,13 +15,13 @@ public class WebSocketStateMachine : IDisposable
 	private readonly Channel<OutboundMessage> _outBoundChannel = Channel.CreateUnbounded<OutboundMessage>();
 	private bool _processing = false;
 
-	public WebSocketStateMachine(WebsocketWorker websocketWorker, ILogger logger)
+	public WebSocketStateMachine(IWebsocketWorker websocketWorker, ILogger logger)
 	{
 		_websocketWorker = websocketWorker;
 		Logger = logger;
 		InternalCts = new();
 	}
-	public WebSocketStateMachine(WebsocketWorker websocketWorker, ILogger logger, ReadOnlySpan<CancellationToken> cts)
+	public WebSocketStateMachine(IWebsocketWorker websocketWorker, ILogger logger, ReadOnlySpan<CancellationToken> cts)
 	{
 		_websocketWorker = websocketWorker;
 		Logger = logger;
@@ -42,10 +32,10 @@ public class WebSocketStateMachine : IDisposable
 	{
 		get
 		{
-			if (_webSocket is null) return OperationalState.Empty;
-			return (_webSocket.State) switch
+			return (_webSocket) switch
 			{
-				WebSocketState.Open => _processing ? OperationalState.Text : OperationalState.Idle,
+				null => OperationalState.Empty,
+				{ State: WebSocketState.Open } => _processing ? OperationalState.Working : OperationalState.Idle,
 				_ => OperationalState.Abort
 			};
 		}
@@ -130,7 +120,7 @@ public class WebSocketStateMachine : IDisposable
 	{
 		try
 		{
-			// 64KB buffer for reading chunks.
+			// buffer for reading chunks.
 			var buffer = (new byte[_websocketWorker.BufferSize]).AsMemory<byte>();
 
 			while (_webSocket?.State == WebSocketState.Open)
@@ -175,11 +165,11 @@ public class WebSocketStateMachine : IDisposable
 	{
 		if (!InternalCts.IsCancellationRequested)
 		{
-			// 1. Cancel any active ReceiveAsync blocking calls
+			// Cancel any active ReceiveAsync blocking calls
 			InternalCts.Cancel();
 			InternalCts.Dispose();
 
-			// 2. Safely dispose the native WebSocket resources
+			// Dispose the native WebSocket resources
 			_webSocket?.Dispose();
 			_webSocket = null;
 			_mainLoop = null;
