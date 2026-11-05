@@ -37,8 +37,10 @@ public abstract class WebsocketWorker : IWebsocketWorker
 		}
 		set
 		{
+			if (value != null)
+				throw new InvalidOperationException("Cannot set AssembleStream while a stream is currently in use.");
 			_assembleStream?.Dispose();
-			if (value is null) _assembleStream = null;
+			_assembleStream = null;
 		}
 	}
 
@@ -108,7 +110,7 @@ public abstract class WebsocketWorker : IWebsocketWorker
 	{
 		return this.WebSocketStateMachine?.State switch
 		{
-			OperationalState.Working => new MemoryStream(),
+			OperationalState.Idle or OperationalState.Working => new MemoryStream(),
 			_ => throw new NotImplementedException($"State \"{this.WebSocketStateMachine?.State}\" is not supported for assembly.")
 		};
 	}

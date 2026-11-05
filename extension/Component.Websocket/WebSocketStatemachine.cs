@@ -13,7 +13,17 @@ public class WebSocketStateMachine : IDisposable
 	private readonly IWebsocketWorker _websocketWorker;
 	internal readonly CancellationTokenSource InternalCts;
 	private readonly Channel<OutboundMessage> _outBoundChannel = Channel.CreateUnbounded<OutboundMessage>();
-	private bool _processing = false;
+
+	private Memory<byte>? BufferMemoryInternal { get; set; }
+	private Memory<byte> BufferMemory
+	{
+		get => BufferMemoryInternal ?? throw new NullReferenceException("Websocket buffer is null.");
+		set
+		{
+			BufferMemoryInternal = value;
+		}
+	}
+	private bool _processing => BufferMemoryInternal is not null && BufferMemory.IsEmpty;
 
 	public WebSocketStateMachine(IWebsocketWorker websocketWorker, ILogger logger)
 	{
@@ -121,22 +131,20 @@ public class WebSocketStateMachine : IDisposable
 		try
 		{
 			// buffer for reading chunks.
-			var buffer = (new byte[_websocketWorker.BufferSize]).AsMemory<byte>();
+			BufferMemory = (new byte[_websocketWorker.BufferSize]).AsMemory<byte>();
 
 			while (_webSocket?.State == WebSocketState.Open)
 			{
-				_processing = false;
-				var result = await _webSocket.ReceiveAsync(buffer, ct);
-				_processing = true;
+				var result = await _webSocket.ReceiveAsync(BufferMemory, ct);
 
 				if (result.MessageType is WebSocketMessageType.Close)
 				{
 					await CloseAcknowledgedAsync();
 					break;
 				}
-				var slice = buffer[..result.Count];
+				var slice = BufferMemory[..result.Count];
 				_websocketWorker.DoAssemble(new(slice, result.MessageType, result.EndOfMessage));
-				buffer.Span.Clear(); //- Clear buffer
+				BufferMemory.Span.Clear(); //- Clear buffer
 			}
 		}
 		catch (OperationCanceledException) { }
