@@ -21,8 +21,7 @@ public abstract class WebsocketWorker : IWebsocketWorker
 
 	public virtual bool HasConnection => (WebSocketStateMachine?.State) switch
 	{
-		OperationalState.Idle => true,
-		OperationalState.Working => true,
+		OperationalState.Idle or OperationalState.Working => true,
 		_ => false
 	};
 
